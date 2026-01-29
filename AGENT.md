@@ -1,38 +1,12 @@
 # vox.ai Skills
 
-A collection of skills for AI coding agents providing vox.ai AICC (AI-powered Call Center) guidelines and best practices.
+vox.ai 개발자를 위한 가이드라인과 베스트 프랙티스.
 
-## Installation
+## Structure
 
-```bash
-npx skills add tryvox/vox-skills
-```
+- `vox-best-practices/` - vox.ai 에이전트 개발 가이드라인
 
-### Installation Options
+## See Also
 
-```bash
-# Global installation (available in all projects)
-npx skills add tryvox/vox-skills --global
-
-# Project-specific installation
-npx skills add tryvox/vox-skills
-```
-
-## Available Skills
-
-| Skill | Description |
-|-------|-------------|
-| [vox-best-practices](./vox-best-practices/) | Comprehensive guidelines for building vox.ai agents |
-
-## Supported Platforms
-
-| Platform | Support |
-|----------|---------|
-| Claude Code | Full |
-| Cursor | Full |
-| GitHub Copilot | Full |
-
-## Notes
-
-- For detailed vox.ai documentation, visit: https://docs.tryvox.co
+- vox.ai 문서: https://docs.tryvox.co
 
