@@ -4,8 +4,8 @@ vox.ai 개발자를 위한 가이드라인과 베스트 프랙티스.
 
 ## Structure
 
-- `voxai/` - 단일(올인원) vox.ai 스킬. `voxai/SKILL.md`에서 references로 타고 들어감
-  - `voxai/references/`
+- `vox-best-practice/` - 단일(올인원) vox.ai 스킬. `vox-best-practice/SKILL.md`에서 references로 타고 들어감
+  - `vox-best-practice/references/`
     - `voice-ai-playbook.md` - 워크플로우/규칙/체크리스트(올인원)
     - `voice-ai-prompt-template.md` - 한국어 system prompt 템플릿
 
