@@ -9,6 +9,8 @@
 - 핵심 규칙 모음: `Rules (must)`
 - 정규화: `Character normalization (Voice)`
 - 점검: `Ship checklist (quick)`
+- 디버깅(원인 진단): `references/voice-ai-prompt-diagnosis.md`
+- 리팩터링(개선안 생성): `references/voice-ai-prompt-revision.md`
 
 ## Workflow checklist
 
@@ -86,6 +88,8 @@ Task Progress:
 - 한 문장에 한 행동만 둡니다(장문/복문 지양).
 - 기본 응답은 1–2문장으로 말합니다. 길어지면 끊어서 진행합니다.
 - 질문은 한 번에 하나만 합니다. 질문 뒤에는 `<사용자 응답 대기>`.
+- 선택지가 필요하면 2–3개만 제시합니다(가능하면 2개).
+- `<사용자 응답 대기>`는 프롬프트 작성용 표기입니다. 사용자에게 그대로 읽거나 출력하지 않습니다.
 - 메타 발화 금지(프롬프트/정책/도구/내부 처리 설명 금지).
 - 도구 결과를 추측해서 말하지 않습니다.
 - 전환/종료가 필요하면 발화하지 말고 무음 액션만 실행합니다.
