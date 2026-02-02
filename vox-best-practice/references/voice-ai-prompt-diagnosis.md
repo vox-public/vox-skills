@@ -15,11 +15,38 @@
 - 한 사례는 “유저 발화 → 에이전트 응답(및 도구 호출/결과) → 기대 동작 → 실제 실패”가 포함되어야 합니다.
 - 전체 통화 로그가 길면, 실패 지점 전후 3–6턴만 발췌해도 됩니다.
 
-### (선택) agent_id로 프롬프트 가져오기
+### (권장) MCP 연동: call_id로 로그/프롬프트 자동 수집
 
-향후 `get_agent` 같은 도구가 제공되면:
-- 유저에게 `agent_id`를 받아 system prompt를 직접 가져옵니다.
-- 도구가 없거나 접근 권한이 없으면, 유저에게 system prompt를 그대로 붙여달라고 요청합니다.
+MCP가 연결되어 있고 `call_id`를 알고 있다면, 아래 순서로 **진단 입력을 자동으로 확보**할 수 있습니다.
+
+1) 콜 로그/컨텍스트 가져오기
+
+```text
+get_call(call_id)
+```
+
+- `call.transcript`: 유저/에이전트 발화 + tool invocation/result가 포함된 transcript
+- `call.dynamic_variables`: 런타임 변수(미주입/빈 값) 관련 이슈 확인에 유용
+- `call.agent_id`: 이 콜이 사용한 agent UUID (있으면 다음 단계로)
+
+2) 콜에 연결된 agent의 현재 프롬프트 가져오기
+
+```text
+get_agent(agent_id = call.agent_id)
+```
+
+- `agent.data.prompt.content`를 “현재 system prompt”로 사용한다.
+
+3) 위 데이터로 failure mode를 더 “근본적으로” 분해한다
+
+- 프롬프트에 적힌 “의도”가 아니라, transcript에서 **실제로 어떤 규칙이 깨졌는지**(턴테이킹/verbosity/tool grounding/에스컬레이션)를 근거로 진단한다.
+- tool invocation/result가 있으면 “도구 실패를 어떻게 처리했는지”를 정확히 확인한다(추측/환각 vs 실패 인정/재시도/대안).
+- `dynamic_variables`가 있으면 `{{...}}` 미주입/빈 값 노출 같은 문제를 transcript 근거로 확인한다.
+
+예외/주의:
+- `call.transcript`가 `null`이면(민감정보 저장 opt-out 등), 유저에게 실패 구간 전후 로그(3–6턴)만 붙여달라고 요청한다.
+- `call.agent_id`가 비어 있으면(레거시/데이터 누락), 유저에게 `agent_id` 또는 system prompt를 요청한다.
+  - 권한/접근 문제가 있으면, system prompt를 유저가 직접 붙여넣게 한다.
 
 ### 실패 사례 포맷(권장)
 
@@ -116,6 +143,9 @@ trace_id: T1
 
 ```yaml
 diagnosis:
+  context:
+    call_id: "optional-call-id-if-used"
+    agent_id: "optional-agent-id-if-used"
   prompt_summary: "프롬프트의 목적/흐름을 1–2문장으로 요약"
   failure_modes:
     - name: "turn_taking_multiple_questions"

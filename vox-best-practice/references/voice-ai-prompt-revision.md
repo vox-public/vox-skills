@@ -14,12 +14,42 @@
    - (권장) `diagnosis.change_requests`가 포함된 진단 결과, 또는
    - 유저가 요약한 “실패 이유/고치고 싶은 점” 목록
 
-### (선택) agent_id로 업데이트하기
+### (권장) MCP 연동: call_id → get_call/get_agent → update_agent
 
-향후 `get_agent` / `update_agent` 같은 도구가 제공되면:
-- `agent_id`로 현재 프롬프트를 가져오고(get_agent),
-- 개선된 프롬프트를 만든 뒤(update 단계),
-- 유저가 원할 때만 update_agent로 반영합니다.
+MCP가 연결되어 있고 `call_id`를 알고 있다면, 아래 순서로 “리팩터링 → 실제 반영”까지 일관되게 처리할 수 있습니다.
+
+1) 콜 로그/컨텍스트 가져오기
+
+```text
+get_call(call_id)
+```
+
+2) 콜에 연결된 agent 프롬프트 가져오기
+
+```text
+get_agent(agent_id = call.agent_id)
+```
+
+- `agent.data.prompt.content`를 “현재 system prompt”로 사용한다.
+- 필요하면 `get_call` transcript 근거로 `voice-ai-prompt-diagnosis.md` 방식으로 원인을 다시 정리하고(특히 tool 호출/실패 처리/turn-taking), 그 결과를 이번 리팩터링 입력으로 사용한다.
+
+3) 개선된 system prompt 생성
+
+- 이 문서의 리팩터링 원칙/패치 패턴을 적용해서 `patch_notes` + `revised_system_prompt`를 만든다.
+
+4) 유저 확인 후 실제 반영(업데이트)
+
+```text
+update_agent(
+  agent_id = call.agent_id,
+  prompt = revised_system_prompt
+)
+```
+
+권장:
+- 업데이트는 **유저가 “적용해줘/업데이트해줘”라고 명시했을 때만** 실행한다.
+- 불필요한 변경을 줄이려면 `update_agent`에는 `prompt`만 넘긴다(다른 `data` 필드는 건드리지 않기).
+- 적용 후 `get_agent`로 다시 읽어서 프롬프트가 바뀌었는지 확인한다.
 
 도구가 없으면, **개선된 system prompt 전체를 출력**하고 유저가 복사/적용하도록 합니다.
 
