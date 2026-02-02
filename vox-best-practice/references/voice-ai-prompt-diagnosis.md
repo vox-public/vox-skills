@@ -35,7 +35,9 @@ get_call(call_id)
 get_agent(agent_id = call.agent_id)
 ```
 
-- `agent.data.prompt.content`를 “현재 system prompt”로 사용한다.
+- vox 플랫폼이 실제로 읽는 system prompt는 보통 `agent.data.prompt.prompt`에 있다.
+- 일부 레거시/도구에서는 `agent.data.prompt.content`가 있을 수 있으니, `prompt`가 비어 있으면 `content`도 확인한다.
+- 이후 리팩터링(update)에서 `firstLine`/`firstLineType` 같은 필드를 보존해야 하므로, 가능하면 `agent.data.prompt` 객체 전체를 같이 확보해 둔다.
 
 3) 위 데이터로 failure mode를 더 “근본적으로” 분해한다
 

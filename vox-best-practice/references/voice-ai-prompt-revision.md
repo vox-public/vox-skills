@@ -30,7 +30,8 @@ get_call(call_id)
 get_agent(agent_id = call.agent_id)
 ```
 
-- `agent.data.prompt.content`를 “현재 system prompt”로 사용한다.
+- vox 플랫폼이 실제로 읽는 system prompt는 보통 `agent.data.prompt.prompt`에 있다.
+- `firstLine`/`firstLineType` 등 `agent.data.prompt`의 다른 필드는 업데이트 시 소실되기 쉬우니, **prompt 객체 전체를 보존**할 수 있게 먼저 읽어둔다.
 - 필요하면 `get_call` transcript 근거로 `voice-ai-prompt-diagnosis.md` 방식으로 원인을 다시 정리하고(특히 tool 호출/실패 처리/turn-taking), 그 결과를 이번 리팩터링 입력으로 사용한다.
 
 3) 개선된 system prompt 생성
@@ -48,7 +49,7 @@ update_agent(
 
 권장:
 - 업데이트는 **유저가 “적용해줘/업데이트해줘”라고 명시했을 때만** 실행한다.
-- 불필요한 변경을 줄이려면 `update_agent`에는 `prompt`만 넘긴다(다른 `data` 필드는 건드리지 않기).
+- vox MCP의 `update_agent(prompt=...)`는 `data.prompt.prompt`를 업데이트하고 `firstLine`/`firstLineType` 등 `data.prompt.*`의 다른 필드는 유지한다(따라서 prompt 문자열만 넘기는 것을 권장).
 - 적용 후 `get_agent`로 다시 읽어서 프롬프트가 바뀌었는지 확인한다.
 
 도구가 없으면, **개선된 system prompt 전체를 출력**하고 유저가 복사/적용하도록 합니다.
