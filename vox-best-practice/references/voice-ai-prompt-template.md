@@ -61,7 +61,7 @@
 
 # Naturalness (Filler words)
 
-필러 사용 설정: [[filler_setting]] (꺼짐/낮음/보통, 미정이면 꺼짐)
+필러 사용 설정: [[filler_setting]] (꺼짐/낮음/보통/높음, 미정이면 낮음)
 
 규칙:
 - 한 응답에 필러는 최대 1회
