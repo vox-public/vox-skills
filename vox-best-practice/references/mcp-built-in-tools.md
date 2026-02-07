@@ -8,7 +8,7 @@
 list_built_in_tools()
 ```
 
-파라미터 없음. 플랫폼 제공 빌트인 도구 카탈로그를 반환합니다.
+파라미터 없음. 플랫폼 제공 빌트인 도구 중 **active 상태**인 것만 반환합니다.
 
 ## 장착: update_agent(add_built_in_tool={...})
 
@@ -83,7 +83,9 @@ list_built_in_tools()
 | `transferAgentVersion` | 선택 | `null` | 특정 버전 (미지정 시 최신) |
 | `preserveChatContext` | 선택 | `false` | 대화 컨텍스트 유지 여부 |
 
-### send_sms
+### send_sms (현재 비활성)
+
+> `is_active=false` 상태로 `list_built_in_tools()`에 노출되지 않으며 에이전트에 장착 불가. 향후 활성화될 수 있음.
 
 통화 중 SMS를 발송합니다.
 

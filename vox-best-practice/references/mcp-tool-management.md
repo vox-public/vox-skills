@@ -8,7 +8,7 @@ vox.ai 에이전트는 두 종류의 도구를 사용합니다.
 
 | 구분 | 빌트인 도구 | 커스텀 도구 |
 |------|------------|------------|
-| 종류 | `end_call`, `transfer_call`, `transfer_agent`, `send_sms` | `api`, `mcp` |
+| 종류 | `end_call`, `transfer_call`, `transfer_agent` (active 기준) | `api`, `mcp` |
 | 범위 | 플랫폼 전체 공통 | 조직(organization) 단위 |
 | 생성 | 불가 (플랫폼 제공) | `create_custom_tool()` |
 | 에이전트 연결 | `update_agent(add_built_in_tool={...})` | `update_agent(add_tool_id="uuid")` |
@@ -59,8 +59,14 @@ update_agent(
 ```
 create_custom_tool(
   name="check_order", tool_type="api",
-  data={"url": "https://api.example.com/orders", "method": "GET",
-        "parameters": {"type": "object", "properties": {"order_id": {"type": "string"}}, "required": ["order_id"]}},
+  data={
+    "apiConfiguration": {
+      "url": "https://api.example.com/orders",
+      "method": "GET",
+      "timeoutSeconds": 10
+    },
+    "parameters": {"type": "object", "properties": {"order_id": {"type": "string"}}, "required": ["order_id"]}
+  },
   description="주문 상태 조회"
 )
 
