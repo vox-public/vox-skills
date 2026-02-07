@@ -11,7 +11,19 @@
 - 기본 제안: OAuth
 - 사용자가 API token을 원하면 해당 방식 안내
 - API token은 `Authorization: Bearer ${VOX_API_KEY}` 헤더 사용
-- 클라이언트가 헤더를 못 붙이면 프록시(mcp-remote 등)로 헤더 주입
+- 클라이언트가 헤더를 지원하지 않으면 OAuth만 안내
+
+## 클라이언트 호환성
+
+| 클라이언트 | OAuth | API token | 비고 |
+|---|---|---|---|
+| Claude Desktop/Web | O | -- | Connectors UI는 OAuth 전용 |
+| Claude Code | O | O | `--header` 플래그 |
+| ChatGPT | O | -- | Developer mode OAuth 전용 |
+| OpenAI Codex | O | O | `bearer_token_env_var` |
+| OpenCode | O | O | `headers` 객체 |
+| Cursor | O | O | `headers` 객체 |
+| VS Code Copilot | O | O | `${input:}` 변수 |
 
 ## Quick Navigation
 
@@ -21,6 +33,7 @@
 - [OpenAI Codex](#openai-codex)
 - [OpenCode](#opencode)
 - [Cursor](#cursor)
+- [VS Code Copilot](#vs-code-copilot)
 
 ## 공통 준비
 
@@ -37,8 +50,8 @@
 
 ### API token (요청 시)
 
-- Claude는 authless 또는 OAuth remote MCP만 지원한다.
-- API token은 직접 헤더 주입이 불가하므로, 프록시를 원격에 띄워 헤더를 주입한 뒤 그 URL을 No Auth로 추가한다.
+- Connectors UI는 OAuth 전용이므로 API token 헤더 주입이 불가하다.
+- API token이 필요하면 Claude Code 사용을 권장한다.
 
 ## Claude Code (CLI)
 
@@ -46,14 +59,16 @@
 
 ```bash
 claude mcp add --transport http vox https://mcp.tryvox.co/
-> /mcp
 ```
+
+추가 후 채팅에서 `/mcp` 명령으로 연결 상태를 확인한다.
 
 ### API token (요청 시)
 
 ```bash
 export VOX_API_KEY="sk_...redacted..."
-claude mcp add vox-token -- npx -y mcp-remote https://mcp.tryvox.co/ --header "Authorization: Bearer ${VOX_API_KEY}"
+claude mcp add --transport http vox-token https://mcp.tryvox.co/ \
+  --header "Authorization: Bearer ${VOX_API_KEY}"
 ```
 
 ## ChatGPT (Developer mode)
@@ -67,7 +82,7 @@ claude mcp add vox-token -- npx -y mcp-remote https://mcp.tryvox.co/ --header "A
 ### API token (요청 시)
 
 - Developer mode는 OAuth 또는 No Auth만 지원한다.
-- API token은 프록시를 원격에 띄워 헤더를 주입한 뒤 그 URL을 No Auth로 추가한다.
+- API token이 필요하면 다른 클라이언트(Claude Code, Cursor 등) 사용을 권장한다.
 
 ## OpenAI Codex
 
@@ -151,5 +166,48 @@ opencode mcp auth vox
       "headers": { "Authorization": "Bearer ${env:VOX_API_KEY}" }
     }
   }
+}
+```
+
+## VS Code Copilot
+
+### OAuth (기본)
+
+`.vscode/mcp.json`:
+
+```json
+{
+  "servers": {
+    "vox": {
+      "type": "http",
+      "url": "https://mcp.tryvox.co/"
+    }
+  }
+}
+```
+
+### API token (요청 시)
+
+`.vscode/mcp.json`:
+
+```json
+{
+  "servers": {
+    "vox": {
+      "type": "http",
+      "url": "https://mcp.tryvox.co/",
+      "headers": {
+        "Authorization": "Bearer ${input:vox-api-key}"
+      }
+    }
+  },
+  "inputs": [
+    {
+      "id": "vox-api-key",
+      "type": "promptString",
+      "description": "vox API Key (sk_...)",
+      "password": true
+    }
+  ]
 }
 ```
