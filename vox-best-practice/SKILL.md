@@ -1,6 +1,6 @@
 ---
 name: vox-best-practice
-description: vox.ai 개발 베스트 프랙티스를 적용한다. (1) 한국어 음성 에이전트 system prompt 설계/작성/리팩터링(템플릿, {{...}} 변수 주입, 필러 옵션, Character normalization, 도구/무음 액션, 테스트/운영), (2) vox MCP 서버(https://mcp.tryvox.co/, Streamable HTTP, OAuth 또는 API token)를 ChatGPT/Claude Desktop/Claude Code/Cursor/OpenCode/Codex/VS Code Copilot 등에 연결할 때 사용한다.
+description: "vox.ai development best practices. (1) Voice agent system prompt design, authoring, and refactoring (template, {{...}} variable injection, filler options, character normalization, tools/silence actions, testing/production). (2) vox MCP server integration for ChatGPT, Claude Desktop, Claude Code, Cursor, OpenCode, Codex, VS Code Copilot."
 ---
 
 # vox.ai Skills
