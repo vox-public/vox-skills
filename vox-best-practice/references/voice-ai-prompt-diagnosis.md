@@ -172,4 +172,5 @@ diagnosis:
 - 진단 단계에서는 **개선된 system prompt 전체를 다시 쓰지 않습니다.**
 - “무엇을 바꿔야 하는지(change_requests)”까지만 제시합니다.
 
-
+핸드오프 팁(권장):
+- 리팩터링 단계(`voice-ai-prompt-revision.md`)로 바로 넘길 생각이면, 각 `failure_modes[].change_requests`를 **누락하지 말고**, 필요하면 중복 제거해서 `diagnosis.change_requests`(flattened)로 한 번 더 모아주면 적용이 더 안정적입니다.
