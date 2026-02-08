@@ -108,8 +108,8 @@ trace_id: T1
 아래는 “음성”에서 빈번한 유형입니다. 진단 시 이 분류를 우선적으로 사용하세요.
 
 ### 1) Turn-taking 붕괴
-- 증상: 질문을 여러 개 던짐, `<사용자 응답 대기>` 누락, 사용자가 말할 틈이 없음, 무한 확인 루프
-- 점검 포인트: “질문 1개”, “대기 토큰”, “불명확 시 확인 질문 1개”, “선택지 2–3개” 규칙
+- 증상: 질문을 여러 개 던짐, 사용자가 말할 틈이 없음, 무한 확인 루프
+- 점검 포인트: voice-ai-playbook.md의 Rules (must)와 Turn-taking 섹션 기준으로 일치 여부 확인
 
 ### 2) 장문/과설명(Voice verbosity)
 - 증상: 한 응답이 너무 길어 TTS/청취 부담, 핵심 질문이 뒤로 밀림
@@ -153,7 +153,6 @@ diagnosis:
     - name: "turn_taking_multiple_questions"
       symptoms:
         - "한 턴에 질문 2개 이상"
-        - "대기 토큰 누락"
       evidence_traces: ["T1", "T4"]
       prompt_drivers:
         - section: "# 턴테이킹"
@@ -161,7 +160,7 @@ diagnosis:
           why_it_matters: "이 규칙이 약하거나 예외가 많으면 턴이 꼬임"
       likely_root_causes:
         - "규칙 우선순위 불명확"
-        - "선택지/대기 규칙 누락"
+        - "선택지 규칙 누락"
       change_requests:
         - "질문 1개 원칙을 'must'로 승격"
         - "긴 요청은 1문장 요약 후 '무엇부터' 질문 1개로 고정"

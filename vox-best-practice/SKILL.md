@@ -1,6 +1,6 @@
 ---
 name: vox-best-practice
-description: vox.ai 개발 베스트 프랙티스를 적용한다. (1) 한국어 음성 에이전트 system prompt 설계/작성/리팩터링(템플릿, {{...}} 변수 주입, 필러 옵션, Character normalization, 도구/무음 액션, 테스트/운영), (2) vox MCP 서버(https://mcp.tryvox.co/, Streamable HTTP, OAuth 또는 API token)를 ChatGPT/Claude Desktop/Claude Code/Cursor/OpenCode/Codex/VS Code Copilot 등에 연결할 때 사용한다.
+description: "vox.ai development best practices. (1) Voice agent system prompt design, authoring, and refactoring (template, {{...}} variable injection, filler options, character normalization, tools/silence actions, testing/production). (2) vox MCP server integration for ChatGPT, Claude Desktop, Claude Code, Cursor, OpenCode, Codex, VS Code Copilot."
 ---
 
 # vox.ai Skills
@@ -12,6 +12,9 @@ description: vox.ai 개발 베스트 프랙티스를 적용한다. (1) 한국어
 - 실패 사례 기반 원인 진단: See [references/voice-ai-prompt-diagnosis.md](references/voice-ai-prompt-diagnosis.md)
 - 진단 기반 리팩터링(개선된 prompt 출력): See [references/voice-ai-prompt-revision.md](references/voice-ai-prompt-revision.md)
 - vox MCP integration (Streamable HTTP, OAuth/API token, 클라이언트별 설정): See [references/mcp-vox-integration.md](references/mcp-vox-integration.md)
+- MCP 도구 관리 (개요, 워크플로우, 주의사항): See [references/mcp-tool-management.md](references/mcp-tool-management.md)
+- 빌트인 도구 상세 (end_call, transfer_call, transfer_agent, send_sms): See [references/mcp-built-in-tools.md](references/mcp-built-in-tools.md)
+- 커스텀 도구 상세 (api/mcp 조회, 생성, 연결/해제): See [references/mcp-custom-tools.md](references/mcp-custom-tools.md)
 
 ## Core operating rules (must)
 
