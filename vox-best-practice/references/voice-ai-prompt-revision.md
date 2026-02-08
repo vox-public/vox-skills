@@ -11,7 +11,7 @@
 
 1) **현재 system prompt** (Markdown 전체)
 2) 아래 중 하나:
-   - (권장) `diagnosis.change_requests`가 포함된 진단 결과, 또는
+   - (권장) `diagnosis.failure_modes[].change_requests`(또는 `diagnosis.change_requests`)가 포함된 진단 결과, 또는
    - 유저가 요약한 “실패 이유/고치고 싶은 점” 목록
 
 ### (권장) MCP 연동: call_id → get_call/get_agent → update_agent
