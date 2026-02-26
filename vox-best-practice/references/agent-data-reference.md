@@ -120,7 +120,7 @@
 
 동작:
 1. 기존 `agent.data`를 읽음
-2. 입력 파라미터를 병합
+2. 입력된 1차 필드를 필드 단위로 교체(replace)
 3. 정규화(normalize)
 4. 스키마 밖 필드 정리(strip)
 5. JSON Schema 검증 + 비즈니스 검증
@@ -154,6 +154,7 @@ MCP는 업데이트 전 아래 legacy key를 canonical로 변환합니다.
 ```text
 update_agent(
   agent_id="agent-uuid",
+  prompt={"prompt": "안녕하세요. 무엇을 도와드릴까요?", "firstLineType": "aiFirstDynamic"},
   llm={"model": "gpt-4o-mini", "temperature": 0.2},
   stt={"provider": "rtzr", "language": "ko"},
   postCall={"actions": []},
@@ -164,5 +165,6 @@ update_agent(
 
 주의:
 - `postCall`만 사용
+- `update_agent`의 각 입력 필드는 replace semantics이므로, 객체 필드는 필요한 하위 키를 포함한 최종 값으로 전달
 - unknown key는 정리되거나 검증 에러가 발생할 수 있음
 - 반영 후 `get_agent(agent_id=...)`로 최종 `agent.data` 확인 권장
