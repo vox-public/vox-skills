@@ -107,8 +107,16 @@
 - `data`
 - `llm`
 - `stt`
-- `post_call` 또는 `postCall`
-- tool 파라미터 (`add/remove_built_in_tool`, `add/remove_tool_id`)
+- `voice`
+- `postCall`
+- `callSettings`
+- `knowledge`
+- `webhookSettings`
+- `security`
+- `speech`
+- `presetDynamicVariables`
+- `builtInTools`
+- `toolIds`
 
 동작:
 1. 기존 `agent.data`를 읽음
@@ -122,7 +130,6 @@
 
 MCP는 업데이트 전 아래 legacy key를 canonical로 변환합니다.
 
-- `post_call -> postCall`
 - `llm.id -> llm.model`
 - `voice.speedV2 -> voice.speed`
 - `llm.provider` 제거
@@ -149,11 +156,13 @@ update_agent(
   agent_id="agent-uuid",
   llm={"model": "gpt-4o-mini", "temperature": 0.2},
   stt={"provider": "rtzr", "language": "ko"},
-  post_call={"actions": []}
+  postCall={"actions": []},
+  builtInTools=[{"toolType": "end_call", "name": "end_call"}],
+  toolIds=["tool-uuid"]
 )
 ```
 
 주의:
-- `post_call`과 `postCall` 동시 전달 불가
+- `postCall`만 사용
 - unknown key는 정리되거나 검증 에러가 발생할 수 있음
 - 반영 후 `get_agent(agent_id=...)`로 최종 `agent.data` 확인 권장

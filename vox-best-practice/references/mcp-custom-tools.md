@@ -74,19 +74,21 @@ HTTP 엔드포인트를 호출하는 도구. `apiConfiguration` 내 `url`, `meth
 }
 ```
 
-## 에이전트 연결: update_agent(add_tool_id="uuid")
+## 에이전트 연결: update_agent(toolIds=[...])
 
 ```
-update_agent(agent_id="agent-uuid", add_tool_id="tool-uuid")
+update_agent(agent_id="agent-uuid", toolIds=["tool-uuid"])
 ```
 
-`list_custom_tools()` 또는 `create_custom_tool()` 응답의 `uid`를 전달합니다. 이미 연결된 도구는 중복 추가되지 않습니다.
+`list_custom_tools()` 또는 `create_custom_tool()` 응답의 `uid`를 `toolIds` 배열에 넣어 전달합니다.
 
-## 에이전트 해제: update_agent(remove_tool_id="uuid")
+## 에이전트 해제: update_agent(toolIds=[...])
 
 ```
-update_agent(agent_id="agent-uuid", remove_tool_id="tool-uuid")
+update_agent(agent_id="agent-uuid", toolIds=[])
 ```
+
+`toolIds`는 교체(replace) 방식입니다. 일부만 변경할 때는 `get_agent()`로 현재 `data.toolIds`를 조회한 뒤 원하는 항목을 추가/제거한 전체 배열을 다시 저장하세요.
 
 ## 참고
 

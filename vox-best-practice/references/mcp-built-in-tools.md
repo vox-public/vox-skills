@@ -10,9 +10,9 @@ list_built_in_tools()
 
 파라미터 없음. 플랫폼 제공 빌트인 도구 중 **active 상태**인 것만 반환합니다.
 
-## 장착: update_agent(add_built_in_tool={...})
+## 장착: update_agent(builtInTools=[...])
 
-`toolType`에 따라 객체 구조가 다릅니다.
+`builtInTools`는 배열 전체 교체(replace) 방식입니다. `toolType`에 따라 item 객체 구조가 다릅니다.
 
 ### end_call
 
@@ -113,10 +113,15 @@ list_built_in_tools()
 
 `speakDuringExecution` 예시: `{"enabled": true, "messages": ["잠시만 기다려 주세요."]}`
 
-## 해제: update_agent(remove_built_in_tool="name")
+## 해제: update_agent(builtInTools=[...])
 
 ```
-update_agent(agent_id="agent-uuid", remove_built_in_tool="end_call")
+update_agent(
+  agent_id="agent-uuid",
+  builtInTools=[
+    {"toolType": "transfer_call", "name": "transfer_to_agent", "transferConfiguration": [{"transferType": "phone", "transferTo": "010-1234-5678"}]}
+  ]
+)
 ```
 
-`name`이 일치하는 빌트인 도구를 에이전트에서 제거합니다.
+제거하려는 도구를 제외한 최종 배열을 전달하면 해당 도구가 해제됩니다.
