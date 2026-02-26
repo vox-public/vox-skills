@@ -50,6 +50,7 @@ update_agent(
 권장:
 - 업데이트는 **유저가 “적용해줘/업데이트해줘”라고 명시했을 때만** 실행한다.
 - vox MCP의 `update_agent(prompt=...)`는 `data.prompt.prompt`를 업데이트하고 `firstLine`/`firstLineType` 등 `data.prompt.*`의 다른 필드는 유지한다(따라서 prompt 문자열만 넘기는 것을 권장).
+- LLM/STT/postCall 같은 설정 변경은 `agent-data-reference.md`를 따른다.
 - 적용 후 `get_agent`로 다시 읽어서 프롬프트가 바뀌었는지 확인한다.
 
 도구가 없으면, **개선된 system prompt 전체를 출력**하고 유저가 복사/적용하도록 합니다.
@@ -125,5 +126,3 @@ revised_system_prompt: |
   3) 불명확한 답변(확인 질문 1개로 수렴)
   4) 여러 요청 동시(1문장 요약 + “무엇부터”)
   5) 범위 이탈/부적절 요청(1문장 제한 + 복귀)
-
-

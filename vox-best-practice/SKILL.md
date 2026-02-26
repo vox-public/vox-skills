@@ -15,6 +15,7 @@ description: "vox.ai development best practices. (1) Voice agent system prompt d
 - MCP 도구 관리 (개요, 워크플로우, 주의사항): See [references/mcp-tool-management.md](references/mcp-tool-management.md)
 - 빌트인 도구 상세 (end_call, transfer_call, transfer_agent, send_sms): See [references/mcp-built-in-tools.md](references/mcp-built-in-tools.md)
 - 커스텀 도구 상세 (api/mcp 조회, 생성, 연결/해제): See [references/mcp-custom-tools.md](references/mcp-custom-tools.md)
+- 에이전트 설정 데이터(`agent.data`) 레퍼런스: See [references/agent-data-reference.md](references/agent-data-reference.md)
 
 ## Core operating rules (must)
 
