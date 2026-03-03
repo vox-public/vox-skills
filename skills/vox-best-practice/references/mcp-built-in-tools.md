@@ -102,6 +102,20 @@ list_built_in_tools()
 | `smsMessagePrompt` | 선택 | | dynamic: AI가 SMS 생성할 프롬프트 |
 | `smsMessageStaticSentence` | 선택 | | static: 발송할 고정 문장 |
 
+### send_dtmf
+
+IVR 메뉴 탐색을 위한 DTMF 톤을 전송합니다.
+
+```json
+{"toolType": "send_dtmf", "name": "send_dtmf", "description": "IVR 메뉴 탐색 시 DTMF 톤을 전송합니다."}
+```
+
+| 필드 | 필수 | 기본값 | 설명 |
+|-----|------|--------|------|
+| `toolType` | 필수 | | `"send_dtmf"` |
+| `name` | 필수 | | 도구 이름 (고유) |
+| `description` | 선택 | | 호출 조건 설명 |
+
 ## 공통 선택 필드
 
 모든 빌트인 도구에 공통:

@@ -91,6 +91,7 @@
 | `transfer_call` | `toolType`, `name`, `transferConfiguration` |
 | `transfer_agent` | `toolType`, `name`, `transferAgentId` |
 | `send_sms` | `toolType`, `name` |
+| `send_dtmf` | `toolType`, `name` |
 | `skill` | `toolType`, `name`, `skillPayload` |
 
 ## MCP 동작 규칙 (중요)
