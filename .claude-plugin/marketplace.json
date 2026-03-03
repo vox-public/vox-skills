@@ -3,12 +3,20 @@
   "owner": {
     "name": "vox.ai"
   },
+  "metadata": {
+    "description": "vox.ai voice agent development plugin — MCP tools + best practice skills",
+    "version": "1.0.0"
+  },
   "plugins": [
     {
       "name": "vox-ai",
-      "source": ".",
       "description": "vox.ai voice agent development plugin — MCP tools + best practice skills",
-      "version": "1.0.0"
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/vox-best-practice",
+        "./skills/flow-node-creator"
+      ]
     }
   ]
 }
