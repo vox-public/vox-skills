@@ -7,7 +7,11 @@ vox.ai 개발자를 위한 Agent Skills 모음 레포입니다.
 ### Claude Code Plugin (권장)
 
 ```bash
-/plugin install github:fleek-fitness/vox-skills
+# 1. marketplace 등록
+/plugin marketplace add fleek-fitness/vox-skills
+
+# 2. plugin 설치
+/plugin install vox-ai@vox-ai
 ```
 
 한 번의 설치로 MCP 서버 + Skills가 모두 제공됩니다.

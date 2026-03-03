@@ -1,0 +1,14 @@
+{
+  "name": "vox-ai",
+  "owner": {
+    "name": "vox.ai"
+  },
+  "plugins": [
+    {
+      "name": "vox-ai",
+      "source": ".",
+      "description": "vox.ai voice agent development plugin — MCP tools + best practice skills",
+      "version": "1.0.0"
+    }
+  ]
+}
