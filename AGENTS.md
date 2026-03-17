@@ -1,20 +1,36 @@
 # vox.ai Skills
 
-vox.ai 개발자를 위한 가이드라인과 베스트 프랙티스.
+`domains/voxai/skills`는 vox.ai skills repository의 canonical home이다. 이 저장소는 installable skill 패키지 모음이면서, 동시에 그 구조와 품질 기준을 지배하는 constitutional docs를 함께 가진다.
 
-## Structure
+## Read Order
 
-- `skills/vox-best-practice/` - 단일(올인원) vox.ai 스킬. `skills/vox-best-practice/SKILL.md`에서 references로 타고 들어감
-  - `skills/vox-best-practice/references/`
-    - `voice-ai-playbook.md` - 워크플로우/규칙/체크리스트(올인원)
-    - `voice-ai-prompt-template.md` - 한국어 system prompt 템플릿
-    - `voice-ai-prompt-diagnosis.md` - 실패 사례 기반 원인 진단(+ MCP 연동: call_id → get_call/get_agent로 로그/프롬프트 자동 수집)
-    - `voice-ai-prompt-revision.md` - 진단 결과 기반 prompt 리팩터링(+ MCP 연동: update_agent(prompt={...})로 프롬프트 객체 실제 반영)
-    - `mcp-vox-integration.md` - vox MCP(https://mcp.tryvox.co/) 클라이언트별 연결 가이드(설정 + troubleshooting)
-- `skills/flow-node-creator/` - vox.ai flow 에이전트 노드 생성 스킬
-- `.claude-plugin/plugin.json` - Claude Code Plugin 메타데이터
-- `.mcp.json` - Plugin MCP 서버 설정 (vox MCP 자동 연결)
+수정 전에 아래 순서로 읽는다.
 
-## See Also
+1. `AGENTS.md`
+2. `ARCHITECTURE.md`
+3. `docs/design-docs/core-beliefs.md`
+4. 필요한 경우 `docs/design-docs/skill-topology.md`, `docs/design-docs/routing-model.md`, `docs/design-docs/evaluation-model.md`
 
-- vox.ai 문서(내부): 조직의 단일 소스에 맞춰 링크/경로를 추가하세요.
+## Core Rules
+
+- `AGENTS.md`는 entrypoint index이지 백과사전이 아니다.
+- installable skill의 physical packaging boundary는 `skills/` 디렉터리다.
+- installable skill의 logical namespace는 flat하다.
+- `using-vox-best-practice`는 thin router skill이다.
+- `vox-*`는 domain skill이다.
+- quality는 `execution`, `routing`, `freshness` 3축으로 정의한다.
+- skill-local semantics와 repo-level harness는 분리한다.
+
+## Repository Shape
+
+- `ARCHITECTURE.md`: stable architecture contract
+- `docs/design-docs/`: constitutional design docs
+- `docs/QUALITY_SCORE.md`, `docs/RELIABILITY.md`, `docs/SECURITY.md`: operating constitution
+- `skills/`: installable skill packages
+- `_harness/`: repo-level quality infrastructure
+
+## Editing Discipline
+
+- 구조를 바꾸기 전에 문서를 먼저 바꾼다.
+- `README.md`는 architecture를 요약하지만 source of truth는 아니다.
+- generated state는 나중에 `docs/generated/`에서 관리한다. current state 설명을 README에 누적하지 않는다.
