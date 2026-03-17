@@ -16,7 +16,7 @@
       "skills": [
         "./skills/using-vox-best-practice",
         "./skills/vox-best-practice",
-        "./skills/flow-node-creator",
+        "./skills/vox-flow-agent",
         "./skills/vox-pricing"
       ]
     }

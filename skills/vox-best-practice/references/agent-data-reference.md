@@ -3,12 +3,9 @@
 `agent.data`의 canonical 구조와 MCP 동작(정규화/병합/검증)을 정리한 레퍼런스입니다.
 
 대상:
-- `domains/voxai/mcp/schemas/agent_schema_v1_resolved.json`
 - MCP `create_agent` / `update_agent`
 
 ## Source of Truth
-
-- 스키마 스냅샷: `domains/voxai/mcp/schemas/agent_schema_v1_resolved.json`
 - 루트 URI: `voxai://agent-schema/agent-data/v1`
 - Root `additionalProperties`: `false` (정의되지 않은 루트 키 불가)
 - Root required:

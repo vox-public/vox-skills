@@ -1,15 +1,10 @@
----
-name: flow-node-creator
-description: "A skill that creates 'conversation flow' nodes for vox.ai voice agents. It converts call-center/OB/CS scripts (free text) into a flow-node format with `name + content + transition conditions`. Use this skill whenever users ask to transform call scripts, consultation scenarios, OB scripts, CS manuals, call flows, consultation flows, or conversation-flow nodes into step-based prompts/nodes/flows. It is also triggered by requests such as 'split this script into steps,' 'turn this into flow nodes,' or 'organize this with transition conditions.'"
----
+# Node Creation: 스크립트 → Flow Node 변환
 
-# Flow Node Creator
-
-콜센터/OB/CS 스크립트(자유 텍스트)를 vox.ai 시스템 프롬프트의 `# 대화 흐름` 섹션에 삽입할 수 있는 **flow node**로 변환한다.
+콜센터/OB/CS 스크립트(자유 텍스트)를 flow node markdown으로 변환한다.
 
 ## 왜 이 형식이 필요한가
 
-vox.ai 음성 에이전트는 하나의 시스템 프롬프트 안에 대화 흐름을 정의한다. 원본 스크립트를 그대로 넣으면 LLM이 단계 경계, 전환 시점, 재시도 제한 등을 자의적으로 해석해서 예측할 수 없는 발화가 나온다. 이 스킬은 원본 스크립트를 "한 단계 = 한 목적 + 명확한 exit 조건"으로 쪼개서 LLM이 각 단계에서 할 일과 빠져나갈 조건을 정확히 파악하게 만든다.
+vox.ai 음성 에이전트는 하나의 시스템 프롬프트 안에 대화 흐름을 정의한다. 원본 스크립트를 그대로 넣으면 LLM이 단계 경계, 전환 시점, 재시도 제한 등을 자의적으로 해석해서 예측할 수 없는 발화가 나온다. 이 규칙은 원본 스크립트를 "한 단계 = 한 목적 + 명확한 exit 조건"으로 쪼개서 LLM이 각 단계에서 할 일과 빠져나갈 조건을 정확히 파악하게 만든다.
 
 핵심 원리:
 1. **단계 안에서 할 일**(프롬프트 본문)과 **빠져나갈 조건**(전환조건)을 분리한다.
@@ -193,7 +188,3 @@ vox.ai 음성 에이전트는 하나의 시스템 프롬프트 안에 대화 흐
 - 권유 2회 이후 미선택 종료: 고객이 "결정 못하겠어요" 또는 "나중에 할게요"처럼 선택을 확정하지 않고 보류 의사를 명확히 표현한 경우.
 - 강한 거절 종료: 고객이 "안 할게요" 또는 "필요 없어요"처럼 결제 진행 자체를 확정 거절한 경우.
 ```
-
-## vox.ai 연동 참고
-
-이 스킬의 출력은 vox.ai 시스템 프롬프트의 `# 대화 흐름` 섹션 안에 들어가는 노드다. 전체 시스템 프롬프트의 다른 섹션(역할, 컨텍스트, 변수, 목표, 말투, 필러, 턴테이킹, 정규화, 도구, 가드레일, 에러 처리)은 이 스킬의 범위 밖이다. 필요하면 vox-best-practice 스킬을 별도로 사용한다.

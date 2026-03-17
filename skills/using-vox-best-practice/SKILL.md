@@ -1,6 +1,6 @@
 ---
 name: using-vox-best-practice
-description: "Use when starting any conversation about vox.ai voice agent development — prompt authoring, flow conversion, tool integration, phone number setup, workspace configuration, pricing inquiry, call operation, or any vox.ai platform question. This skill selects the right domain skill and never executes domain logic itself."
+description: "Use when starting any conversation about vox.ai voice agent development — prompt authoring, flow design, node conversion, tool integration, phone number setup, workspace configuration, pricing inquiry, call operation, or any vox.ai platform question. This skill selects the right domain skill and never executes domain logic itself."
 ---
 
 # using-vox-best-practice
@@ -20,7 +20,7 @@ vox.ai 관련 요청의 routing entrypoint. domain 로직을 직접 실행하지
 | Skill | Trigger | Owns | Does Not Own |
 |-------|---------|------|--------------|
 | `vox-best-practice` | voice agent prompt 작성/리팩터링/진단/MCP 통합 | prompt authoring, MCP integration | pricing, workspace, flow |
-| `flow-node-creator` | 콜센터/OB/CS 스크립트 → flow node 변환 | flow node conversion | prompt authoring, pricing |
+| `vox-flow-agent` | flow agent 설계/구성, node type 선택, 스크립트→node 변환, 변수 흐름, transition 설계 | flow design, node conversion, variable system | prompt authoring, pricing |
 | `vox-pricing` | 가격/요금/플랜/빌링/cost 질문 | pricing and plan facts | prompt authoring, workspace |
 
 ### Not Installed
@@ -28,7 +28,6 @@ vox.ai 관련 요청의 routing entrypoint. domain 로직을 직접 실행하지
 | Skill | Status |
 |-------|--------|
 | `vox-single-prompt-agent` | `[not installed]` |
-| `vox-flow-agent` | `[not installed]` |
 | `vox-call` | `[not installed]` |
 | `vox-tool` | `[not installed]` |
 | `vox-phone-number` | `[not installed]` |
@@ -55,5 +54,5 @@ vox.ai 관련 요청의 routing entrypoint. domain 로직을 직접 실행하지
 
 - 가격표, 요율, 빌링 정책을 직접 포함하지 않는다 → `vox-pricing`
 - prompt 템플릿, 진단 규칙, MCP 설정을 직접 포함하지 않는다 → `vox-best-practice`
-- flow node 변환 로직을 직접 포함하지 않는다 → `flow-node-creator`
+- flow 설계, node 변환, 변수 시스템을 직접 포함하지 않는다 → `vox-flow-agent`
 - domain skill의 내용을 복제하거나 요약하지 않는다
