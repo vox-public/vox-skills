@@ -14,8 +14,10 @@
       "source": "./",
       "strict": false,
       "skills": [
+        "./skills/using-vox-best-practice",
         "./skills/vox-best-practice",
-        "./skills/flow-node-creator"
+        "./skills/flow-node-creator",
+        "./skills/vox-pricing"
       ]
     }
   ]
