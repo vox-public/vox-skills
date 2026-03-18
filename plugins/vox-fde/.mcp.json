@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "vox": {
+      "type": "http",
+      "url": "https://mcp.tryvox.co/"
+    },
+    "linear": {
+      "type": "sse",
+      "url": "https://mcp.linear.app/sse"
+    }
+  }
+}

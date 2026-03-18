@@ -1,0 +1,9 @@
+{
+  "name": "vox-fde",
+  "version": "0.5.0",
+  "description": "vox.ai FDE(Forward Deployed Engineer)가 고객 POC 온보딩을 독립 수행할 수 있게 돕는 플러그인. Linear 프로젝트 자동 생성, 단계별 가이드, 에이전트 프롬프트 작성, 문서 템플릿을 제공한다.",
+  "author": {
+    "name": "vox.ai"
+  },
+  "keywords": ["fde", "poc", "onboarding", "voice-agent", "vox"]
+}
