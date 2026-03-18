@@ -22,13 +22,12 @@
 Canonical installable skill packages live under `skills/`.
 
 - `using-vox-best-practice`
-- `vox-single-prompt-agent`
+- `vox-single-agent`
 - `vox-flow-agent`
-- `vox-call`
 - `vox-tool`
 - `vox-phone-number`
 - `vox-workspace`
-- `vox-pricing`
+- `vox-general`
 
 ## Repository Layout
 

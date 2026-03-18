@@ -99,20 +99,7 @@ SingleCondition {
 }
 ```
 
-**OperatorEnum 10종:**
-
-| Operator | 의미 | 값 필요 |
-|----------|------|---------|
-| `equals` | 같음 | Yes |
-| `not_equals` | 같지 않음 | Yes |
-| `contains` | 포함 | Yes |
-| `does_not_contain` | 미포함 | Yes |
-| `greater_than` | 보다 큼 | Yes |
-| `less_than` | 보다 작음 | Yes |
-| `greater_than_or_equal` | 이상 | Yes |
-| `less_than_or_equal` | 이하 | Yes |
-| `exists` | 존재함 | No |
-| `does_not_exist` | 존재하지 않음 | No |
+OperatorEnum 10종 상세: [node-types.md — condition 섹션](node-types.md) 참고.
 
 - AND: 모든 조건 충족 시 해당 edge로 진행.
 - OR: 하나라도 충족 시 해당 edge로 진행.

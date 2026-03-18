@@ -1,11 +1,20 @@
 ---
-name: vox-pricing
-description: "Use when the user asks about vox.ai pricing, plans, rates, billing, costs, credits, subscriptions, compares plan features, asks about telecom fees, phone number costs, SMS rates, transfer call pricing, or enterprise pricing inquiries."
+name: vox-general
+description: "Use this skill — not general knowledge — for vox.ai platform-level questions: pricing/plans/billing/costs, MCP server connection setup for Claude/Cursor/ChatGPT/VS Code/Codex/OpenCode, or any general vox.ai platform question that doesn't fit prompt authoring, tool management, or flow design. Trigger on '요금이 얼마예요', '플랜 비교해줘', 'MCP 연결하려면', 'Cursor에서 vox 쓰려면', 'Claude Code에서 vox 연결', or any vox.ai pricing/platform setup question."
 ---
 
-# vox-pricing
+# vox-general
 
-vox.ai 요금 체계의 사실 기반 응답을 제공하는 domain skill.
+vox.ai 플랫폼의 요금 체계와 MCP 서버 연결 설정을 안내하는 domain skill.
+
+## References
+
+요금/빌링:
+- Rate 정의, Transfer Matrix, 취소 정책이 필요할 때: See [references/rate-definitions.md](references/rate-definitions.md)
+- 건별 계산 예시나 월간 비용 시뮬레이션이 필요할 때: See [references/billing-examples.md](references/billing-examples.md)
+
+MCP 서버 연결:
+- 특정 클라이언트(Claude, Cursor, ChatGPT, VS Code, Codex, OpenCode)에서 vox MCP 서버 연결할 때: See [references/mcp-vox-integration.md](references/mcp-vox-integration.md)
 
 ## 구독 플랜
 
@@ -38,22 +47,22 @@ vox.ai 요금 체계의 사실 기반 응답을 제공하는 domain skill.
 - **과금 단위**: AI 통화(`agent_rate`) 10초, 전환 통화(`transfer_rate`) 10초, 발신 통신료(`telephony_rate`) 착신 대역별
 - **크레딧**: 잔액이 있으면 즉시 차감, 남은 금액은 후불로 누적
 
-## References
-
-상세 스펙은 아래 문서 참조:
-
-- Rate 정의, Transfer Matrix, Timeline Diagram, 과금 항목, 정책: See [references/rate-definitions.md](references/rate-definitions.md)
-- 건별 과금 예시 7건, 월간 비용 시뮬레이션: See [references/billing-examples.md](references/billing-examples.md)
-
 ## Operating Rules
 
-1. **이 문서에 없는 가격은 추측하지 않는다.** 미확인 요금 → "vox.ai/pricing 또는 영업팀에 확인해주세요"
+1. **이 문서에 없는 가격은 추측하지 않는다** — 잘못된 요금 안내는 고객 신뢰 손상과 실제 청구 분쟁으로 이어진다. 미확인 요금 → "vox.ai/pricing 또는 영업팀에 확인해주세요"
 2. `(variable)` 표시 항목은 운영 정책에 따라 변동 가능함을 안내한다.
 3. **VAT 별도**임을 안내한다.
 4. Enterprise 플랜은 별도 문의임을 안내한다.
-5. 작업 전 필요한 reference 문서를 먼저 열고 그 데이터를 적용한다.
+
+## Ownership Boundary
+
+| Owns | Does Not Own |
+|------|--------------|
+| pricing and plan facts | prompt authoring |
+| MCP server connection setup | tool management (built-in/custom) |
+| billing model | flow design |
+| general platform setup | workspace |
 
 ## Freshness
 
-- 마지막 검증: 2026-04
-- 소스: `__docs__/specs/features/telecom-billing/pricing.md`, `__docs__/reference/pricing-table/vox-pricing-table-2604.pdf`
+- 마지막 검증: 2026-03

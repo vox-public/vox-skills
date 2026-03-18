@@ -1,6 +1,6 @@
 ---
 name: vox-flow-agent
-description: "Use when the user asks about vox.ai flow agent design, node type selection, flow structure planning, transition logic, variable passing between nodes, global node configuration, when to use flow vs single-prompt agent, script-to-node conversion, or any question about building and organizing multi-node conversation flows."
+description: "Use when the user is designing a vox.ai flow agent — selecting node types, planning branching logic, wiring transitions, extracting variables between nodes, configuring global nodes, or converting a call-center script into flow nodes. Also trigger on 'flow vs single prompt 뭐가 나아?', 'node 연결 어떻게 해?', '스크립트를 노드로 변환해줘', 'condition node 설정', or any vox flow agent question."
 ---
 
 # vox-flow-agent
@@ -38,7 +38,7 @@ description: "Use when the user asks about vox.ai flow agent design, node type s
 | `note` | 별도 | 메모 (실행 없음) | content (markdown), resizable |
 
 - **Deprecated**: `function` (→ `tool`로 대체), `knowledge` (→ `conversation` node-level knowledge로 대체)
-- 상세 스펙: See [references/node-types.md](references/node-types.md)
+- 특정 노드 타입의 필드/설정 상세가 필요할 때: See [references/node-types.md](references/node-types.md)
 
 ## Transition 설계 규칙
 
@@ -64,7 +64,7 @@ description: "Use when the user asks about vox.ai flow agent design, node type s
 | agent | 에이전트 설정 | `{{customer_name}}`, `{{order_id}}` 등 에이전트 prompt/설정에서 `{{...}}`로 선언 |
 | flow | extraction/api node | extraction: LLM이 대화에서 추출, api: JSONPath로 응답에서 추출 |
 
-- 상세: See [references/variable-system.md](references/variable-system.md)
+- 변수 naming, 추출 설정, 렌더링 위치 확인 시: See [references/variable-system.md](references/variable-system.md)
 
 ## Flow 설계 패턴
 
@@ -100,12 +100,12 @@ begin → 대화 → transferCall
 
 - 입력: 원본 스크립트, 필수 수집 항목, 재권유/재시도 제한, 운영 제약, `{{...}}` 변수
 - 출력 포맷: `## name / ## content / ## transition conditions` (고정 3섹션)
-- 상세 규칙 (포맷, 턴 운영, 전환조건 작성법, 자가 점검): See [references/node-creation.md](references/node-creation.md)
+- 스크립트를 노드로 변환하는 작업 시 반드시 읽기: See [references/node-creation.md](references/node-creation.md)
 
-## Operating Rules
+## 운영 규칙
 
 1. 이 문서에 없는 node type이나 설정을 추측하지 않는다
 2. deprecated node (`function`, `knowledge`)는 신규 flow에 사용하지 않는다
-3. flow 설계 시 node 수는 최소화한다 — 하나의 conversation node로 충분하면 쪼개지 않는다
+3. flow 설계 시 node 수는 최소화한다 — 불필요하게 쪼개면 edge 관리가 복잡해지고 유지보수 비용이 증가한다
 4. 변수 이름은 snake_case, 의미가 명확한 이름 사용
-5. 전환조건에 "다음 단계 이름"을 절대 쓰지 않는다 — exit 조건만 정의
+5. 전환조건에 "다음 단계 이름"을 절대 쓰지 않는다 — exit 조건만 정의해야 노드 순서가 바뀌어도 LLM이 올바르게 판단한다
