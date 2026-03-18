@@ -1,6 +1,15 @@
 ---
 description: 고객사용 에이전트 프롬프트 작성을 시작한다
 argument-hint: [고객사명 또는 용도]
+allowed-tools:
+  - mcp__e67ad035-2e8a-4e16-a8c6-d7bccb952bb1__create_agent
+  - mcp__e67ad035-2e8a-4e16-a8c6-d7bccb952bb1__update_agent
+  - mcp__e67ad035-2e8a-4e16-a8c6-d7bccb952bb1__get_agent
+  - mcp__e67ad035-2e8a-4e16-a8c6-d7bccb952bb1__list_agents
+  - mcp__e67ad035-2e8a-4e16-a8c6-d7bccb952bb1__list_built_in_tools
+  - mcp__e67ad035-2e8a-4e16-a8c6-d7bccb952bb1__list_custom_tools
+  - Read
+  - Write
 ---
 
 고객사용 vox.ai 에이전트의 system prompt를 작성하는 워크플로우를 시작한다.
