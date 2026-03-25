@@ -1,6 +1,6 @@
 ---
 name: vox-flow-agent
-description: "Use when the user is designing a vox.ai flow agent — selecting node types, planning branching logic, wiring transitions, extracting variables between nodes, configuring global nodes, or converting a call-center script into flow nodes. Also trigger on 'flow vs single prompt 뭐가 나아?', 'node 연결 어떻게 해?', '스크립트를 노드로 변환해줘', 'condition node 설정', or any vox flow agent question."
+description: "This skill should be used when designing a vox.ai flow agent — selecting node types, planning branching logic, wiring transitions, extracting variables between nodes, configuring global nodes, converting a call-center script into flow nodes, visualizing scripts as Mermaid flowcharts, or reviewing flow designs. Trigger on 'flow vs single prompt 뭐가 나아?', 'node 연결 어떻게 해?', '스크립트를 노드로 변환해줘', 'condition node 설정', '플로우차트 그려줘', '스크립트 시각화', 'flow 리뷰해줘', '노드 설계 검토해줘', '플로우 검증', '설계 리뷰'."
 ---
 
 # vox-flow-agent
@@ -10,6 +10,20 @@ description: "Use when the user is designing a vox.ai flow agent — selecting n
 - @xyflow/react 기반 visual flow editor
 - Supabase에 `FlowData` (`ReactFlowJsonObject<Node, Edge>` = nodes + edges + viewport)로 저장
 - 각 node는 고유 type, data, position을 가짐
+
+## 스크립트 → Flow 변환 워크플로우
+
+스크립트를 flow agent로 변환할 때 3단계로 진행한다:
+
+1. **시각화 (flow-sketch)**: 스크립트 → Mermaid flowchart + 노드 요약 테이블. 전체 뼈대를 시각화하고 피드백으로 확정한다. See [references/flow-sketch.md](references/flow-sketch.md)
+2. **상세 설계 (node creation)**: 확정된 차트의 각 노드 → flow node markdown. 프롬프트, 전환조건, 멘트를 상세하게 작성한다. See [references/node-creation.md](references/node-creation.md)
+3. **리뷰 (flow review)**: 설계물을 체크리스트 기반 검증. CRITICAL/WARN/INFO로 분류한 리포트를 출력한다. See [references/flow-review.md](references/flow-review.md)
+
+사용자가 "플로우차트 그려줘", "스크립트 시각화" 등 시각화만 요청하면 1단계만 수행한다.
+사용자가 "스크립트를 노드로 변환해줘" 등 상세 설계를 요청하면 1→2단계를 순차 수행한다.
+확정된 flowchart가 이미 있으면 2단계부터 시작한다.
+사용자가 "flow 리뷰해줘", "설계 검토" 등 리뷰를 요청하면 3단계를 수행한다.
+리뷰 지적사항 반영 시 해당 단계만 재수행한다.
 
 ## Flow vs Single Prompt 판단 기준
 
@@ -93,14 +107,6 @@ begin → 대화 → transferCall
                ├→ (성공) 종료
                └→ (fallback) 안내 → 재시도/endCall
 ```
-
-## Node 생성 (스크립트 → flow node 변환)
-
-콜센터/OB/CS 스크립트를 flow node markdown으로 변환하는 기능을 내장한다.
-
-- 입력: 원본 스크립트, 필수 수집 항목, 재권유/재시도 제한, 운영 제약, `{{...}}` 변수
-- 출력 포맷: `## name / ## content / ## transition conditions` (고정 3섹션)
-- 스크립트를 노드로 변환하는 작업 시 반드시 읽기: See [references/node-creation.md](references/node-creation.md)
 
 ## 운영 규칙
 

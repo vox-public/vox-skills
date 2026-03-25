@@ -152,6 +152,205 @@ vox.ai 음성 에이전트는 하나의 시스템 프롬프트 안에 대화 흐
 - 한 턴의 발화가 3문장을 초과하지 않는가
 - 원본 스크립트의 `{{...}}` 변수가 빠지지 않았는가
 
+## 노드 타입별 작성법
+
+conversation 노드는 위 포맷을 그대로 따른다. 아래는 conversation 외 노드 타입의 작성법이다.
+
+### extraction 노드
+
+대화 컨텍스트에서 변수를 추출한다. 고객과 대화하지 않으며, 항상 `isSkipUserResponse: true`로 자동 전환된다.
+
+```md
+## name
+[노드 이름]
+
+## content
+### 목적
+1. [추출 대상 설명]
+
+### 추출 변수
+- [변수명] (타입): [설명 — LLM이 무엇을 추출할지 판단하는 가이드]
+
+## transition conditions
+(자동 전환 — skipUserResponse: true. 조건 없이 다음 노드로 진행.)
+```
+
+**적용 예시:**
+
+```md
+## name
+회원정보추출
+
+## content
+### 목적
+1. 직전 대화에서 고객이 말한 성함과 회원번호를 추출한다.
+
+### 추출 변수
+- customer_name (string): 고객이 말한 본인 성함
+- membership_number (string): 고객이 말한 회원번호 (숫자 또는 영문+숫자 조합)
+
+## transition conditions
+(자동 전환 — skipUserResponse: true. 조건 없이 다음 노드로 진행.)
+```
+
+### condition 노드
+
+이미 추출된 변수 값을 시스템이 기계적으로 비교하여 분기한다. 고객과 대화하지 않는다. 반드시 앞에 extraction 또는 api 노드가 있어야 한다.
+
+```md
+## name
+[노드 이름]
+
+## content
+### 목적
+1. [분기 판단 목적]
+
+### 분기 조건
+- {{변수명}} == "값A" → [결과 라벨]
+- {{변수명}} == "값B" → [결과 라벨]
+- else → [결과 라벨]
+
+## transition conditions
+(시스템 자동 분기 — 위 조건 기반. 고객 발화 아님.)
+```
+
+**적용 예시:**
+
+```md
+## name
+회원등급확인
+
+## content
+### 목적
+1. 회원 등급에 따라 안내 분기를 결정한다.
+
+### 분기 조건
+- {{member_grade}} == "premium" → 프리미엄혜택안내
+- {{member_grade}} == "basic" → 일반혜택안내
+- {{member_grade}} does_not_exist → 비회원안내
+
+## transition conditions
+(시스템 자동 분기 — 위 조건 기반. 고객 발화 아님.)
+```
+
+### api 노드
+
+외부 HTTP API를 호출하고 응답에서 변수를 추출한다. fallback transition이 자동 생성된다.
+
+```md
+## name
+[노드 이름]
+
+## content
+### 목적
+1. [API 호출 목적]
+
+### API 설정
+- method: [GET/POST/PUT/DELETE/PATCH]
+- url: [요청 URL — {{변수명}}으로 동적 값 삽입 가능]
+- body: [요청 body — 필요 시]
+- auth: [인증 방식 — 필요 시]
+
+### 응답 변수
+- [변수명]: [JSONPath 표현식] — [설명]
+
+## transition conditions
+- 성공: API 응답 정상 수신 시 다음 노드로 진행.
+- 실패: API 호출 실패 시 fallback edge로 진행. (fallback은 시스템 자동 생성)
+```
+
+**적용 예시:**
+
+```md
+## name
+주문조회API
+
+## content
+### 목적
+1. 주문번호로 외부 시스템에서 주문 상태를 조회한다.
+
+### API 설정
+- method: GET
+- url: https://api.example.com/orders/{{order_number}}
+- auth: Bearer (토큰은 에이전트 설정에서 주입)
+
+### 응답 변수
+- order_status: $.data.status — 주문 상태 (delivered/in_transit/cancelled)
+- delivery_date: $.data.delivery_date — 배송 예정일
+
+## transition conditions
+- 성공: API 응답 정상 수신 시 다음 노드로 진행.
+- 실패: API 호출 실패 시 fallback edge로 진행. (fallback은 시스템 자동 생성)
+```
+
+### endCall 노드
+
+종료 멘트를 발화하고 통화를 종료한다. Global Node로 설정하면 어디서든 "통화 끊어주세요" 등으로 이 노드에 도달할 수 있다.
+
+```md
+## name
+[노드 이름]
+
+## content
+### 목적
+1. [종료 목적/상황]
+
+### 종료 멘트
+- promptType: [static/dynamic]
+- 멘트: "[종료 시 발화할 멘트]"
+
+### Global Node 설정 (해당 시)
+- isGlobalNode: true
+- transitionCondition: "[글로벌 진입 조건 — 예: 고객이 통화 종료를 요청한 경우]"
+
+## transition conditions
+(통화 종료 — 전환 없음.)
+```
+
+**적용 예시:**
+
+```md
+## name
+종료
+
+## content
+### 목적
+1. 통화를 마무리하고 종료한다.
+
+### 종료 멘트
+- promptType: dynamic
+- 멘트: "네, 상담 도와드려서 감사합니다. 좋은 하루 되세요."
+
+### Global Node 설정
+- isGlobalNode: true
+- transitionCondition: "고객이 '끊어주세요', '그만할게요', '됐어요' 등 통화 종료 의사를 표현한 경우"
+
+## transition conditions
+(통화 종료 — 전환 없음.)
+```
+
+## Global Node 설계 가이드
+
+콜센터 스크립트에 거의 항상 존재하는 "언제든 상담원 연결", "언제든 통화 종료" 같은 글로벌 예외를 flow에 반영한다.
+
+**Global Node 후보 판별:**
+- 스크립트에 "언제든지", "어떤 단계에서든" 같은 표현이 있으면 Global Node 후보
+- 대표적 패턴: 통화 종료 요청, 상담원 연결 요청, 불만/욕설 대응
+
+**설계 규칙:**
+1. Global Node로 설정 가능한 타입: conversation, endCall
+2. `isGlobalNode: true` + `transitionCondition`을 반드시 함께 설정한다
+3. `transitionCondition`은 고객 발화 기반으로 작성한다 — "고객이 ~라고 말한 경우"
+4. Global Node는 최소화한다 — 2~3개 이내. 너무 많으면 전환 충돌 위험
+
+**일반적인 Global Node 구성:**
+
+| 글로벌 예외 | 노드 타입 | transitionCondition 예시 |
+|------------|----------|------------------------|
+| 통화 종료 | endCall | "고객이 통화 종료를 요청한 경우" |
+| 상담원 연결 | conversation → transferCall | "고객이 상담원 연결을 요청한 경우" |
+| 불만 에스컬레이션 | conversation → transferCall | "고객이 강한 불만을 표현하거나 책임자를 요구한 경우" |
+
 ## 적용 예시
 
 아래는 "결제방법 안내" 구간의 스크립트를 노드로 변환한 결과다.
