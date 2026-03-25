@@ -1,6 +1,6 @@
 ---
 name: vox-flow-agent
-description: "Use when the user is designing a vox.ai flow agent — selecting node types, planning branching logic, wiring transitions, extracting variables between nodes, configuring global nodes, converting a call-center script into flow nodes, visualizing scripts as flowcharts, or reviewing flow designs. Also trigger on 'flow vs single prompt 뭐가 나아?', 'node 연결 어떻게 해?', '스크립트를 노드로 변환해줘', 'condition node 설정', '플로우차트 그려줘', '스크립트 시각화', '콜 시나리오 시각화', '대화 흐름 정리해줘', 'mermaid로 만들어줘', '스크립트를 플로우로 만들어줘', '스크립트 분석해줘', 'flow 리뷰해줘', '노드 설계 검토해줘', '플로우 검증', '설계 리뷰', or any vox flow agent question."
+description: "This skill should be used when designing a vox.ai flow agent — selecting node types, planning branching logic, wiring transitions, extracting variables between nodes, configuring global nodes, converting a call-center script into flow nodes, visualizing scripts as Mermaid flowcharts, or reviewing flow designs. Trigger on 'flow vs single prompt 뭐가 나아?', 'node 연결 어떻게 해?', '스크립트를 노드로 변환해줘', 'condition node 설정', '플로우차트 그려줘', '스크립트 시각화', 'flow 리뷰해줘', '노드 설계 검토해줘', '플로우 검증', '설계 리뷰'."
 ---
 
 # vox-flow-agent
@@ -21,7 +21,9 @@ description: "Use when the user is designing a vox.ai flow agent — selecting n
 
 사용자가 "플로우차트 그려줘", "스크립트 시각화" 등 시각화만 요청하면 1단계만 수행한다.
 사용자가 "스크립트를 노드로 변환해줘" 등 상세 설계를 요청하면 1→2단계를 순차 수행한다.
+확정된 flowchart가 이미 있으면 2단계부터 시작한다.
 사용자가 "flow 리뷰해줘", "설계 검토" 등 리뷰를 요청하면 3단계를 수행한다.
+리뷰 지적사항 반영 시 해당 단계만 재수행한다.
 
 ## Flow vs Single Prompt 판단 기준
 
@@ -105,14 +107,6 @@ begin → 대화 → transferCall
                ├→ (성공) 종료
                └→ (fallback) 안내 → 재시도/endCall
 ```
-
-## Node 생성 (스크립트 → flow node 변환)
-
-콜센터/OB/CS 스크립트를 flow node로 변환하는 3단계 워크플로우:
-
-1. **시각화**: 스크립트 → Mermaid flowchart + 노드 요약 테이블. See [references/flow-sketch.md](references/flow-sketch.md)
-2. **상세 설계**: 확정된 차트 → flow node markdown (`## name / ## content / ## transition conditions` 고정 3섹션). See [references/node-creation.md](references/node-creation.md)
-3. **리뷰**: 설계물 검증 → CRITICAL/WARN/INFO 리포트. See [references/flow-review.md](references/flow-review.md)
 
 ## 운영 규칙
 

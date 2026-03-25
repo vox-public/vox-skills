@@ -55,6 +55,11 @@ flow agent 설계물(flowchart + 노드 상세 설계)을 체크리스트 기반
 | B10 | INFO | skipUserResponse 적절성 | 일방 안내 노드에 skipUserResponse 설정 여부, static/dynamic 선택 |
 | B11 | INFO | 멘트 품질 | 큰따옴표 감싸기, TTS 불가 특수문자, 자연스러운 존댓말 |
 | B12 | INFO | `{{변수}}` 누락 | 원본 스크립트의 런타임 변수가 빠지지 않았는지 |
+| B13 | CRITICAL | extraction 포맷 | extraction 노드에 추출 변수 목록(변수명/타입/설명)이 정의되어 있는가. transition conditions가 "자동 전환"으로 표기되어 있는가 |
+| B14 | CRITICAL | condition 분기 완전성 | condition 노드의 분기 조건이 모든 케이스를 커버하는가. else/default 분기가 존재하는가 |
+| B15 | WARN | condition 변수 소비 | condition 노드에서 참조하는 변수가 앞선 extraction/api 노드에서 실제로 생성되는가 |
+| B16 | WARN | api 응답 변수 정의 | api 노드에 responseVariables(변수명 + JSONPath)가 정의되어 있는가 |
+| B17 | WARN | Global Node 설정 여부 | 스크립트에 "언제든" 예외가 있으면 해당 endCall/conversation에 Global Node 설정이 있는가 |
 
 ### C. Flowchart ↔ 노드 설계 정합성
 
@@ -85,6 +90,19 @@ flow agent 설계물(flowchart + 노드 상세 설계)을 체크리스트 기반
 ```
 
 CRITICAL이 없고 WARN이 경미하면 "통과"로 판정. 각 항목은 1~2문장으로 간결하게 작성한다.
+
+### 수정 가이드
+
+"수정 필요" 판정 시 아래 기준으로 수정 범위를 안내한다:
+
+| 지적 유형 | 수정 범위 | 재리뷰 범위 |
+|----------|----------|------------|
+| CRITICAL A1~A5 (flowchart 구조 문제) | 1단계(flow-sketch) 수정 후 2단계 재작업 | 전체 재리뷰 |
+| CRITICAL B1~B3, C1~C2 (노드 설계/정합성 문제) | 해당 노드만 2단계 재작업 | 해당 항목 + 정합성(C) 재리뷰 |
+| WARN | 해당 항목만 수정 | 수정 항목에 대해서만 재확인 |
+
+- 재리뷰 시 이전 리뷰에서 OK였던 항목은 재검사하지 않는다.
+- 수정 후 재리뷰 결과를 기존 리포트에 이어서 출력한다.
 
 ## 운영 규칙
 
