@@ -52,14 +52,17 @@ flow agent 설계물(flowchart + 노드 상세 설계)을 체크리스트 기반
 | B7 | WARN | 턴 운영 위반 | 한 턴 3문장 초과 (skipUserResponse 노드 제외) |
 | B8 | WARN | content depth 초과 | 리스트 depth 3단 이상 중첩 |
 | B9 | WARN | transition conditions 중첩 | 전환조건에 하위 불릿/번호 사용 |
-| B10 | INFO | skipUserResponse 적절성 | 일방 안내 노드에 skipUserResponse 설정 여부, static/dynamic 선택 |
-| B11 | INFO | 멘트 품질 | 큰따옴표 감싸기, TTS 불가 특수문자, 자연스러운 존댓말 |
-| B12 | INFO | `{{변수}}` 누락 | 원본 스크립트의 런타임 변수가 빠지지 않았는지 |
-| B13 | CRITICAL | extraction 포맷 | extraction 노드에 추출 변수 목록(변수명/타입/설명)이 정의되어 있는가. transition conditions가 "자동 전환"으로 표기되어 있는가 |
-| B14 | CRITICAL | condition 분기 완전성 | condition 노드의 분기 조건이 모든 케이스를 커버하는가. else/default 분기가 존재하는가 |
-| B15 | WARN | condition 변수 소비 | condition 노드에서 참조하는 변수가 앞선 extraction/api 노드에서 실제로 생성되는가 |
-| B16 | WARN | api 응답 변수 정의 | api 노드에 responseVariables(변수명 + JSONPath)가 정의되어 있는가 |
-| B17 | WARN | Global Node 설정 여부 | 스크립트에 "언제든" 예외가 있으면 해당 endCall/conversation에 Global Node 설정이 있는가 |
+| B10 | WARN | content에 전환조건 응대 포함 | content 안에 전환조건 성립 시의 응대 멘트가 있는가. 전환 성립 시 즉시 다음 노드로 이동하므로 해당 멘트는 절대 발화되지 않음. "다음 노드로 전환" 같은 시스템 동작 설명도 마찬가지 |
+| B11 | WARN | static/dynamic 모드 미명시 | conversation 노드에 promptType(static/dynamic)이 명시되어 있는가. dynamic이면 firstMessage가 있는가 |
+| B12 | INFO | static/dynamic 선택 적절성 | FAQ 대응/재확인이 필요한 노드에 static 사용, 또는 단순 수락/거절 노드에 dynamic 사용 등 모드 선택이 부적절한 경우 |
+| B13 | INFO | skipUserResponse 적절성 | 일방 안내 노드에 skipUserResponse 설정 여부 |
+| B14 | INFO | 멘트 품질 | 큰따옴표 감싸기, TTS 불가 특수문자, 자연스러운 존댓말 |
+| B15 | INFO | `{{변수}}` 누락 | 원본 스크립트의 런타임 변수가 빠지지 않았는지 |
+| B16 | CRITICAL | extraction 포맷 | extraction 노드에 추출 변수 목록(변수명/타입/설명)이 정의되어 있는가. transition conditions가 "자동 전환"으로 표기되어 있는가 |
+| B17 | CRITICAL | condition 분기 완전성 | condition 노드의 분기 조건이 모든 케이스를 커버하는가. else/default 분기가 존재하는가 |
+| B18 | WARN | condition 변수 소비 | condition 노드에서 참조하는 변수가 앞선 extraction/api 노드에서 실제로 생성되는가 |
+| B19 | WARN | api 응답 변수 정의 | api 노드에 responseVariables(변수명 + JSONPath)가 정의되어 있는가 |
+| B20 | WARN | Global Node 설정 여부 | 스크립트에 "언제든" 예외가 있으면 해당 endCall/conversation에 Global Node 설정이 있는가 |
 
 ### C. Flowchart ↔ 노드 설계 정합성
 
@@ -98,7 +101,7 @@ CRITICAL이 없고 WARN이 경미하면 "통과"로 판정. 각 항목은 1~2문
 | 지적 유형 | 수정 범위 | 재리뷰 범위 |
 |----------|----------|------------|
 | CRITICAL A1~A5 (flowchart 구조 문제) | 1단계(flow-sketch) 수정 후 2단계 재작업 | 전체 재리뷰 |
-| CRITICAL B1~B3, C1~C2 (노드 설계/정합성 문제) | 해당 노드만 2단계 재작업 | 해당 항목 + 정합성(C) 재리뷰 |
+| CRITICAL B1~B3, B16~B17, C1~C2 (노드 설계/정합성 문제) | 해당 노드만 2단계 재작업 | 해당 항목 + 정합성(C) 재리뷰 |
 | WARN | 해당 항목만 수정 | 수정 항목에 대해서만 재확인 |
 
 - 재리뷰 시 이전 리뷰에서 OK였던 항목은 재검사하지 않는다.
