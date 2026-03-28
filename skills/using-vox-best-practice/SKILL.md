@@ -19,6 +19,7 @@ vox.ai 관련 요청의 routing entrypoint. domain 로직을 직접 실행하지
 
 | Skill | Trigger | Owns | Does Not Own |
 |-------|---------|------|--------------|
+| `vox-onboarding` | 시작/온보딩, 에이전트 만들기, 전화 걸기/받기, 캠페인, 일반 안내 | onboarding, quickstart, 에이전트 생성 가이드, 전화 실행, 일반 사용 안내 | prompt 세부 작성, flow 설계, 도구 관리, 가격 상세 |
 | `vox-single-agent` | voice agent prompt 작성/리팩터링/진단/agent.data | prompt authoring, diagnosis, revision, agent.data | flow, pricing, tool management |
 | `vox-tool` | 빌트인/커스텀 도구 관리 | built-in tools, custom tools, tool workflow | prompt authoring, pricing, MCP connection setup |
 | `vox-flow-agent` | flow agent 설계/node 변환/변수 흐름 | flow design, node conversion, variable system | prompt authoring, pricing |
