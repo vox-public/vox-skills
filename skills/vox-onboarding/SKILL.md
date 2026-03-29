@@ -30,7 +30,7 @@ echo "ONBOARDED: $_ONBOARDED"
 - "vox.ai MCP 서버에 연결되지 않았습니다. 어떤 AI 도구를 사용하고 계신가요?" (Claude Code / Codex / Cursor / VS Code 등)
 - 사용자가 알려주면 references/quickstart-ko.md에서 해당 클라이언트 섹션을 읽고 연결 방법을 안내
 - OAuth가 기본. "claude mcp add" 명령어 실행 후 브라우저에서 로그인 팝업이 뜸
-- API 토큰을 원하면: vox.ai 대시보드(https://app.tryvox.co) 에서 발급 가능
+- API 토큰을 원하면: vox.ai 대시보드(https://www.tryvox.co) 에서 발급 가능
 - 안내 후: "설정이 완료되면 '준비됐어요'라고 말씀해주세요" → 다시 list_agents 호출하여 확인
 
 ### Step 2: 에이전트 생성
@@ -111,7 +111,7 @@ touch ~/.vox/.onboarded
 - 생성된 에이전트: {name} (ID: {agent_id})
 - 아웃바운드 테스트: {완료/스킵}
 - 인바운드 설정: {완료/스킵}
-- 대시보드: https://app.tryvox.co
+- 대시보드: https://www.tryvox.co/agent/{agent_id}
 
 **다음 단계:**
 - 프롬프트 다듬기 → 그냥 "프롬프트 수정해줘"라고 말하면 됨 (vox-single-agent 스킬이 처리)
