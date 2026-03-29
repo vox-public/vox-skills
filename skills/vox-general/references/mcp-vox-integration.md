@@ -97,7 +97,7 @@ codex
 Codex 안에서 `/plugins`를 실행하고 `vox.ai Plugins` marketplace에서 `vox-ai`를 설치한다.
 
 - 이 방식은 vox.ai MCP 서버와 best-practice skills를 함께 제공한다.
-- repo를 연 뒤에도 marketplace가 보이지 않으면 Codex를 재시작한다.
+- repo를 clone한 뒤 Codex가 이미 열려 있었다면 재시작한다.
 
 ### MCP 직접 등록 - OAuth (대안)
 

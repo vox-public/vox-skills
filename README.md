@@ -6,7 +6,7 @@ vox.ai 개발자를 위한 Codex/Claude plugin + Agent Skills 레포입니다.
 
 ### OpenAI Codex Plugin (권장)
 
-이 레포는 Codex local marketplace를 포함합니다. repo root에서 Codex를 열고 plugin을 설치하세요.
+이 repo는 Codex workspace install 구조를 이미 포함합니다. repo root에서 Codex를 열고 plugin을 설치하세요.
 
 ```bash
 git clone https://github.com/fleek-fitness/vox-skills.git
@@ -23,7 +23,7 @@ Codex 안에서:
 
 Plugin 설치 후 MCP 서버와 스킬이 함께 활성화됩니다.
 
-Codex에 repo를 연 뒤에도 marketplace가 보이지 않으면 Codex를 재시작하세요.
+repo를 clone한 뒤 Codex가 이미 열려 있었다면 재시작하세요.
 
 ### Claude Code Plugin
 
