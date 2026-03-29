@@ -1,0 +1,32 @@
+{
+  "name": "vox-ai",
+  "version": "1.0.0",
+  "description": "vox.ai voice agent development plugin with bundled MCP tools and best-practice skills.",
+  "author": {
+    "name": "vox.ai",
+    "url": "https://www.tryvox.co"
+  },
+  "homepage": "https://www.tryvox.co",
+  "repository": "https://github.com/fleek-fitness/vox-skills",
+  "keywords": [
+    "vox.ai",
+    "voice-agents",
+    "telephony",
+    "mcp",
+    "skills"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "vox.ai",
+    "shortDescription": "Build and operate vox.ai voice agents in Codex.",
+    "longDescription": "Install vox.ai to connect the vox.ai MCP server and load bundled best-practice skills for prompt agents, flow agents, tools, onboarding, and dashboard operations.",
+    "developerName": "vox.ai",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://www.tryvox.co"
+  }
+}

@@ -20,7 +20,7 @@
 | Claude Desktop/Web | O | -- | Connectors UI는 OAuth 전용 |
 | Claude Code | O | O | `--header` 플래그 |
 | ChatGPT | O | -- | Developer mode OAuth 전용 |
-| OpenAI Codex | O | O | `bearer_token_env_var` |
+| OpenAI Codex | O | O | Plugin 또는 MCP 설정 |
 | OpenCode | O | O | `headers` 객체 |
 | Cursor | O | O | `headers` 객체 |
 | VS Code Copilot | O | O | `${input:}` 변수 |
@@ -86,7 +86,20 @@ claude mcp add --transport http vox-token https://mcp.tryvox.co/ \
 
 ## OpenAI Codex
 
-### OAuth (기본)
+### Plugin 설치 (권장)
+
+```bash
+git clone https://github.com/fleek-fitness/vox-skills.git
+cd vox-skills
+codex
+```
+
+Codex 안에서 `/plugins`를 실행하고 `vox.ai Plugins` marketplace에서 `vox-ai`를 설치한다.
+
+- 이 방식은 vox.ai MCP 서버와 best-practice skills를 함께 제공한다.
+- repo를 연 뒤에도 marketplace가 보이지 않으면 Codex를 재시작한다.
+
+### MCP 직접 등록 - OAuth (대안)
 
 ```bash
 codex mcp add vox --url https://mcp.tryvox.co/

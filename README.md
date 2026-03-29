@@ -1,10 +1,31 @@
 # vox.ai Skills
 
-vox.ai 개발자를 위한 Agent Skills 모음 레포입니다.
+vox.ai 개발자를 위한 Codex/Claude plugin + Agent Skills 레포입니다.
 
 ## 설치
 
-### Claude Code Plugin (권장)
+### OpenAI Codex Plugin (권장)
+
+이 레포는 Codex local marketplace를 포함합니다. repo root에서 Codex를 열고 plugin을 설치하세요.
+
+```bash
+git clone https://github.com/fleek-fitness/vox-skills.git
+cd vox-skills
+codex
+```
+
+Codex 안에서:
+
+1. `/plugins` 실행
+2. marketplace에서 `vox.ai Plugins` 선택
+3. `vox-ai` 설치
+4. 필요하면 OAuth 로그인 완료
+
+Plugin 설치 후 MCP 서버와 스킬이 함께 활성화됩니다.
+
+Codex에 repo를 연 뒤에도 marketplace가 보이지 않으면 Codex를 재시작하세요.
+
+### Claude Code Plugin
 
 ```bash
 # 1. marketplace 등록
@@ -16,10 +37,14 @@ vox.ai 개발자를 위한 Agent Skills 모음 레포입니다.
 
 한 번의 설치로 MCP 서버 + Skills가 모두 제공됩니다.
 
-### 수동 설치 (개별)
+### MCP 직접 등록 (대안)
 
 ```bash
-# MCP
+# Codex MCP
+codex mcp add vox --url https://mcp.tryvox.co/
+codex mcp login vox
+
+# Claude Code MCP
 claude mcp add --transport http vox https://mcp.tryvox.co/
 
 # Skills

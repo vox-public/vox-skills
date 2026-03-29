@@ -26,7 +26,16 @@ claude mcp add --transport http vox https://mcp.tryvox.co/ \
 
 ### OpenAI Codex
 
-OAuth:
+Plugin (권장):
+```bash
+git clone https://github.com/fleek-fitness/vox-skills.git
+cd vox-skills
+codex
+```
+
+Codex 안에서 `/plugins`를 실행하고 `vox.ai Plugins` marketplace에서 `vox-ai`를 설치하세요.
+
+MCP 직접 등록 - OAuth:
 ```bash
 codex mcp add vox --url https://mcp.tryvox.co/
 codex mcp login vox
