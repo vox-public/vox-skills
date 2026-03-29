@@ -1,11 +1,6 @@
 ---
 name: vox-onboarding
-description: |
-  vox.ai 시작하기 — 음성 AI 에이전트를 만들고 실제 전화를 걸거나 받는다.
-  /vox-onboarding 입력하면 에이전트 생성 → 아웃바운드 콜 → 인바운드 설정까지 가이드.
-  "에이전트 만들어줘", "전화 걸어줘", "vox 시작", "음성 에이전트",
-  "아웃바운드", "인바운드", "캠페인" 요청에 이 스킬을 사용.
-  처음 사용하는 사용자에게 특히 유용. vox.ai에 대한 일반적인 질문에도 사용.
+description: "Getting started with vox.ai — create a voice AI agent, make an outbound call, and set up inbound reception. Guides the full onboarding flow: agent creation → outbound test call → inbound phone number setup. Especially useful for first-time users and general vox.ai questions. Trigger on '에이전트 만들어줘', '전화 걸어줘', 'vox 시작', '음성 에이전트', '아웃바운드', '인바운드', '캠페인', or any getting-started request."
 ---
 
 # vox — 음성 AI 에이전트 시작하기

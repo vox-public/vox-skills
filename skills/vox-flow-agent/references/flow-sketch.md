@@ -53,17 +53,17 @@
 
 노드 타입 판단 기준 (스크립트 구간 → 노드 타입 매핑):
 
-| 구간 성격 | 추천 노드 타입 |
-|----------|--------------|
-| 대화/질문/응답 | conversation |
-| 정보 추출 (이름, 번호 등) | extraction |
-| 변수 기반 분기 | condition |
-| 외부 API 호출 | api |
-| 도구 실행 | tool |
-| 상담원 전환 | transferCall |
-| 다른 에이전트로 전환 | transferAgent |
-| 일방적 안내 후 종료 | endCall |
-| 일방적 안내 후 계속 | conversation (static, skipUserResponse) |
+| 구간 성격 | 추천 노드 타입 | 비고 |
+|----------|--------------|------|
+| 대화/질문/응답 | conversation | |
+| 정보 추출 (이름, 번호 등) | extraction | 항상 자동 전환 (`isSkipUserResponse: true`) — 대화형 노드가 아님 |
+| 변수 기반 분기 | condition | |
+| 외부 API 호출 | api | |
+| 도구 실행 | tool | |
+| 상담원 전환 | transferCall | |
+| 다른 에이전트로 전환 | transferAgent | |
+| 일방적 안내 후 종료 | endCall | |
+| 일방적 안내 후 계속 | conversation (static, skipUserResponse) | |
 
 각 노드 타입의 필드/설정 상세는 [node-types.md](node-types.md) 참조.
 

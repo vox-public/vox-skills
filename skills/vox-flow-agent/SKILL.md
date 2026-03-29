@@ -108,6 +108,10 @@ begin → 대화 → transferCall
                └→ (fallback) 안내 → 재시도/endCall
 ```
 
+## 산출물 성격
+
+이 워크플로우의 최종 산출물은 **사람이 vox.ai 대시보드 flow editor에 수동 입력하는 markdown 노드 명세**이다. Supabase `ReactFlowJsonObject` JSON을 프로그래밍적으로 생성하는 것이 아니라, 각 노드의 프롬프트·전환조건·변수를 사람이 읽고 UI에 옮길 수 있는 형태로 출력한다.
+
 ## 운영 규칙
 
 1. 이 문서에 없는 node type이나 설정을 추측하지 않는다

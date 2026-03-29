@@ -1,6 +1,6 @@
 ---
 name: vox-dash-guide
-description: "vox.ai 대시보드 사용법 가이드. 에이전트 설정(프롬프트, TTS, 툴, 추출, 배포), 웹 테스트, 대량발신, 통화 데이터 조회 방법을 안내한다. '대시보드 사용법 알려줘', '에이전트 설정 어떻게 해', '대량발신 방법', '통화 기록 어디서 봐', '테스트 어떻게 해', '프롬프트 수정은 어디서', '발신 설정 도와줘' 등의 요청에 트리거한다."
+description: "Guide for using the vox.ai dashboard — agent settings (prompt, TTS, tools, extraction, deployment), web testing, bulk calling, and call data review. Supports screen-guided mode via Chrome MCP extension when a dashboard URL is provided. Trigger on '대시보드 사용법 알려줘', '에이전트 설정 어떻게 해', '대량발신 방법', '통화 기록 어디서 봐', '테스트 어떻게 해', '화면 보여줘', '대시보드 같이 봐줘', or any dashboard usage question."
 ---
 
 # vox.ai 대시보드 가이드
