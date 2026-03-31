@@ -27,29 +27,29 @@ description: "This skill should be used when designing a vox.ai flow agent — s
 
 ## Flow vs Single Prompt 판단 기준
 
-| 기준 | Single Prompt | Flow |
-|------|--------------|------|
-| 대화 복잡도 | 단순 Q&A, 1~2 분기 | 3개 이상 분기, 복잡한 시나리오 |
-| 결정적 흐름 제어 | prompt에 의존 | node 단위로 보장 |
-| 조건부 분기 | 어려움 | condition node로 정확히 제어 |
-| 외부 API 연동 | tool로 가능 | api node로 응답 변수 추출까지 |
-| 변수 추적 | 어려움 | extraction → condition 체인 |
-| 유지보수 | prompt 하나 수정 | node 단위 독립 수정 |
+| 기준             | Single Prompt      | Flow                           |
+| ---------------- | ------------------ | ------------------------------ |
+| 대화 복잡도      | 단순 Q&A, 1~2 분기 | 3개 이상 분기, 복잡한 시나리오 |
+| 결정적 흐름 제어 | prompt에 의존      | node 단위로 보장               |
+| 조건부 분기      | 어려움             | condition node로 정확히 제어   |
+| 외부 API 연동    | tool로 가능        | api node로 응답 변수 추출까지  |
+| 변수 추적        | 어려움             | extraction → condition 체인    |
+| 유지보수         | prompt 하나 수정   | node 단위 독립 수정            |
 
 ## Node Type 요약 (Active 10종)
 
-| Node | addable | 용도 | 핵심 설정 |
-|------|---------|------|----------|
-| `begin` | No (자동) | flow 시작점 | firstLineType (AI/user), pauseBeforeSpeaking |
-| `conversation` | Yes | 대화 수행 | prompt (static/dynamic), transitions, loopCondition, knowledge, llm |
-| `tool` | Yes | 도구 실행 | toolId, prompt, fallback transition |
-| `api` | Yes | HTTP API 호출 | method/url/auth/headers/body, responseVariables (JSONPath) |
-| `condition` | Yes | 조건 분기 | logicalTransitions (AND/OR, 10종 operator) |
-| `extraction` | Yes | 변수 추출 | extractionPrompt, variables (name/type/desc) |
-| `transferCall` | Yes | 통화 전환 | transferType (cold/warm), destination, SIP headers |
-| `transferAgent` | Yes | 에이전트 전환 | agentId, preserveChatContext |
-| `endCall` | Yes | 통화 종료 | prompt (static/dynamic), globalNodeSettings |
-| `note` | 별도 | 메모 (실행 없음) | content (markdown), resizable |
+| Node            | addable   | 용도             | 핵심 설정                                                           |
+| --------------- | --------- | ---------------- | ------------------------------------------------------------------- |
+| `begin`         | No (자동) | flow 시작점      | firstLineType (AI/user), pauseBeforeSpeaking                        |
+| `conversation`  | Yes       | 대화 수행        | prompt (static/dynamic), transitions, loopCondition, knowledge, llm |
+| `tool`          | Yes       | 도구 실행        | toolId, prompt, fallback transition                                 |
+| `api`           | Yes       | HTTP API 호출    | method/url/auth/headers/body, responseVariables (JSONPath)          |
+| `condition`     | Yes       | 조건 분기        | logicalTransitions (AND/OR, 10종 operator)                          |
+| `extraction`    | Yes       | 변수 추출        | extractionPrompt, variables (name/type/desc)                        |
+| `transferCall`  | Yes       | 통화 전환        | transferType (cold/warm), destination, SIP headers                  |
+| `transferAgent` | Yes       | 에이전트 전환    | agentId, preserveChatContext                                        |
+| `endCall`       | Yes       | 통화 종료        | prompt (static/dynamic), globalNodeSettings                         |
+| `note`          | 별도      | 메모 (실행 없음) | content (markdown), resizable                                       |
 
 - **Deprecated**: `function` (→ `tool`로 대체), `knowledge` (→ `conversation` node-level knowledge로 대체)
 - 특정 노드 타입의 필드/설정 상세가 필요할 때: See [references/node-types.md](references/node-types.md)
@@ -72,22 +72,24 @@ description: "This skill should be used when designing a vox.ai flow agent — s
 
 ## 변수 시스템 요약
 
-| 카테고리 | 생성 위치 | 예시 |
-|---------|---------|------|
-| system | 플랫폼 자동 | `{{current_time}}`, `{{call_from}}`, `{{call_to}}`, `{{call_id}}`, `{{agent_id}}` |
-| agent | 에이전트 설정 | `{{customer_name}}`, `{{order_id}}` 등 에이전트 prompt/설정에서 `{{...}}`로 선언 |
-| flow | extraction/api node | extraction: LLM이 대화에서 추출, api: JSONPath로 응답에서 추출 |
+| 카테고리 | 생성 위치           | 예시                                                                              |
+| -------- | ------------------- | --------------------------------------------------------------------------------- |
+| system   | 플랫폼 자동         | `{{current_time}}`, `{{call_from}}`, `{{call_to}}`, `{{call_id}}`, `{{agent_id}}` |
+| agent    | 에이전트 설정       | `{{customer_name}}`, `{{order_id}}` 등 에이전트 prompt/설정에서 `{{...}}`로 선언  |
+| flow     | extraction/api node | extraction: LLM이 대화에서 추출, api: JSONPath로 응답에서 추출                    |
 
 - 변수 naming, 추출 설정, 렌더링 위치 확인 시: See [references/variable-system.md](references/variable-system.md)
 
 ## Flow 설계 패턴
 
 **Linear** — 순차 진행
+
 ```
 begin → 인사 → 본인확인 → 안내 → endCall
 ```
 
 **Branching** — 의도 분기
+
 ```
 begin → 의도파악 → condition
                     ├→ 시나리오A → endCall
@@ -96,17 +98,69 @@ begin → 의도파악 → condition
 ```
 
 **Data Collection** — 정보 수집 후 조건 처리
+
 ```
 begin → extraction(이름) → extraction(전화번호) → api(조회)
         → condition(결과) → 안내 → endCall
 ```
 
 **Transfer Fallback** — 전환 실패 처리
+
 ```
 begin → 대화 → transferCall
                ├→ (성공) 종료
                └→ (fallback) 안내 → 재시도/endCall
 ```
+
+### 실무 설계 패턴
+
+**IVR Menu** — DTMF 기반 메뉴 분기
+
+```
+begin → 인사(static/skip) → IVR메뉴(static, DTMF 전환) → [DTMF 1] 시나리오A
+                                                        → [DTMF 2] 시나리오B
+```
+
+- 인사 노드: `promptType: static`, `isSkipUserResponse: true`, `isAllowInterruption: false`
+- IVR 메뉴 노드: `promptType: static`, 전환조건에 `유저가 [DTMF] N 을 누른 경우` 사용
+
+**SMS/API Chain** — API 호출 + 결과 처리
+
+```
+대화 → api(static: "잠시만") → 성공 시 endCall
+                              → 실패 시 에러 endCall
+```
+
+- api 노드에 `promptType: "static"` + `staticSentence: "잠시만 기다려주세요."` 설정하거나
+- 별도 conversation(static/skip: "잠시만") → extraction(skip) → api(none) 체인 사용
+
+**DTMF Collection** — DTMF 입력 수집 → 추출 → API
+
+```
+전화번호 수집(dynamic, DTMF 유도) → extraction(번호 추출/skip) → api({{input_number}})
+```
+
+- conversation에서 DTMF 입력 유도 + 검증 규칙 포함
+- extraction에서 포맷 검증 후 변수화
+
+**Loop-back** — 추가 문의 루프
+
+```
+IVR메뉴 → 시나리오 완료 → 추가문의(dynamic) → "있어요" → IVR메뉴(loop back)
+                                              → "없어요" → endCall
+```
+
+- 작업 완료 후 "더 문의하실 내용이 있으신가요?" → 메뉴로 돌아가는 패턴
+
+**Shared Error Node** — 공유 에러 종료
+
+```
+api_A → (실패) → 공통 에러 endCall
+api_B → (실패) ↗
+api_C → (실패) ↗
+```
+
+- 여러 API 실패 경로를 하나의 endCall로 수렴시켜 edge 관리를 단순화
 
 ## 산출물 성격
 
