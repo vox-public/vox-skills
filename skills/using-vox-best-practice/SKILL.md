@@ -24,6 +24,7 @@ vox.ai 관련 요청의 routing entrypoint. domain 로직을 직접 실행하지
 | `vox-tool` | 빌트인/커스텀 도구 관리 | built-in tools, custom tools, tool workflow | prompt authoring, pricing, MCP connection setup |
 | `vox-flow-agent` | flow agent 설계/node 변환/변수 흐름 | flow design, node conversion, variable system | prompt authoring, pricing |
 | `vox-general` | 가격/요금/플랜/빌링, MCP 서버 연결 설정 | pricing, MCP server connection, platform setup | prompt authoring, tool management, flow |
+| `vox-dash-guide` | 대시보드 사용법, 에이전트 설정, 웹 테스트, 대량발신, 통화 기록, 화면 가이드 | dashboard usage, agent settings UI, web testing, bulk calling, call data review, screen-guided mode | prompt authoring, flow design, tool management, pricing |
 
 ### Not Installed
 
