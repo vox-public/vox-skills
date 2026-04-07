@@ -9,7 +9,7 @@ vox.ai 개발자를 위한 Codex/Claude plugin + Agent Skills 레포입니다.
 이 repo는 Codex workspace install 구조를 이미 포함합니다. repo root에서 Codex를 열고 plugin을 설치하세요.
 
 ```bash
-git clone https://github.com/fleek-fitness/vox-skills.git
+git clone https://github.com/vox-public/vox-skills.git
 cd vox-skills
 codex
 ```
@@ -29,7 +29,7 @@ repo를 clone한 뒤 Codex가 이미 열려 있었다면 재시작하세요.
 
 ```bash
 # 1. marketplace 등록
-/plugin marketplace add fleek-fitness/vox-skills
+/plugin marketplace add vox-public/vox-skills
 
 # 2. plugin 설치
 /plugin install vox-ai@vox-ai
@@ -48,13 +48,13 @@ codex mcp login vox
 claude mcp add --transport http vox https://mcp.tryvox.co/
 
 # Skills
-npx skills add https://github.com/fleek-fitness/vox-skills --skill vox-best-practice
+npx skills add https://github.com/vox-public/vox-skills --skill vox-best-practice
 ```
 
 설치 전에 레포에 포함된 스킬 목록을 확인하려면:
 
 ```bash
-npx skills add https://github.com/fleek-fitness/vox-skills --list
+npx skills add https://github.com/vox-public/vox-skills --list
 ```
 
 ## Available Skills

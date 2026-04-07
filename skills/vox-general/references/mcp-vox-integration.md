@@ -89,7 +89,7 @@ claude mcp add --transport http vox-token https://mcp.tryvox.co/ \
 ### Plugin 설치 (권장)
 
 ```bash
-git clone https://github.com/fleek-fitness/vox-skills.git
+git clone https://github.com/vox-public/vox-skills.git
 cd vox-skills
 codex
 ```

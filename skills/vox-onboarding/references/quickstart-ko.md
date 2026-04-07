@@ -3,7 +3,7 @@
 ## 설치
 
 ```
-npx skills add https://github.com/fleek-fitness/vox-skills --skill vox
+npx skills add https://github.com/vox-public/vox-skills --skill vox
 ```
 
 ## MCP 서버 연결
@@ -28,7 +28,7 @@ claude mcp add --transport http vox https://mcp.tryvox.co/ \
 
 Plugin (권장):
 ```bash
-git clone https://github.com/fleek-fitness/vox-skills.git
+git clone https://github.com/vox-public/vox-skills.git
 cd vox-skills
 codex
 ```

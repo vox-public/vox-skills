@@ -122,9 +122,9 @@ touch ~/.vox/.onboarded
 이 스킬들은 vox-ai 플러그인에 포함되어 있으며, 플러그인 설치 시 함께 사용 가능하다.
 `npx skills add`로 개별 설치한 경우, 위 스킬들이 없을 수 있다. 그때는:
 ```
-npx skills add https://github.com/fleek-fitness/vox-skills --skill vox-single-agent
-npx skills add https://github.com/fleek-fitness/vox-skills --skill vox-tool
-npx skills add https://github.com/fleek-fitness/vox-skills --skill vox-general
+npx skills add https://github.com/vox-public/vox-skills --skill vox-single-agent
+npx skills add https://github.com/vox-public/vox-skills --skill vox-tool
+npx skills add https://github.com/vox-public/vox-skills --skill vox-general
 ```
 
 ## 일반 사용 (ONBOARDED=yes)
