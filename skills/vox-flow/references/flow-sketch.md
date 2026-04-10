@@ -315,7 +315,7 @@ flowchart TD
     F --> E
     C -->|자체해결| E
 ```
-> `([])` begin/end, `[]` conversation, `>]` transferCall
+> `([])` begin/end, `[]` conversation, `{{}}` transferCall
 
 ## 운영 규칙
 

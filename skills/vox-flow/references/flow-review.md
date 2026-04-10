@@ -31,7 +31,7 @@ flow agent 설계물(flowchart + 노드 상세 설계)을 체크리스트 기반
 
 | ID | 심각도 | 항목 | 판단 기준 |
 |----|--------|------|----------|
-| A1 | CRITICAL | 노드 모양 정확성 | conversation=`[]`, condition=`{}`, extraction=`[//]`, api=`[()]`, begin/endCall=`([])`, transfer=`>]` |
+| A1 | CRITICAL | 노드 모양 정확성 | conversation=`[]`, condition=`{}`, extraction=`[//]`, api=`[()]`, begin/endCall=`([])`, transfer=`{{}}` |
 | A2 | CRITICAL | conversation vs condition 혼동 | 고객 발화 기반 분기 → conversation. 변수 값 비교 → condition. "동의/거절" 판단은 conversation |
 | A3 | CRITICAL | condition 앞에 extraction/api 없음 | condition은 이미 추출된 변수를 비교. 변수 생성 노드 없이 condition 사용하면 오류 |
 | A4 | WARN | 필수 예외 분기 누락 | 오대상(본인아님/관리사무소아님), 통화거절 등 OB콜 기본 예외 |

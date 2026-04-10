@@ -1,6 +1,6 @@
 ---
 name: vox-onboarding
-description: "Getting started with vox.ai — create a voice AI agent, make an outbound call, and set up inbound reception. Guides the full onboarding flow: agent creation → outbound test call → inbound phone number setup. Especially useful for first-time users and general vox.ai questions. Trigger on '에이전트 만들어줘', '전화 걸어줘', 'vox 시작', '음성 에이전트', '아웃바운드', '인바운드', '캠페인', or any getting-started request."
+description: "Getting started with vox.ai — create a voice AI agent, make an outbound call, and set up inbound reception. Guides the full onboarding flow: agent creation → outbound test call → inbound phone number setup. Especially useful for first-time users and general vox.ai questions. Trigger on '에이전트 만들어줘', '전화 걸어줘', 'vox 시작', '음성 에이전트', '아웃바운드', '인바운드', or any getting-started request."
 ---
 
 # vox — 음성 AI 에이전트 시작하기
@@ -70,13 +70,14 @@ echo "ONBOARDED: $_ONBOARDED"
 2. 보유 번호가 있으면: 해당 번호를 call_from으로 사용
 3. 보유 번호가 없으면:
    - "아직 발신 번호가 없습니다. 전화를 걸려면 번호가 필요해요."
-   - "번호를 구매하시겠어요? (Phase 2에서 공용 번호가 제공될 예정입니다)"
-   - 사용자가 구매 원하면: 번호 구매 안내 (비용 고지 포함)
+   - `list_available_telephone_numbers` MCP 도구로 구매 가능 번호 조회
+   - 사용자가 구매 원하면: `create_telephone_number`로 번호 구매 (비용: 월 7,000원부터)
    - 아니면: "나중에 번호를 구매하신 후 전화를 걸 수 있어요" → Step 4로
 4. 번호가 있으면 `create_call` MCP 도구 실행
    - agent_id: Step 2에서 생성한 에이전트 ID
    - call_from: 보유 번호
    - call_to: 사용자가 알려준 번호
+5. 전화는 보통 10~30초 내에 걸려온다. 통화 후 결과를 확인하려면 `get_call` 도구를 사용할 수 있다.
 
 ### Step 4: 인바운드 안내 (전화 받기)
 
@@ -115,7 +116,7 @@ touch ~/.vox/.onboarded
 
 **다음 단계:**
 - 프롬프트 다듬기 → 그냥 "프롬프트 수정해줘"라고 말하면 됨 (vox-agents 스킬이 처리)
-- 캠페인 (대량 발신) → "캠페인 만들어줘" (create_campaign 도구)
+- 대량 발신 → "대량발신 설정해줘" (vox-dash-guide 스킬이 처리)
 - 도구 추가 → "도구 연결해줘" (vox-tools 스킬이 처리)
 - 요금 확인 → "요금이 얼마예요?" (vox-docs MCP에서 pricing 검색)
 
@@ -135,7 +136,7 @@ npx skills add https://github.com/vox-public/vox-skills --skill vox-tools
 - **전화 걸기**: 아웃바운드 콜 실행
 - **전화 받기**: 인바운드 에이전트 설정
 - **전화번호**: 구매, 목록, 에이전트 연결
-- **캠페인**: 대량 발신 캠페인 생성/관리
+- **대량 발신**: 캠페인 설정/관리 (→ vox-dash-guide)
 - **통화 기록**: 콜 결과 조회
 - **프롬프트 최적화**: 에이전트 프롬프트 개선 (vox-agents 스킬)
 - **플로우 설계**: 복잡한 대화 흐름 설계 (vox-flow 스킬)

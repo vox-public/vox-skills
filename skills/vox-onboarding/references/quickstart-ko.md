@@ -3,7 +3,7 @@
 ## 설치
 
 ```
-npx skills add https://github.com/vox-public/vox-skills --skill vox
+npx skills add https://github.com/vox-public/vox-skills --skill using-vox-skills
 ```
 
 ## MCP 서버 연결

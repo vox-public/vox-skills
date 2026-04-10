@@ -13,7 +13,7 @@
 5. [conversation 노드 모드](#conversation-노드-모드-static-vs-dynamic)
 6. [conversation 노드 출력 포맷](#conversation-노드-출력-포맷)
 7. [작성 규칙](#작성-규칙)
-8. [노드 타입별 작성법](#노드-타입별-작성법)
+8. [노드 타입별 작성법](#노드-타입별-작성법) — conversation, extraction, condition, api, endCall, transferCall, transferAgent, sendSms, tool
 9. [Global Node 설계 가이드](#global-node-설계-가이드)
 10. [적용 예시](#적용-예시)
 
@@ -421,7 +421,7 @@ conversation 노드는 위 포맷을 그대로 따른다. 아래는 conversation
 
 - {{변수명}} == "값A" → [결과 라벨]
 - {{변수명}} == "값B" → [결과 라벨]
-- else → [결과 라벨]
+- {{변수명}} does_not_exist → [결과 라벨] (catch-all — 변수 미추출 등 기본 분기)
 
 ## transition conditions
 
@@ -595,6 +595,241 @@ API 호출 전 대기 멘트를 처리하는 두 가지 방식:
 ## transition conditions
 
 (통화 종료 — 전환 없음.)
+```
+
+### transferCall 노드
+
+외부 전화번호(또는 SIP)로 통화를 전환한다. 전환 전 고객에게 안내 멘트를 발화할 수 있고, warm transfer 시 상담원에게 컨텍스트를 전달한다. fallback transition이 자동 생성된다.
+
+```md
+## name
+
+[노드 이름]
+
+## content
+
+### 목적
+
+1. [전환 이유/상황]
+
+### 전환 전 발화
+
+- promptType: [none/static/dynamic]
+- 멘트: "[전환 전 고객에게 발화할 멘트]" (none이면 생략)
+
+### 전환 설정
+
+- transferType: [cold/warm]
+- transferTo: [전화번호 또는 SIP URI]
+- displayedCallerId: [agent/user] (수신자에게 보이는 발신번호)
+
+### warm transfer 설정 (해당 시)
+
+- transferMessageType: [static/dynamic]
+- 멘트/프롬프트: "[상담원에게 전달할 브리핑 내용]"
+
+## transition conditions
+
+- 성공: 전환 성공 시 에이전트 퇴장.
+- 실패: 전환 실패(미응답/통화중) 시 fallback edge로 진행. (fallback은 시스템 자동 생성)
+```
+
+**적용 예시:**
+
+```md
+## name
+
+상담원연결
+
+## content
+
+### 목적
+
+1. 고객 요청에 따라 담당 상담원에게 통화를 전환한다.
+
+### 전환 전 발화
+
+- promptType: static
+- 멘트: "담당 상담원에게 연결해 드리겠습니다. 잠시만 기다려주세요."
+
+### 전환 설정
+
+- transferType: warm
+- transferTo: 02-1234-5678
+- displayedCallerId: user
+
+### warm transfer 설정
+
+- transferMessageType: dynamic
+- 프롬프트: "지금까지의 대화 내용을 요약하여 상담원에게 전달하세요."
+
+## transition conditions
+
+- 성공: 전환 성공 시 에이전트 퇴장.
+- 실패: 전환 실패(미응답/통화중) 시 fallback edge로 진행. (fallback은 시스템 자동 생성)
+```
+
+### transferAgent 노드
+
+같은 조직 내 다른 vox 에이전트로 대화를 넘긴다. 이전 대화 컨텍스트를 유지할 수 있다. fallback transition이 자동 생성된다.
+
+```md
+## name
+
+[노드 이름]
+
+## content
+
+### 목적
+
+1. [전환 이유/상황]
+
+### 전환 설정
+
+- agentId: [전환 대상 에이전트 ID]
+- preserveChatContext: [true/false] (대화 맥락 유지 여부)
+
+## transition conditions
+
+- 성공: 에이전트 전환 성공 시 현재 에이전트 퇴장.
+- 실패: 전환 실패 시 fallback edge로 진행. (fallback은 시스템 자동 생성)
+```
+
+**적용 예시:**
+
+```md
+## name
+
+기술지원전환
+
+## content
+
+### 목적
+
+1. 기술적 문의가 확인되면 기술지원 전용 에이전트로 전환한다.
+
+### 전환 설정
+
+- agentId: 456
+- preserveChatContext: true
+
+## transition conditions
+
+- 성공: 에이전트 전환 성공 시 현재 에이전트 퇴장.
+- 실패: 전환 실패 시 fallback edge로 진행. (fallback은 시스템 자동 생성)
+```
+
+### sendSms 노드
+
+통화 중 SMS를 발송한다. 자동으로 "요청 성공 시" + "요청 실패 시" 두 transition이 생성된다.
+
+```md
+## name
+
+[노드 이름]
+
+## content
+
+### 목적
+
+1. [SMS 발송 이유/상황]
+
+### SMS 내용
+
+- promptType: [static/dynamic]
+- 멘트: "[SMS 내용 또는 AI 생성 프롬프트]"
+
+### Global Node 설정 (해당 시)
+
+- isGlobalNode: true
+- transitionCondition: "[글로벌 진입 조건]"
+
+## transition conditions
+
+- 성공: SMS 발송 성공 시 다음 노드로 진행.
+- 실패: SMS 발송 실패 시 fallback edge로 진행. (fallback은 시스템 자동 생성)
+```
+
+**적용 예시:**
+
+```md
+## name
+
+예약확인SMS
+
+## content
+
+### 목적
+
+1. 예약 확정 후 고객에게 확인 SMS를 발송한다.
+
+### SMS 내용
+
+- promptType: static
+- 멘트: "예약이 확정되었습니다. 일시: {{appointment_date}}, 장소: {{location}}"
+
+## transition conditions
+
+- 성공: SMS 발송 성공 시 다음 노드로 진행.
+- 실패: SMS 발송 실패 시 fallback edge로 진행. (fallback은 시스템 자동 생성)
+```
+
+### tool 노드
+
+빌트인 도구(end_call, send_dtmf 등)를 실행한다. fallback transition이 자동 생성된다. 도구별 파라미터는 `vox-tools` 스킬의 `references/mcp-built-in-tools.md` 참조.
+
+```md
+## name
+
+[노드 이름]
+
+## content
+
+### 목적
+
+1. [도구 실행 이유/상황]
+
+### 발화 모드
+
+- promptType: [static/dynamic]
+- 멘트: "[실행 중 고객에게 발화할 멘트]"
+
+### 도구 설정
+
+- toolType: [end_call/send_dtmf 등]
+- [도구별 추가 설정]
+
+## transition conditions
+
+- 성공: 도구 실행 성공 시 다음 노드로 진행.
+- 실패: 도구 실행 실패 시 fallback edge로 진행. (fallback은 시스템 자동 생성)
+```
+
+**적용 예시:**
+
+```md
+## name
+
+DTMF전송
+
+## content
+
+### 목적
+
+1. IVR 메뉴에서 안내받은 번호를 입력하여 원하는 메뉴로 진입한다.
+
+### 발화 모드
+
+- promptType: none
+
+### 도구 설정
+
+- toolType: send_dtmf
+
+## transition conditions
+
+- 성공: DTMF 전송 성공 시 다음 노드로 진행.
+- 실패: DTMF 전송 실패 시 fallback edge로 진행. (fallback은 시스템 자동 생성)
 ```
 
 ## Global Node 설계 가이드
