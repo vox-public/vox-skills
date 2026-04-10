@@ -6,7 +6,7 @@ flow agent 설계물(flowchart + 노드 상세 설계)을 체크리스트 기반
 - [flow-sketch.md](flow-sketch.md) — Mermaid 모양 규칙, 패턴
 - [node-creation.md](node-creation.md) — 노드 작성 포맷, 전환조건/멘트 규칙
 - [node-types.md](node-types.md) — 노드 타입 필드 상세
-- [variable-system.md](variable-system.md) — 변수 시스템
+- variable-system.md — 변수 시스템 (`vox-agents/references/`에 위치)
 
 ## 입력
 

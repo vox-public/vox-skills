@@ -1,0 +1,64 @@
+{
+  "_comment": "voxai/web defaultFlowObject 기준. 새 flow agent 생성 시 이 구조로 초기화됨.",
+
+  "nodes": [
+    {
+      "id": "begin-1",
+      "type": "begin",
+      "data": {
+        "name": "Begin #1",
+        "firstLineType": "aiFirst"
+      },
+      "position": { "x": 0, "y": 0 }
+    },
+    {
+      "id": "conversation-1",
+      "type": "conversation",
+      "data": {
+        "name": "Conversation #1",
+        "promptType": "dynamic",
+        "prompt": "안녕하세요 무엇을 도와드릴까요?",
+        "staticSentence": "",
+        "transitions": [
+          { "id": "tr-1", "condition": "" },
+          { "id": "tr-2", "condition": "" }
+        ],
+        "loopCondition": "",
+        "isSkipUserResponse": false,
+        "isAllowInterruption": true,
+        "globalNodeSettings": {
+          "isGlobalNode": false,
+          "transitionCondition": ""
+        }
+      },
+      "position": { "x": 450, "y": 0 }
+    },
+    {
+      "id": "endcall-1",
+      "type": "endCall",
+      "data": {
+        "name": "EndCall #1",
+        "promptType": "none",
+        "prompt": "",
+        "staticSentence": "",
+        "globalNodeSettings": {
+          "isGlobalNode": false,
+          "transitionCondition": ""
+        }
+      },
+      "position": { "x": 988, "y": 275 }
+    }
+  ],
+
+  "edges": [
+    {
+      "id": "edge-begin-to-conv",
+      "type": "custom",
+      "source": "begin-1",
+      "target": "conversation-1",
+      "animated": true
+    }
+  ],
+
+  "viewport": { "x": 100, "y": 300, "zoom": 0.55 }
+}

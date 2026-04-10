@@ -1,5 +1,62 @@
 # Node Types 상세 스펙
 
+## 목차
+
+- [공통 타입](#공통-타입) — NodeTransitionData, GlobalNodeSettings, Edge 연결
+- [begin](#begin) — 시작
+- [conversation](#conversation) — 대화
+- [tool](#tool) — 도구 실행
+- [api](#api) — HTTP API 호출
+- [sendSms](#sendsms) — SMS 발송
+- [condition](#condition) — 조건 분기
+- [extraction](#extraction) — 변수 추출
+- [transferCall](#transfercall) — 통화 전환
+- [transferAgent](#transferagent) — 에이전트 전환
+- [endCall](#endcall) — 통화 종료
+- [note](#note) — 메모
+- [Deprecated](#deprecated) — function, knowledge
+
+---
+
+## 공통 타입
+
+### NodeTransitionData
+
+conversation, tool, api, sendSms, transferCall, transferAgent 노드가 사용하는 전환 조건 구조.
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `id` | string | 전환 ID — edge의 `sourceHandle`과 매핑됨 |
+| `condition` | string? | 자연어 전환 조건. `{{variable}}` 참조 가능 |
+| `isSkipUserResponse` | boolean? | 유저 응답 없이 즉시 전환 |
+| `isFallback` | boolean? | fallback 전환 여부 (tool/api/transfer 노드에서 자동 생성) |
+
+### GlobalNodeSettings
+
+conversation, endCall, sendSms 노드에서 사용. 활성화하면 flow 어디서든 이 노드로 이동 가능.
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `isGlobalNode` | boolean | 글로벌 노드 활성화 |
+| `transitionCondition` | string | 글로벌 전환 조건 (예: "통화 끊어달라고 하면") |
+
+### Edge 연결 메커니즘
+
+노드 간 연결은 `edge`로 표현된다. **핵심**: edge의 `sourceHandle`이 소스 노드의 `transition.id`와 매핑됨.
+
+```
+Node A (conversation)                Edge                    Node B
+  transitions: [                    {
+    { id: "tr-1",          ←——→       sourceHandle: "tr-1",
+      condition: "예약 원하면" }        source: "node-a",
+  ]                                    target: "node-b"
+                                    }
+```
+
+- 하나의 transition에 하나의 edge만 연결 (1:1)
+- condition 노드는 `logicalTransitions[].id`가 sourceHandle
+- begin 노드는 transition 없이 직접 edge 연결
+
 ---
 
 ## begin
@@ -259,3 +316,35 @@ HTTP API 호출 노드.
 
 - 별도 addable 카테고리 (isAddable: false이지만 별도 UI로 추가).
 - 실행 흐름에 영향 없음. 팀 커뮤니케이션용.
+
+---
+
+## sendSms
+
+SMS 발송 노드. 통화 중 SMS 메시지를 전송.
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `name` | string | 노드 이름 |
+| `promptType` | `"static" \| "dynamic"` | SMS 내용 생성 모드 |
+| `prompt` | string | dynamic 모드 프롬프트 |
+| `staticSentence` | string | static 모드 고정 메시지 |
+| `transitions` | NodeTransitionData[] | 전환 조건 (성공 + fallback 자동 생성) |
+| `globalNodeSettings` | GlobalNodeSettings | 글로벌 노드 설정 |
+
+- SMS 발송 가능한 전화번호가 조직에 있어야 사용 가능.
+- 자동으로 "요청 성공 시" + "요청 실패 시" 두 transition이 생성됨.
+
+---
+
+## Deprecated
+
+아래 노드 타입은 더 이상 신규 flow에서 사용하지 않는다. 기존 flow에서는 동작하지만 대시보드에서 추가 불가.
+
+### function (→ tool)
+
+`tool` 노드로 대체됨. 기존 flow에서 `function` 타입이 보이면 `tool` 노드와 동일하게 동작한다.
+
+### knowledge (→ conversation)
+
+`conversation` 노드의 `knowledge` 설정으로 통합됨. `conversation` 노드에서 `ragEnabled: true` + `knowledgeIds`를 설정하면 동일한 기능.
