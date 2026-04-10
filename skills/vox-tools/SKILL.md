@@ -9,9 +9,9 @@ vox.ai 에이전트의 도구 관리를 다루는 domain skill. 빌트인 도구
 
 ## References
 
-- 도구 관리 전체 워크플로우를 파악할 때: See [references/mcp-tool-management.md](references/mcp-tool-management.md)
-- 빌트인 도구 파라미터 상세가 필요할 때 (end_call, transfer_call, transfer_agent, send_dtmf): See [references/mcp-built-in-tools.md](references/mcp-built-in-tools.md)
-- 커스텀 도구 생성/연결/삭제가 필요할 때: See [references/mcp-custom-tools.md](references/mcp-custom-tools.md)
+- **mcp-tool-management.md** — 도구 관리 전체 워크플로우. **도구 장착/해제 작업 시 읽기.** See [references/mcp-tool-management.md](references/mcp-tool-management.md)
+- **mcp-built-in-tools.md** — 빌트인 도구 파라미터 상세 (end_call, transfer_call, transfer_agent, send_dtmf, send_sms). **빌트인 도구 설정 시 읽기.** See [references/mcp-built-in-tools.md](references/mcp-built-in-tools.md)
+- **mcp-custom-tools.md** — 커스텀 도구 생성/연결/삭제. **커스텀 도구 작업 시 읽기.** See [references/mcp-custom-tools.md](references/mcp-custom-tools.md)
 
 MCP 서버 연결 설정(Claude, Cursor, ChatGPT 등)은 `vox-onboarding` 스킬이 담당한다.
 
@@ -30,3 +30,18 @@ MCP 서버 연결 설정(Claude, Cursor, ChatGPT 등)은 `vox-onboarding` 스킬
 | custom tools (api, mcp type) | pricing |
 | tool management workflow | flow design |
 | tool naming rules | MCP server connection setup (→ vox-onboarding) |
+
+## Related Resources
+
+### MCP Tools (vox)
+- `list_built_in_tools` — 빌트인 도구 목록
+- `list_custom_tools` — 커스텀 도구 목록
+- `create_custom_tool` — 커스텀 도구 생성
+- `delete_custom_tool` — 커스텀 도구 삭제
+- `get_agent`, `update_agent` — 도구 장착/해제 시 사용
+
+### Docs (vox-docs)
+- `docs/build/tools` — 도구 관리 개요
+
+### App URLs
+- `https://www.tryvox.co/agent/{agentId}` — 에이전트 상세 (Tools 탭)

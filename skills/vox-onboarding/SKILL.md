@@ -138,7 +138,7 @@ npx skills add https://github.com/vox-public/vox-skills --skill vox-tools
 - **캠페인**: 대량 발신 캠페인 생성/관리
 - **통화 기록**: 콜 결과 조회
 - **프롬프트 최적화**: 에이전트 프롬프트 개선 (vox-agents 스킬)
-- **플로우 설계**: 복잡한 대화 흐름 설계 (vox-agents 스킬)
+- **플로우 설계**: 복잡한 대화 흐름 설계 (vox-flow 스킬)
 - **가격/빌링**: 요금 안내 (vox-docs MCP에서 pricing 검색)
 
 요청이 다른 도메인 스킬의 전문 영역이면 해당 스킬의 지침을 따른다.
@@ -146,6 +146,21 @@ npx skills add https://github.com/vox-public/vox-skills --skill vox-tools
 ## 이 스킬이 하지 않는 것
 
 - 프롬프트 작성의 세부 규칙 → vox-agents
-- 플로우 노드 설계 → vox-agents
-- 빌트인/커스텀 도구 관리 → vox-tool
+- 플로우 노드 설계 → vox-flow
+- 빌트인/커스텀 도구 관리 → vox-tools
 - 가격 정책 상세 → vox-docs MCP에서 pricing 검색
+
+## Related Resources
+
+### MCP Tools (vox)
+- `list_agents`, `create_agent` — 에이전트 조회/생성
+- `create_call` — 아웃바운드 콜 실행
+- `list_telephone_numbers`, `create_telephone_number`, `update_telephone_number` — 전화번호 관리
+
+### Docs (vox-docs)
+- `docs/quickstart` — 빠른 시작 가이드
+- `docs/pricing` — 요금 안내
+
+### App URLs
+- `https://www.tryvox.co` — 대시보드 홈
+- `https://www.tryvox.co/agent/{agentId}` — 에이전트 상세

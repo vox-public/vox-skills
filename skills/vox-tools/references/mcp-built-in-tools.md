@@ -106,7 +106,7 @@ list_built_in_tools()
 
 IVR 메뉴 탐색을 위한 DTMF 톤을 전송합니다.
 
-- 설계 가이드: See [ivr-navigation-best-practice.md](ivr-navigation-best-practice.md)
+- 설계 가이드: `vox-agents/references/ivr-navigation-best-practice.md` 참조
 
 ```json
 {"toolType": "send_dtmf", "name": "send_dtmf", "description": "IVR 메뉴 탐색 시 DTMF 톤을 전송합니다."}
