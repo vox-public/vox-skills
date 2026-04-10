@@ -28,9 +28,9 @@ Single prompt로 충분한 경우 → `vox-agents` 스킬로 handoff한다.
 - **node-creation.md** — 확정된 차트의 각 노드 → 상세 설계. **2단계: flowchart 확정 후 읽기.** See [references/node-creation.md](references/node-creation.md)
 - **node-types.md** — 노드 타입별 필드/설정 상세. **특정 노드의 설정 옵션이 필요할 때 읽기.** See [references/node-types.md](references/node-types.md)
 - **flow-review.md** — 설계물 체크리스트 기반 검증. **3단계: 설계 완료 후 또는 "리뷰해줘" 요청 시 읽기.** See [references/flow-review.md](references/flow-review.md)
-- **variable-system.md** — 변수 naming, 추출 설정, 렌더링 위치. **extraction/condition 변수 흐름을 설계할 때 읽기.** See [references/variable-system.md](references/variable-system.md)
 
 공통 reference (`vox-agents`에 위치):
+- **variable-system.md** — 변수 naming, 추출 설정, 렌더링 위치. **extraction/condition 변수 흐름을 설계할 때 읽기.**
 - **voice-ai-playbook.md** — 음성 UX 핵심 규칙. **새 flow 설계 시 가장 먼저 읽기.**
 - **default-agent-data.json** + **agent-data-reference.md** — agent.data 기본값 + MCP 동작 규칙. **MCP로 에이전트를 생성할 때 읽기.**
 - **ivr-navigation-best-practice.md** — IVR/DTMF 패턴. **ARS/IVR 통과 시나리오에서 읽기.**
