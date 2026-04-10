@@ -11,16 +11,7 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 
 ## Flow vs Single Prompt 판단 기준
 
-| 기준 | Single Prompt | Flow |
-|------|---------------|------|
-| 대화 복잡도 | 단순 Q&A, 1~2 분기 | 3개 이상 분기, 복잡한 시나리오 |
-| 결정적 흐름 제어 | prompt에 의존 | node 단위로 보장 |
-| 조건부 분기 | 어려움 | condition node로 정확히 제어 |
-| 외부 API 연동 | tool로 가능 | api node로 응답 변수 추출까지 |
-| 변수 추적 | 어려움 | extraction → condition 체인 |
-| 유지보수 | prompt 하나 수정 | node 단위 독립 수정 |
-
-Single prompt로 충분한 경우 → `vox-agents` 스킬로 handoff한다.
+→ `vox-agents`의 Agent Type 판단 기준 테이블 참조. Single prompt로 충분한 경우 `vox-agents` 스킬로 handoff한다.
 
 ## References
 
@@ -82,7 +73,7 @@ Single prompt로 충분한 경우 → `vox-agents` 스킬로 handoff한다.
 
 1. **공통 규칙 먼저** — flow에서도 실패 원인의 대부분은 음성 UX 위반(장문 발화, 부정확한 사실)이므로, `vox-agents`의 voice-ai-playbook 규칙(사실성 우선, 트레이드오프, 런타임 vs 개발 산출물 구분)이 flow에도 동일하게 적용된다.
 2. 이 문서에 없는 node type이나 설정을 추측하지 않는다 — 존재하지 않는 설정을 안내하면 사용자가 대시보드에서 찾을 수 없어 디버깅에 시간을 낭비한다.
-3. deprecated node(`function`, `knowledge`)는 신규 flow에 사용하지 않는다.
+3. deprecated node(`function`, `knowledge`)는 신규 flow에 사용하지 않는다 — 대시보드에서 더 이상 추가할 수 없고, 향후 런타임 지원이 제거될 수 있다.
 4. node 수는 최소화 — 불필요한 분할은 edge 관리를 복잡하게 하고 유지보수 비용이 증가한다.
 5. 변수 이름은 snake_case, 의미가 명확한 이름 사용 — condition node와 변수 렌더러가 snake_case를 전제로 동작하며, 모호한 이름(val1, temp)은 노드 간 전달 시 혼동을 일으킨다.
 6. 전환조건에 "다음 단계 이름"을 쓰지 않는다 — exit 조건만 정의해야 노드 순서가 바뀌어도 LLM이 올바르게 판단한다.
@@ -102,10 +93,11 @@ Single prompt로 충분한 경우 → `vox-agents` 스킬로 handoff한다.
 
 ### MCP Tools (vox)
 - `create_agent` — flow 에이전트 생성 (agent_type: "flow")
-- `get_agent` — 기존 에이전트 설정 확인
+- `update_agent` — 에이전트 설정 수정
+- `get_agent` — 기존 에이전트 설정 확인 (flow_data 포함)
 - `list_agents` — 에이전트 목록
 
-### Docs (vox-docs search)
+### Docs (vox-docs)
 - `docs/build/flow/overview` — 플로우 에이전트 개요
 - `docs/build/flow/nodes/overview` — 노드 타입 개요
 - `docs/build/flow/nodes/begin-node` — 시작 노드

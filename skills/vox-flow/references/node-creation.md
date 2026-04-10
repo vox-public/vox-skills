@@ -2,7 +2,7 @@
 
 콜센터/OB/CS 스크립트(자유 텍스트)를 flow node markdown으로 변환한다.
 
-> **워크플로 위치**: flow-sketch(Step 1) → **node-creation(이 문서, Step 2)** → flow-review(Step 3). 노드 타입 상세는 `node-types.md` 참조.
+> **워크플로 위치**: [flow-sketch](flow-sketch.md)(Step 1) → **node-creation(이 문서, Step 2)** → [flow-review](flow-review.md)(Step 3). 노드 타입 상세는 [node-types.md](node-types.md) 참조.
 
 ## 목차
 

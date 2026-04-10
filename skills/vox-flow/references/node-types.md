@@ -243,6 +243,7 @@ HTTP API 호출 노드.
 
 - 유저 응답을 기다리지 않고 기존 대화 컨텍스트에서 즉시 추출.
 - 추출된 변수는 flow 변수로 등록, 이후 노드에서 `{{variable_name}}`으로 참조.
+- extraction 노드는 transition 없이 단일 edge로 다음 노드에 연결 (begin과 동일 방식).
 
 ---
 
@@ -257,6 +258,7 @@ HTTP API 호출 노드.
 | `prompt` | string | dynamic 프롬프트 |
 | `transferConfiguration` | TransferConfigurationItem | 전환 대상 설정 |
 | `transferType` | `"cold" \| "warm"` | 전환 방식 |
+| `transferMessageType` | `"static" \| "dynamic"`? | warm transfer 상담원 멘트 모드 |
 | `displayedCallerId` | `"agent" \| "user"` | 발신번호 표시 |
 | `warmTransferPrompt` | string? | warm transfer 시 상담원에게 전달할 프롬프트 |
 | `warmTransferStaticSentence` | string? | warm transfer static 멘트 |

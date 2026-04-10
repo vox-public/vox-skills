@@ -2,6 +2,14 @@
 
 콜센터/OB/CS 스크립트를 Mermaid flowchart + 노드 요약 테이블로 변환한다. flow 설계의 첫 단계로, 전체 뼈대를 시각화하고 피드백으로 다듬는다.
 
+## 목차
+
+- [입력](#입력)
+- [출력](#출력)
+- [작업 절차](#작업-절차) — 1 분석 → 2 노드 도출 → 3 Mermaid → 4 테이블 → 5 핸드오프 → 6 피드백
+- [패턴 라이브러리](#패턴-라이브러리) — Linear / Branching / Data Collection / Multi-stage Sales / Extraction→Condition / API→Condition / Transfer
+- [운영 규칙](#운영-규칙)
+
 ## 입력
 
 - **스크립트 텍스트**: 대화에 직접 붙여넣은 스크립트
@@ -142,8 +150,8 @@ flowchart TD
 | api | `E[(API호출)]` | cylinder | 외부 데이터 |
 | tool | `F[[도구실행]]` | subroutine | 시스템 실행 |
 | endCall | `G([종료])` | stadium | 흐름의 끝 |
-| transferCall | `H>상담원연결]` | flag | 외부 전환 |
-| transferAgent | `I>에이전트전환]` | flag | 내부 전환 |
+| transferCall | `H{{상담원연결}}` | hexagon | 외부 전환 |
+| transferAgent | `I{{에이전트전환}}` | hexagon | 내부 전환 |
 
 **모양을 섞어 쓰지 않는다.** conversation에 `{}` 쓰거나, condition에 `[]` 쓰면 안 된다.
 
@@ -301,7 +309,7 @@ flowchart TD
 flowchart TD
     A([시작]) --> B[인사/본인확인]
     B -->|확인완료| C[문의접수]
-    C -->|전환필요| D>상담원연결]
+    C -->|전환필요| D{{상담원연결}}
     D -->|성공| E([종료])
     D -->|실패| F[전환실패안내]
     F --> E
@@ -313,6 +321,6 @@ flowchart TD
 
 1. 차트와 테이블은 항상 함께 출력한다 — 하나만 출력하지 않는다
 2. 스크립트에 없는 분기를 임의로 추가하지 않는다. 추론 가능한 기본 예외(본인아님, 통화불가 등)만 추가하되 별도로 안내한다
-3. 노드 이름은 한국어로, 4~8자 이내로 간결하게 작성한다
+3. 노드 이름은 한국어로, 4~8자 이내로 간결하게 작성한다 — Mermaid 차트에서 노드가 비대해지면 레이아웃이 깨지고 한눈에 파악이 어렵다
 4. 피드백 반영 후 항상 전체 차트를 다시 출력한다 (diff만 보여주면 전체 맥락을 잃는다)
 5. 확정된 차트를 기반으로 [node-creation.md](node-creation.md)로 상세 설계를 이어갈 수 있음을 안내한다
