@@ -48,7 +48,7 @@ codex mcp login vox
 claude mcp add --transport http vox https://mcp.tryvox.co/
 
 # Skills
-npx skills add https://github.com/vox-public/vox-skills --skill vox-best-practice
+npx skills add https://github.com/vox-public/vox-skills --skill using-vox-skills
 ```
 
 설치 전에 레포에 포함된 스킬 목록을 확인하려면:
@@ -59,43 +59,61 @@ npx skills add https://github.com/vox-public/vox-skills --list
 
 ## Available Skills
 
-### using-vox-best-practice (router)
+### using-vox-skills (router)
 
 vox.ai 관련 요청의 routing entrypoint. 요청 내용에 따라 아래 domain skill을 자동 선택합니다.
 
-- `skills/using-vox-best-practice/SKILL.md`
+- `skills/using-vox-skills/SKILL.md`
 
-### vox-single-agent
+### vox-onboarding
 
-한국어 음성(single prompt) 에이전트의 system prompt 설계/작성/리팩터링/진단을 담당합니다.
+첫 사용자 온보딩. 에이전트 생성 → 아웃바운드 테스트 → 인바운드 설정까지 안내합니다.
+
+- MCP 서버 연결 설정 (Claude/Cursor/ChatGPT/VS Code/Codex/OpenCode)
+- `skills/vox-onboarding/SKILL.md`
+
+### vox-agents
+
+프롬프트 에이전트(single prompt) 설계와 공통 음성 UX 규칙을 담당합니다.
 
 - 신규 프롬프트 작성 워크플로우 + 한국어 템플릿
 - 실패 사례 원인 진단 → 리팩터링
 - agent.data 스키마 (MCP create_agent/update_agent)
-- `skills/vox-single-agent/SKILL.md`
+- Agent Type 판단 (prompt vs flow) + flow handoff
+- `skills/vox-agents/SKILL.md`
 
-### vox-flow-agent
+### vox-flow
 
-여러 node를 연결해 대화 흐름을 제어하는 flow agent 설계를 담당합니다.
+플로우 에이전트 설계를 담당합니다. vox-agents의 확장 스킬입니다.
 
-- Flow vs Single Prompt 판단 기준
 - 10종 node type 설계/설정
-- 스크립트 → flow node 변환
+- 스크립트 → Mermaid flowchart → flow node 변환
 - 변수 시스템 (extraction → condition 체인)
-- `skills/vox-flow-agent/SKILL.md`
+- 설계물 체크리스트 기반 리뷰
+- `skills/vox-flow/SKILL.md`
 
-### vox-tool
+### vox-tools
 
 vox.ai 에이전트의 빌트인/커스텀 도구 관리를 담당합니다.
 
 - 빌트인 도구: end_call, transfer_call, transfer_agent, send_sms, send_dtmf
 - 커스텀 도구 (API/MCP type) 생성/연결/해제
-- `skills/vox-tool/SKILL.md`
+- `skills/vox-tools/SKILL.md`
 
-### vox-general
+### vox-dash-guide
 
-vox.ai 플랫폼 요금 체계와 MCP 서버 연결 설정을 담당합니다.
+vox.ai 대시보드 사용 가이드. 다른 스킬에서 UI 안내가 필요할 때도 참조됩니다.
 
-- 구독 플랜/요금/빌링 안내
-- vox MCP 서버를 Claude/Cursor/ChatGPT/VS Code/Codex/OpenCode에 연결
-- `skills/vox-general/SKILL.md`
+- 에이전트 설정 (프롬프트, TTS, 도구, 추출, 배포)
+- 웹 테스트, 대량발신, 통화 데이터 조회
+- Chrome MCP extension으로 화면 보며 안내 지원
+- `skills/vox-dash-guide/SKILL.md`
+
+## MCP Servers
+
+이 플러그인은 두 개의 MCP 서버를 연결합니다:
+
+| Name | URL | 역할 |
+|------|-----|------|
+| `vox` | `https://mcp.tryvox.co/` | 플랫폼 도구 (에이전트, 통화, 조직 등) |
+| `vox-docs` | `https://docs.tryvox.co/mcp` | 공식 문서 검색 (search + get_page) |

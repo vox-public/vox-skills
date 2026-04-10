@@ -1,0 +1,59 @@
+{
+  "_comment": "voxai/web defaultAgentData 기준 fully resolved 기본값. MCP create_agent 시 이 구조로 병합됨.",
+
+  "prompt": {
+    "prompt": "",
+    "firstLine": "",
+    "firstLineType": "aiFirstDynamic",
+    "pauseBeforeSpeakingSeconds": 0,
+    "isFirstMessageInterruptible": true
+  },
+
+  "llm": {
+    "model": "z-ai/glm-4.7",
+    "temperature": 0.4
+  },
+
+  "stt": {
+    "languages": ["ko"],
+    "speed": "high"
+  },
+
+  "voice": {
+    "id": "hsDIEmgna8wPYhqtgbxx",
+    "provider": "elevenlabs",
+    "model": "eleven_flash_v2_5",
+    "speed": 0.95,
+    "temperature": 0.9
+  },
+
+  "postCall": {
+    "actions": []
+  },
+
+  "callSettings": {
+    "backgroundMusic": "none",
+    "backgroundMusicVolume": 0.5,
+    "noiseCancellation": "bvc",
+    "activationThreshold": 0.6,
+    "callTimeoutInSeconds": 900,
+    "silenceCallTimeoutInSeconds": 30,
+    "ringDurationInSeconds": 30,
+    "dtmfTerminationEnabled": false,
+    "dtmfTerminationKey": "#",
+    "dtmfTimeoutSeconds": 3
+  },
+
+  "toolIds": [],
+  "builtInTools": [],
+
+  "security": {
+    "optOutSensitiveDataStorage": false
+  },
+
+  "speech": {
+    "isAllowInterruption": true,
+    "isAllowTurnDetection": true,
+    "responsiveness": 1.0
+  }
+}

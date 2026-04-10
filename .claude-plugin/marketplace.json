@@ -17,6 +17,7 @@
         "./skills/using-vox-skills",
         "./skills/vox-onboarding",
         "./skills/vox-agents",
+        "./skills/vox-flow",
         "./skills/vox-tools",
         "./skills/vox-dash-guide"
       ]

@@ -139,7 +139,7 @@ npx skills add https://github.com/vox-public/vox-skills --skill vox-tools
 - **통화 기록**: 콜 결과 조회
 - **프롬프트 최적화**: 에이전트 프롬프트 개선 (vox-agents 스킬)
 - **플로우 설계**: 복잡한 대화 흐름 설계 (vox-agents 스킬)
-- **가격/빌링**: 요금 안내 (vox-general 스킬)
+- **가격/빌링**: 요금 안내 (vox-docs MCP에서 pricing 검색)
 
 요청이 다른 도메인 스킬의 전문 영역이면 해당 스킬의 지침을 따른다.
 
@@ -148,4 +148,4 @@ npx skills add https://github.com/vox-public/vox-skills --skill vox-tools
 - 프롬프트 작성의 세부 규칙 → vox-agents
 - 플로우 노드 설계 → vox-agents
 - 빌트인/커스텀 도구 관리 → vox-tool
-- 가격 정책 상세 → vox-general
+- 가격 정책 상세 → vox-docs MCP에서 pricing 검색

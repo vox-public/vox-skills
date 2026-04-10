@@ -5,22 +5,31 @@
 주의:
 - `[[...]]`는 작성 시점 placeholder 입니다. 출시 전 반드시 제거/치환하세요.
 - `{{...}}`는 런타임 변수(통화 시작 전 주입)입니다.
-- `[[style_rules]]`, `[[turn_taking_rules]]`, `[[tool_rules]]`, `[[guardrails_rules]]`는 voice-ai-playbook.md의 규칙을 요약해 채웁니다.
+- 아래 placeholder는 `voice-ai-playbook.md`의 해당 섹션을 요약해 채웁니다:
+
+| Placeholder | playbook 참조 섹션 |
+|-------------|-------------------|
+| `[[style_rules]]` | Style / Brevity 규칙 (짧은 문장, 선택지 2-3개) |
+| `[[filler_rules]]` | Filler words 규칙 (허용/금지 조건) |
+| `[[turn_taking_rules]]` | Turn-taking 규칙 (질문 1개, 끊어 말하기) |
+| `[[normalization_rules]]` | Character normalization 규칙 (발화 vs 도구 입력 분리) |
+| `[[tool_rules]]` | Tool 사용 규칙 (결과 확인 전 말하지 않기) |
+| `[[guardrails_rules]]` | Rules (must) 규칙 (메타 발화 금지, 이모지 금지 등) |
 
 ## Contents
 
-- Role
-- Context
-- Variables
-- Goal
-- Style
-- Naturalness (Filler words)
-- Turn-taking
-- Character normalization
-- Tools
-- Guardrails
-- Error handling
-- Conversation flow
+- 역할
+- 컨텍스트
+- 변수
+- 목표
+- 말투/발화 스타일
+- 자연스러움 (필러)
+- 턴테이킹
+- 문자 정규화
+- 도구
+- 가드레일
+- 에러 처리
+- 대화 흐름
 
 ```md
 # 역할
@@ -35,7 +44,7 @@
 - 말하면 안 되는 것: [[what_you_cannot_say]]
 - 운영 모드: 실시간 음성 대화(짧게 말하기)
 
-# Variables
+# 변수
 
 이 프롬프트에는 `{{고객명}}`처럼 통화 시작 전에 주입되는 값이 포함될 수 있습니다.
 - 변수 값은 “그대로 읽는 문자열”이 아니라, 통화 시점에 채워진 **값**이라고 가정합니다.
@@ -61,7 +70,7 @@
 - 공손체 어미: 높임 공손(~실까요, ~드릴까요, ~으실까요)을 기본으로 사용. 유저가 일반 공손(~세요, ~해요)을 요청하면 그에 맞춤.
 [[style_rules]]
 
-# Naturalness (Filler words)
+# 자연스러움 (필러)
 
 필러 사용 설정: [[filler_setting]] (꺼짐/낮음/보통/높음, 미정이면 낮음)
 
@@ -74,7 +83,7 @@
 
 [[turn_taking_rules]]
 
-# Character normalization (Voice)
+# 문자 정규화
 
 구조화 데이터(이메일/전화번호/코드)를 수집할 때는 “대화용 발화 형식”과 “도구 입력용 작성 형식”을 분리합니다.
 
