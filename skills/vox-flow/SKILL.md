@@ -24,6 +24,8 @@ Single prompt로 충분한 경우 → `vox-agents` 스킬로 handoff한다.
 
 ## References
 
+- **default-flow-data.json** — flow 기본 스키마 (begin→conversation→endCall). **flow 구조를 이해할 때 읽기.** See [references/default-flow-data.json](references/default-flow-data.json)
+- **flow-guide.md** — flow 설계 통합 가이드 (edge 메커니즘, 변수 흐름, 설계 원칙). **flow를 처음 설계할 때 읽기.** See [references/flow-guide.md](references/flow-guide.md)
 - **flow-sketch.md** — 스크립트 → Mermaid flowchart 시각화. **1단계: 스크립트를 처음 받았을 때 읽기.** See [references/flow-sketch.md](references/flow-sketch.md)
 - **node-creation.md** — 확정된 차트의 각 노드 → 상세 설계. **2단계: flowchart 확정 후 읽기.** See [references/node-creation.md](references/node-creation.md)
 - **node-types.md** — 노드 타입별 필드/설정 상세. **특정 노드의 설정 옵션이 필요할 때 읽기.** See [references/node-types.md](references/node-types.md)
@@ -48,7 +50,7 @@ Single prompt로 충분한 경우 → `vox-agents` 스킬로 handoff한다.
 
 사용자가 시각화만 요청하면 1단계만. "노드로 변환해줘"면 1→2단계. "리뷰해줘"면 3단계.
 
-## Node Type 요약 (Active 10종)
+## Node Type 요약 (Active 11종)
 
 | Node | 용도 |
 |------|------|
@@ -56,6 +58,7 @@ Single prompt로 충분한 경우 → `vox-agents` 스킬로 handoff한다.
 | `conversation` | LLM 기반 대화 수행 |
 | `tool` | vox 등록 도구 실행 |
 | `api` | HTTP API 호출 + 응답 변수 추출 |
+| `sendSms` | SMS 발송 |
 | `condition` | 변수 기반 조건 분기 (대화 없음) |
 | `extraction` | 대화 컨텍스트에서 변수 추출 |
 | `transferCall` | 통화 전환 (cold/warm) |
@@ -77,13 +80,13 @@ Single prompt로 충분한 경우 → `vox-agents` 스킬로 handoff한다.
 
 ## Core Operating Rules
 
-1. **공통 규칙 먼저** — `vox-agents`의 voice-ai-playbook 규칙(사실성 우선, 트레이드오프, 런타임 vs 개발 산출물 구분)이 flow에도 동일하게 적용된다.
+1. **공통 규칙 먼저** — flow에서도 실패 원인의 대부분은 음성 UX 위반(장문 발화, 부정확한 사실)이므로, `vox-agents`의 voice-ai-playbook 규칙(사실성 우선, 트레이드오프, 런타임 vs 개발 산출물 구분)이 flow에도 동일하게 적용된다.
 2. 이 문서에 없는 node type이나 설정을 추측하지 않는다 — 존재하지 않는 설정을 안내하면 사용자가 대시보드에서 찾을 수 없어 디버깅에 시간을 낭비한다.
 3. deprecated node(`function`, `knowledge`)는 신규 flow에 사용하지 않는다.
 4. node 수는 최소화 — 불필요한 분할은 edge 관리를 복잡하게 하고 유지보수 비용이 증가한다.
-5. 변수 이름은 snake_case, 의미가 명확한 이름 사용.
+5. 변수 이름은 snake_case, 의미가 명확한 이름 사용 — condition node와 변수 렌더러가 snake_case를 전제로 동작하며, 모호한 이름(val1, temp)은 노드 간 전달 시 혼동을 일으킨다.
 6. 전환조건에 "다음 단계 이름"을 쓰지 않는다 — exit 조건만 정의해야 노드 순서가 바뀌어도 LLM이 올바르게 판단한다.
-7. **산출물은 대시보드 입력용** — flow 설계 결과물은 대시보드 flow editor에서 수동 입력한다. MCP로 flow를 직접 생성/수정하는 API는 현재 없으므로, 노드 markdown을 사람이 읽고 UI에 옮길 수 있는 형태로 출력한다.
+7. **산출물은 대시보드 입력용** — flow 설계 결과물은 대시보드 flow editor에서 수동 입력한다. REST API(`PATCH /v2/agents/{id}` with `flow_data`)로 프로그래밍 수정이 가능하지만, 현재 MCP tools에는 `flow_data` 파라미터가 없으므로 MCP 클라이언트에서 직접 flow를 수정할 수 없다. 노드 markdown을 사람이 읽고 UI에 옮길 수 있는 형태로 출력한다.
 
 ## Ownership Boundary
 
@@ -105,11 +108,15 @@ Single prompt로 충분한 경우 → `vox-agents` 스킬로 handoff한다.
 ### Docs (vox-docs search)
 - `docs/build/flow/overview` — 플로우 에이전트 개요
 - `docs/build/flow/nodes/overview` — 노드 타입 개요
-- `docs/build/flow/nodes/conversation-node` — conversation 노드
-- `docs/build/flow/nodes/api-node` — api 노드
-- `docs/build/flow/nodes/condition-node` — condition 노드
-- `docs/build/flow/nodes/extraction-node` — extraction 노드
-- `docs/build/flow/nodes/tool-node` — tool 노드
+- `docs/build/flow/nodes/begin-node` — 시작 노드
+- `docs/build/flow/nodes/conversation-node` — 대화 노드
+- `docs/build/flow/nodes/api-node` — API 노드
+- `docs/build/flow/nodes/condition-node` — 조건 노드
+- `docs/build/flow/nodes/extraction-node` — 추출 노드
+- `docs/build/flow/nodes/tool-node` — 도구 노드
+- `docs/build/flow/nodes/transfer-node` — 통화 전환 노드
+- `docs/build/flow/nodes/transfer-agent-node` — 에이전트 전환 노드
+- `docs/build/flow/nodes/end-node` — 종료 노드
 - `docs/build/flow/transitions` — 전환 조건
 - `docs/build/flow/advanced/global-node` — 글로벌 노드
 
