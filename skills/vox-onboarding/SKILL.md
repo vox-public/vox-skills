@@ -28,7 +28,7 @@ echo "ONBOARDED: $_ONBOARDED"
 
 실패하면:
 - "vox.ai MCP 서버에 연결되지 않았습니다. 어떤 AI 도구를 사용하고 계신가요?" (Claude Code / Codex / Cursor / VS Code 등)
-- 사용자가 알려주면 references/quickstart-ko.md에서 해당 클라이언트 섹션을 읽고 연결 방법을 안내
+- 사용자가 알려주면 references/mcp-vox-integration.md에서 해당 클라이언트 섹션을 읽고 연결 방법을 안내
 - OAuth가 기본. "claude mcp add" 명령어 실행 후 브라우저에서 로그인 팝업이 뜸
 - API 토큰을 원하면: vox.ai 대시보드(https://www.tryvox.co) 에서 발급 가능
 - 안내 후: "설정이 완료되면 '준비됐어요'라고 말씀해주세요" → 다시 list_agents 호출하여 확인
@@ -42,9 +42,9 @@ echo "ONBOARDED: $_ONBOARDED"
 - 사용 사례 (에이전트가 할 일?)
 - 웹사이트/참고 자료 (선택)
 
-**프롬프트 생성 시 반드시 vox-single-agent 스킬의 템플릿을 참조한다:**
-- `vox-single-agent/references/voice-ai-prompt-template.md`를 읽어서 프롬프트 구조를 따른다
-- `vox-single-agent/references/voice-ai-playbook.md`의 규칙을 적용한다
+**프롬프트 생성 시 반드시 vox-agents 스킬의 템플릿을 참조한다:**
+- `vox-agents/references/voice-ai-prompt-template.md`를 읽어서 프롬프트 구조를 따른다
+- `vox-agents/references/voice-ai-playbook.md`의 규칙을 적용한다
 - 핵심: 역할 정의, 인사말, 업무 범위, 톤, 금지사항, 마무리 멘트를 포함
 - 한국어 자연스러운 음성 대화체 사용
 
@@ -92,7 +92,7 @@ echo "ONBOARDED: $_ONBOARDED"
    - "이제 이 번호로 전화하면 에이전트가 받습니다"
 3. 번호가 없으면:
    - "인바운드 설정에는 전화번호가 필요합니다"
-   - 번호 구매를 원하면 안내 (비용: 월 7,000원부터, vox-general/references/rate-definitions.md 참조)
+   - 번호 구매를 원하면 안내 (비용: 월 7,000원부터, vox-docs MCP에서 pricing 페이지 검색)
    - `create_telephone_number` 시 inbound_agent_id를 함께 설정하면 한 번에 완료
 
 ### Step 5: 완료
@@ -114,17 +114,16 @@ touch ~/.vox/.onboarded
 - 대시보드: https://www.tryvox.co/agent/{agent_id}
 
 **다음 단계:**
-- 프롬프트 다듬기 → 그냥 "프롬프트 수정해줘"라고 말하면 됨 (vox-single-agent 스킬이 처리)
+- 프롬프트 다듬기 → 그냥 "프롬프트 수정해줘"라고 말하면 됨 (vox-agents 스킬이 처리)
 - 캠페인 (대량 발신) → "캠페인 만들어줘" (create_campaign 도구)
-- 도구 추가 → "도구 연결해줘" (vox-tool 스킬이 처리)
-- 요금 확인 → "요금이 얼마예요?" (vox-general 스킬이 처리)
+- 도구 추가 → "도구 연결해줘" (vox-tools 스킬이 처리)
+- 요금 확인 → "요금이 얼마예요?" (vox-docs MCP에서 pricing 검색)
 
 이 스킬들은 vox-ai 플러그인에 포함되어 있으며, 플러그인 설치 시 함께 사용 가능하다.
 `npx skills add`로 개별 설치한 경우, 위 스킬들이 없을 수 있다. 그때는:
 ```
-npx skills add https://github.com/vox-public/vox-skills --skill vox-single-agent
-npx skills add https://github.com/vox-public/vox-skills --skill vox-tool
-npx skills add https://github.com/vox-public/vox-skills --skill vox-general
+npx skills add https://github.com/vox-public/vox-skills --skill vox-agents
+npx skills add https://github.com/vox-public/vox-skills --skill vox-tools
 ```
 
 ## 일반 사용 (ONBOARDED=yes)
@@ -138,15 +137,15 @@ npx skills add https://github.com/vox-public/vox-skills --skill vox-general
 - **전화번호**: 구매, 목록, 에이전트 연결
 - **캠페인**: 대량 발신 캠페인 생성/관리
 - **통화 기록**: 콜 결과 조회
-- **프롬프트 최적화**: 에이전트 프롬프트 개선 (vox-single-agent 스킬)
-- **플로우 설계**: 복잡한 대화 흐름 설계 (vox-flow-agent 스킬)
+- **프롬프트 최적화**: 에이전트 프롬프트 개선 (vox-agents 스킬)
+- **플로우 설계**: 복잡한 대화 흐름 설계 (vox-agents 스킬)
 - **가격/빌링**: 요금 안내 (vox-general 스킬)
 
 요청이 다른 도메인 스킬의 전문 영역이면 해당 스킬의 지침을 따른다.
 
 ## 이 스킬이 하지 않는 것
 
-- 프롬프트 작성의 세부 규칙 → vox-single-agent
-- 플로우 노드 설계 → vox-flow-agent
+- 프롬프트 작성의 세부 규칙 → vox-agents
+- 플로우 노드 설계 → vox-agents
 - 빌트인/커스텀 도구 관리 → vox-tool
 - 가격 정책 상세 → vox-general

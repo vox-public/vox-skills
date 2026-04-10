@@ -1,6 +1,6 @@
 ---
 name: vox-dash-guide
-description: "Guide for using the vox.ai dashboard — agent settings (prompt, TTS, tools, extraction, deployment), web testing, bulk calling, and call data review. Supports screen-guided mode via Chrome MCP extension when a dashboard URL is provided. Trigger on '대시보드 사용법 알려줘', '에이전트 설정 어떻게 해', '대량발신 방법', '통화 기록 어디서 봐', '테스트 어떻게 해', '화면 보여줘', '대시보드 같이 봐줘', or any dashboard usage question."
+description: "Guide for using the vox.ai dashboard — agent settings (prompt, TTS, tools, extraction, deployment), web testing, bulk calling, and call data review. Also serves as a UI reference that other vox skills consult when explaining how to do something in the dashboard. Supports screen-guided mode via Chrome MCP extension when a dashboard URL is provided. Trigger on '대시보드 사용법 알려줘', '에이전트 설정 어떻게 해', '대량발신 방법', '통화 기록 어디서 봐', '테스트 어떻게 해', '화면 보여줘', '대시보드 같이 봐줘', 'UI에서 어떻게 해', or any dashboard usage question. Other vox skills should also reference this skill when they need to explain dashboard UI steps."
 ---
 
 # vox.ai 대시보드 가이드

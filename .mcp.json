@@ -3,6 +3,10 @@
     "vox": {
       "type": "http",
       "url": "https://mcp.tryvox.co/"
+    },
+    "vox-docs": {
+      "type": "http",
+      "url": "https://docs.tryvox.co/mcp"
     }
   }
 }

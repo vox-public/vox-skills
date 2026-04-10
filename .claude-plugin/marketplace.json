@@ -14,12 +14,11 @@
       "source": "./",
       "strict": false,
       "skills": [
+        "./skills/using-vox-skills",
         "./skills/vox-onboarding",
-        "./skills/using-vox-best-practice",
-        "./skills/vox-single-agent",
-        "./skills/vox-flow-agent",
-        "./skills/vox-tool",
-        "./skills/vox-general"
+        "./skills/vox-agents",
+        "./skills/vox-tools",
+        "./skills/vox-dash-guide"
       ]
     }
   ]
