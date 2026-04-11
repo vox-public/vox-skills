@@ -7,16 +7,7 @@ description: "Getting started with vox.ai — create a voice AI agent, make an o
 
 vox.ai MCP 도구를 사용해 음성 AI 에이전트를 만들고 실제 전화를 걸거나 받는 것을 도와주는 스킬.
 
-## Preamble
-
-```bash
-_VOX_DIR="$HOME/.vox"
-mkdir -p "$_VOX_DIR"
-_ONBOARDED=$([ -f "$_VOX_DIR/.onboarded" ] && echo "yes" || echo "no")
-echo "ONBOARDED: $_ONBOARDED"
-```
-
-## 온보딩 (ONBOARDED=no)
+## 온보딩
 
 처음 사용하는 사용자를 자연스러운 대화로 안내한다. 사용자가 한 번에 정보를 주면 추가 질문 없이 바로 진행. 정보가 부족할 때만 가볍게 물어본다.
 
@@ -98,16 +89,6 @@ echo "ONBOARDED: $_ONBOARDED"
 
 ### Step 5: 완료
 
-에이전트가 성공적으로 생성된 경우에만 온보딩 완료 마킹:
-
-```bash
-touch ~/.vox/.onboarded
-```
-
-에이전트 생성 없이 여기까지 왔으면 .onboarded를 마킹하지 않는다. 다음 /vox 실행 시 온보딩이 다시 시작된다.
-
-온보딩을 다시 하고 싶으면: `rm ~/.vox/.onboarded`
-
 **완료 요약:**
 - 생성된 에이전트: {name} (ID: {agent_id})
 - 아웃바운드 테스트: {완료/스킵}
@@ -121,28 +102,6 @@ touch ~/.vox/.onboarded
 - 요금 확인 → "요금이 얼마예요?" (vox-docs MCP에서 pricing 검색)
 
 이 스킬들은 vox-ai 플러그인에 포함되어 있으며, 플러그인 설치 시 함께 사용 가능하다.
-`npx skills add`로 개별 설치한 경우, 위 스킬들이 없을 수 있다. 그때는:
-```
-npx skills add https://github.com/vox-public/vox-skills --skill vox-agents
-npx skills add https://github.com/vox-public/vox-skills --skill vox-tools
-```
-
-## 일반 사용 (ONBOARDED=yes)
-
-"무엇을 도와드릴까요?"
-
-주요 기능:
-- **에이전트 관리**: 생성, 수정, 목록 조회
-- **전화 걸기**: 아웃바운드 콜 실행
-- **전화 받기**: 인바운드 에이전트 설정
-- **전화번호**: 구매, 목록, 에이전트 연결
-- **대량 발신**: 캠페인 설정/관리 (→ vox-dash-guide)
-- **통화 기록**: 콜 결과 조회
-- **프롬프트 최적화**: 에이전트 프롬프트 개선 (vox-agents 스킬)
-- **플로우 설계**: 복잡한 대화 흐름 설계 (vox-flow 스킬)
-- **가격/빌링**: 요금 안내 (vox-docs MCP에서 pricing 검색)
-
-요청이 다른 도메인 스킬의 전문 영역이면 해당 스킬의 지침을 따른다.
 
 ## 이 스킬이 하지 않는 것
 
