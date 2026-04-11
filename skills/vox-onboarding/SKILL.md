@@ -59,11 +59,15 @@ vox.ai MCP 도구를 사용해 음성 AI 에이전트를 만들고 실제 전화
 사용자가 번호를 알려주면:
 1. `list_telephone_numbers` MCP 도구로 보유 번호 확인
 2. 보유 번호가 있으면: 해당 번호를 call_from으로 사용
-3. 보유 번호가 없으면:
-   - "아직 발신 번호가 없습니다. 전화를 걸려면 번호가 필요해요."
-   - `list_available_telephone_numbers` MCP 도구로 구매 가능 번호 조회
-   - 사용자가 구매 원하면: `create_telephone_number`로 번호 구매 (비용: 월 7,000원부터)
-   - 아니면: "나중에 번호를 구매하신 후 전화를 걸 수 있어요" → Step 4로
+3. **보유 번호가 없으면 (results가 비어있음)**:
+   - `list_organizations` MCP 도구로 현재 organization_id를 확인
+   - 아래 URL을 사용자에게 안내한다 (이 URL로 들어가면 번호 구매 다이얼로그가 바로 열림):
+     ```
+     https://www.tryvox.co/dashboard/{organization_id}/numbers?new=1
+     ```
+   - "발신 번호가 없어서 전화를 걸 수 없습니다. 위 링크로 들어가 번호를 구매하신 후, '번호 샀어요'라고 말씀해주세요"
+   - 사용자가 구매 완료를 알리면 `list_telephone_numbers`를 다시 호출하여 확인
+   - 구매를 원하지 않으면 Step 4로 넘어간다
 4. 번호가 있으면 `create_call` MCP 도구 실행
    - agent_id: Step 2에서 생성한 에이전트 ID
    - call_from: 보유 번호
@@ -84,8 +88,11 @@ vox.ai MCP 도구를 사용해 음성 AI 에이전트를 만들고 실제 전화
    - "이제 이 번호로 전화하면 에이전트가 받습니다"
 3. 번호가 없으면:
    - "인바운드 설정에는 전화번호가 필요합니다"
-   - 번호 구매를 원하면 안내 (비용: 월 7,000원부터, vox-docs MCP에서 pricing 페이지 검색)
-   - `create_telephone_number` 시 inbound_agent_id를 함께 설정하면 한 번에 완료
+   - `list_organizations`로 organization_id를 확인한 뒤 아래 URL을 안내:
+     ```
+     https://www.tryvox.co/dashboard/{organization_id}/numbers?new=1
+     ```
+   - 사용자가 번호를 구매하면 `list_telephone_numbers`로 재확인 후 `update_telephone_number`로 inbound_agent_id 설정
 
 ### Step 5: 완료
 
