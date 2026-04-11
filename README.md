@@ -100,14 +100,17 @@ vox.ai 에이전트의 빌트인/커스텀 도구 관리를 담당합니다.
 - 커스텀 도구 (API/MCP type) 생성/연결/해제
 - `skills/vox-tools/SKILL.md`
 
-### vox-dash-guide
+### vox-web-app
 
-vox.ai 대시보드 사용 가이드. 다른 스킬에서 UI 안내가 필요할 때도 참조됩니다.
+vox.ai 웹 앱(`tryvox.co/dashboard`) 사용 가이드. 다른 스킬에서 UI 안내가 필요할 때도 참조됩니다.
 
-- 에이전트 설정 (프롬프트, TTS, 도구, 추출, 배포)
-- 웹 테스트, 대량발신, 통화 데이터 조회
+- 구축(build): agents, voice, tools, knowledge
+- 배포(deploy): numbers, single/batch outbound
+- 모니터링(monitor): analytics, history, alerts
+- 설정(settings): workspace, billing, member, api-key, webhook, sms, profile
+- 딥링크 치트시트 (`?new=1`, `?clone=true`, `?create=api` 등)
 - Chrome MCP extension으로 화면 보며 안내 지원
-- `skills/vox-dash-guide/SKILL.md`
+- `skills/vox-web-app/SKILL.md`
 
 ## MCP Servers
 

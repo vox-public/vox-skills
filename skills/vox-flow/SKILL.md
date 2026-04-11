@@ -85,7 +85,7 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 |------|--------------|
 | flow design / node conversion / review | prompt authoring / diagnosis / revision (→ vox-agents) |
 | node types / transitions / patterns | tool management (→ vox-tools) |
-| variable system (flow scope) | dashboard UI guide (→ vox-dash-guide) |
+| variable system (flow scope) | web app UI guide (→ vox-web-app) |
 | flow sketch / Mermaid visualization | pricing / billing |
 | global node configuration | phone number management |
 

@@ -62,7 +62,7 @@ Flow 에이전트(multi-node)가 필요한 경우 → `vox-flow` 스킬로 hando
 | agent.data schema | tool management (→ vox-tools) |
 | voice AI playbook rules (공통) | pricing / billing |
 | IVR/DTMF best practice (공통) | phone number management |
-| agent type 판단 + flow handoff | dashboard UI guide (→ vox-dash-guide) |
+| agent type 판단 + flow handoff | web app UI guide (→ vox-web-app) |
 
 ## Related Resources
 
