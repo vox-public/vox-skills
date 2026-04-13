@@ -1,5 +1,5 @@
 {
-  "_comment": "voxai/web defaultAgentData 기준 fully resolved 기본값. MCP create_agent 시 이 구조로 병합됨.",
+  "_comment": "Canonical agent defaults. Keep in sync with voxai/web AgentDefaultConfig.ts, voxai/mcp _DEFAULT_AGENT_DATA, and voxai/api-server schema defaults.",
 
   "prompt": {
     "prompt": "",
@@ -20,11 +20,12 @@
   },
 
   "voice": {
-    "id": "hsDIEmgna8wPYhqtgbxx",
-    "provider": "elevenlabs",
-    "model": "eleven_flash_v2_5",
-    "speed": 0.95,
-    "temperature": 0.9
+    "id": "69c18e1d-fab0-4747-b9da-58617cd8b9e4",
+    "provider": "cartesia",
+    "model": "sonic-3-latest",
+    "speed": 1,
+    "volume": 1,
+    "language": "ko-KR"
   },
 
   "postCall": {
@@ -35,7 +36,7 @@
     "backgroundMusic": "none",
     "backgroundMusicVolume": 0.5,
     "noiseCancellation": "bvc",
-    "activationThreshold": 0.6,
+    "activationThreshold": 0.55,
     "callTimeoutInSeconds": 900,
     "silenceCallTimeoutInSeconds": 30,
     "ringDurationInSeconds": 30,
