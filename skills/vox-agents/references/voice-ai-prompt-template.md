@@ -5,16 +5,18 @@
 주의:
 - `[[...]]`는 작성 시점 placeholder 입니다. 출시 전 반드시 제거/치환하세요.
 - `{{...}}`는 런타임 변수(통화 시작 전 주입)입니다.
+- **변수 fallback 표현 규칙**: 값이 비어있을 때의 대체 처리는 **자연 발화 규칙으로만** 씁니다 (값이 없으면 생략 + "고객님" 같은 대체 표현). `{{고객명|기본값}}` 같은 **파이프/조건문 문법은 금지** — vox 런타임이 파싱하지 않아 통화 중 그대로 읽힙니다.
 - 아래 placeholder는 `voice-ai-playbook.md`의 해당 섹션을 요약해 채웁니다:
 
-| Placeholder | playbook 참조 섹션 |
-|-------------|-------------------|
-| `[[style_rules]]` | Style / Brevity 규칙 (짧은 문장, 선택지 2-3개) |
-| `[[filler_rules]]` | Filler words 규칙 (허용/금지 조건) |
-| `[[turn_taking_rules]]` | Turn-taking 규칙 (질문 1개, 끊어 말하기) |
-| `[[normalization_rules]]` | Character normalization 규칙 (발화 vs 도구 입력 분리) |
-| `[[tool_rules]]` | Tool 사용 규칙 (결과 확인 전 말하지 않기) |
-| `[[guardrails_rules]]` | Rules (must) 규칙 (메타 발화 금지, 이모지 금지 등) |
+| Placeholder | 참조 소스 | 포함 조건 |
+|-------------|----------|----------|
+| `[[style_rules]]` | `voice-ai-playbook.md` § Style / Brevity (짧은 문장, 선택지 2-3개) | 항상 |
+| `[[filler_rules]]` | `voice-ai-playbook.md` § Filler (허용/금지) | 항상 |
+| `[[turn_taking_rules]]` | `voice-ai-playbook.md` § 턴테이킹 (질문 1개, 끊어 말하기, **인터럽션 복구 포함**) | 항상 |
+| `[[expressivity_rules]]` | `voice-emotive-speech.md` (SSML `<speed>`/`<emotion>`/`[laughter]`) | **Opt-in** — 요청 없으면 `# 표현력` 섹션 전체 삭제 |
+| `[[normalization_rules]]` | `voice-ai-playbook.md` § Character normalization (발화 vs 도구 입력) | 항상 |
+| `[[tool_rules]]` | `voice-ai-playbook.md` § 도구 & 액션 (결과 확인 전 말하지 않기) | 항상 |
+| `[[guardrails_rules]]` | `voice-ai-playbook.md` § Rules (must) (메타 발화 금지 등) | 항상 |
 
 ## Contents
 
@@ -24,6 +26,7 @@
 - 목표
 - 말투/발화 스타일
 - 자연스러움 (필러)
+- 표현력 (opt-in)
 - 턴테이킹
 - 문자 정규화
 - 도구
@@ -78,6 +81,21 @@
 - 한 응답에 필러는 최대 1회
 - 금지: 고지/사과/민감정보/숫자/정확성이 중요한 문장
 [[filler_rules]]
+
+<!--
+# 표현력 (opt-in)
+
+이 섹션은 유저가 "자연스러운 발화", "감정 표현", "웃게", "톤", "속도 조절",
+"감정 enabled" 같은 요구를 명시했을 때만 포함합니다.
+요청이 없으면 이 주석 블록과 아래 섹션을 모두 삭제하세요.
+
+전제: voice는 Cartesia 제공자여야 합니다.
+소스: voice-emotive-speech.md
+
+# 표현력
+
+[[expressivity_rules]]
+-->
 
 # 턴테이킹
 

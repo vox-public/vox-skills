@@ -31,6 +31,7 @@ Flow 에이전트(multi-node)가 필요한 경우 → `vox-flow` 스킬로 hando
 - **voice-ai-prompt-diagnosis.md** — 실패 사례 원인 진단. **에이전트가 이상하게 동작할 때 읽기.** See [references/voice-ai-prompt-diagnosis.md](references/voice-ai-prompt-diagnosis.md)
 - **voice-ai-prompt-revision.md** — 진단 기반 리팩터링. **diagnosis 산출물의 change_requests를 반영할 때 읽기.** See [references/voice-ai-prompt-revision.md](references/voice-ai-prompt-revision.md)
 - **variable-system.md** — 변수 카테고리(system/dynamic/extraction), naming, 렌더링 위치. **변수 설계 시 읽기.** See [references/variable-system.md](references/variable-system.md)
+- **voice-emotive-speech.md** — Cartesia Sonic-3 기반 감정/속도/웃음 표현력 prompting 가이드 (SSML `<emotion>`, `<speed>`, `[laughter]`). **유저가 "자연스럽게", "웃게", "속도 조절", "감정 표현"을 요청할 때 읽기.** See [references/voice-emotive-speech.md](references/voice-emotive-speech.md)
 
 ## Core Operating Rules
 
@@ -53,6 +54,21 @@ Flow 에이전트(multi-node)가 필요한 경우 → `vox-flow` 스킬로 hando
 디버깅/개선:
 1. `voice-ai-prompt-diagnosis.md` 읽기 → 실패 원인 진단
 2. `voice-ai-prompt-revision.md` 읽기 → change_requests 기반 리팩터링
+
+## Prompt Composition (Default + Opt-in 모듈)
+
+템플릿(`voice-ai-prompt-template.md`)은 공통 뼈대 + 조건부 모듈로 구성한다.
+
+| 모듈 | 상태 | 주입 위치 | 소스 |
+|------|------|----------|------|
+| 턴테이킹 (인터럽션 복구 포함) | **Default** — 항상 포함 | `# 턴테이킹` 섹션의 `[[turn_taking_rules]]` | `voice-ai-playbook.md` § 턴테이킹 전체 |
+| 표현력 (감정/속도/웃음) | **Opt-in** — 요청 시만 | 새 `# 표현력` 섹션의 `[[expressivity_rules]]` (템플릿에 주석 처리된 상태로 존재) | `voice-emotive-speech.md` |
+
+**Opt-in 트리거 (표현력)** — 유저가 "자연스럽게", "감정 발화", "웃게", "톤", "속도 조절", "감정 enabled" 같은 표현을 쓰면 해당 모듈을 포함한다. 미언급 시 템플릿의 `# 표현력` 주석 블록을 **그대로 삭제**한다.
+
+**Opt-in 전제 조건** — 표현력 모듈은 voice가 **Cartesia** 제공자일 때만 의미가 있다. 다른 제공자(ElevenLabs 등)면 포함하지 말고 사용자에게 voice 변경을 제안(`vox-web-app` 가이드)한 뒤 결정.
+
+**기존 프롬프트 수정** — 이미 배포된 프롬프트에 opt-in 모듈을 **추가/제거**하라는 요청은 `voice-ai-prompt-revision.md`의 change_requests 흐름으로 처리한다.
 
 ## Ownership Boundary
 
