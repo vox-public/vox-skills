@@ -6,19 +6,15 @@
 
 vox.ai MCP 서버 URL: `https://mcp.tryvox.co/mcp`
 
+vox MCP는 **OAuth only**다. API token/`Authorization: Bearer` 헤더 방식은 지원하지 않는다. 클라이언트가 OAuth를 지원하지 않으면 연결할 수 없다.
+
 ### Claude Code
 
-OAuth (기본):
 ```bash
 claude mcp add --transport http vox https://mcp.tryvox.co/mcp
 ```
 
-API 토큰:
-```bash
-export VOX_API_KEY="sk_..."
-claude mcp add --transport http vox https://mcp.tryvox.co/mcp \
-  --header "Authorization: Bearer ${VOX_API_KEY}"
-```
+추가 후 채팅에서 `/mcp` 명령으로 연결 상태를 확인한다. 첫 vox 도구 호출 시 브라우저에서 로그인 창이 열린다.
 
 ### OpenAI Codex
 
@@ -29,28 +25,22 @@ cd vox-skills
 codex
 ```
 
-Codex 안에서 `/plugins`를 실행하고 `vox.ai Plugins` marketplace에서 `vox-ai`를 설치하세요.
+Codex 안에서 `/plugins`를 실행하고 `vox.ai Plugins` marketplace에서 `vox-ai`를 설치한다.
 
-MCP 직접 등록 - OAuth:
+MCP 직접 등록:
 ```bash
 codex mcp add vox --url https://mcp.tryvox.co/mcp
 codex mcp login vox
 ```
 
-API 토큰 — `~/.codex/config.toml`:
-```toml
-[mcp_servers.vox]
-url = "https://mcp.tryvox.co/mcp"
-bearer_token_env_var = "VOX_API_KEY"
-```
-
 ### Cursor
 
-설정 → MCP → 추가:
+`~/.cursor/mcp.json` 또는 `.cursor/mcp.json`:
 ```json
 {
-  "url": "https://mcp.tryvox.co/mcp",
-  "headers": { "Authorization": "Bearer ${env:VOX_API_KEY}" }
+  "mcpServers": {
+    "vox": { "url": "https://mcp.tryvox.co/mcp" }
+  }
 }
 ```
 
@@ -61,8 +51,8 @@ bearer_token_env_var = "VOX_API_KEY"
 {
   "servers": {
     "vox": {
-      "url": "https://mcp.tryvox.co/mcp",
-      "headers": { "Authorization": "Bearer ${input:vox_api_key}" }
+      "type": "http",
+      "url": "https://mcp.tryvox.co/mcp"
     }
   }
 }

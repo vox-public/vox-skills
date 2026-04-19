@@ -20,8 +20,7 @@ vox.ai MCP 도구를 사용해 음성 AI 에이전트를 만들고 실제 전화
 실패하면:
 - "vox.ai MCP 서버에 연결되지 않았습니다. 어떤 AI 도구를 사용하고 계신가요?" (Claude Code / Codex / Cursor / VS Code 등)
 - 사용자가 알려주면 references/mcp-vox-integration.md에서 해당 클라이언트 섹션을 읽고 연결 방법을 안내
-- OAuth가 기본. "claude mcp add" 명령어 실행 후 브라우저에서 로그인 팝업이 뜸
-- API 토큰을 원하면: vox.ai 대시보드(https://www.tryvox.co) 에서 발급 가능
+- vox MCP는 OAuth only다 (API token 방식은 지원하지 않는다). 첫 도구 호출 시 브라우저에서 로그인 창이 열린다.
 - 안내 후: "설정이 완료되면 '준비됐어요'라고 말씀해주세요" → 다시 list_agents 호출하여 확인
 
 ### Step 2: 에이전트 생성
