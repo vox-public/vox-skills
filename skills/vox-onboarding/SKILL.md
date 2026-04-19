@@ -79,20 +79,21 @@ vox.ai MCP 도구를 사용해 음성 AI 에이전트를 만들고 실제 전화
 "전화를 받는 에이전트도 설정할 수 있어요."
 (넘어가려면 "나중에 할게요"도 OK)
 
+공개 MCP에서는 번호에 인바운드 에이전트를 연결하는 도구가 노출되지 않는다. 이 단계는 웹 앱 UI에서 수행하므로, 아래 링크를 안내하고 사용자가 완료했다고 말하면 확인만 한다.
+
 1. `list_telephone_numbers` MCP 도구로 보유 번호 확인 (Step 3에서 이미 조회했으면 재사용)
-2. 번호가 있으면:
-   - "이 번호에 에이전트를 연결할까요?"
-   - `update_telephone_number` MCP 도구로 inbound_agent_id 설정
-     - record_id: list_telephone_numbers 응답에서 추출한 UUID (number 문자열이 아님)
-     - inbound_agent_id: Step 2에서 생성한 에이전트 ID
-   - "이제 이 번호로 전화하면 에이전트가 받습니다"
-3. 번호가 없으면:
-   - "인바운드 설정에는 전화번호가 필요합니다"
-   - `list_organizations`로 organization_id를 확인한 뒤 아래 URL을 안내:
+2. `list_organizations`로 현재 `organization_id`를 확인
+3. 번호 유무에 따라 안내:
+   - **번호가 있으면**: 아래 URL을 알려주고 "번호를 선택한 뒤 오른쪽 상세의 '인바운드 에이전트' 필드에 방금 만든 에이전트를 지정하세요"로 안내
+     ```
+     https://www.tryvox.co/dashboard/{organization_id}/numbers
+     ```
+   - **번호가 없으면**: 구매 다이얼로그가 자동으로 열리는 딥링크 안내
      ```
      https://www.tryvox.co/dashboard/{organization_id}/numbers?new=1
      ```
-   - 사용자가 번호를 구매하면 `list_telephone_numbers`로 재확인 후 `update_telephone_number`로 inbound_agent_id 설정
+     구매 완료 후 위 번호 관리 페이지로 돌아가 인바운드 에이전트 필드를 지정한다.
+4. 사용자가 "연결했어요"라고 답하면 "이제 이 번호로 전화하면 방금 만든 에이전트가 받습니다"로 마무리한다.
 
 ### Step 5: 완료
 
@@ -120,9 +121,12 @@ vox.ai MCP 도구를 사용해 음성 AI 에이전트를 만들고 실제 전화
 ## Related Resources
 
 ### MCP Tools (vox)
+- `list_organizations` — 현재 조직 확인 (웹 앱 딥링크 생성용 `organization_id`)
 - `list_agents`, `create_agent` — 에이전트 조회/생성
 - `create_call` — 아웃바운드 콜 실행
-- `list_telephone_numbers`, `create_telephone_number`, `update_telephone_number` — 전화번호 관리
+- `list_telephone_numbers` — 보유 번호 확인 (read-only)
+
+번호 구매와 인바운드 에이전트 연결은 공개 MCP에 도구가 없으므로 `https://www.tryvox.co/dashboard/{organizationId}/numbers`로 안내한다.
 
 ### Docs (vox-docs)
 - `docs/quickstart` — 빠른 시작 가이드

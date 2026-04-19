@@ -2,7 +2,7 @@
 
 ## Canonical Facts
 
-- Server URL: `https://mcp.tryvox.co/`
+- Server URL: `https://mcp.tryvox.co/mcp`
 - Transport: Streamable HTTP
 - Auth: OAuth (user-scope) OR API token (org-scope)
 
@@ -45,7 +45,7 @@
 ### OAuth (기본)
 
 1. Settings → Connectors → Add custom connector
-2. URL: `https://mcp.tryvox.co/`
+2. URL: `https://mcp.tryvox.co/mcp`
 3. Connect/Authenticate 완료
 
 ### API token (요청 시)
@@ -58,7 +58,7 @@
 ### OAuth (기본)
 
 ```bash
-claude mcp add --transport http vox https://mcp.tryvox.co/
+claude mcp add --transport http vox https://mcp.tryvox.co/mcp
 ```
 
 추가 후 채팅에서 `/mcp` 명령으로 연결 상태를 확인한다.
@@ -67,7 +67,7 @@ claude mcp add --transport http vox https://mcp.tryvox.co/
 
 ```bash
 export VOX_API_KEY="sk_...redacted..."
-claude mcp add --transport http vox-token https://mcp.tryvox.co/ \
+claude mcp add --transport http vox-token https://mcp.tryvox.co/mcp \
   --header "Authorization: Bearer ${VOX_API_KEY}"
 ```
 
@@ -76,7 +76,7 @@ claude mcp add --transport http vox-token https://mcp.tryvox.co/ \
 ### OAuth (기본)
 
 1. Settings → Apps → Advanced settings → Developer mode
-2. Create app → MCP server URL: `https://mcp.tryvox.co/`
+2. Create app → MCP server URL: `https://mcp.tryvox.co/mcp`
 3. OAuth 로그인
 
 ### API token (요청 시)
@@ -102,7 +102,7 @@ Codex 안에서 `/plugins`를 실행하고 `vox.ai Plugins` marketplace에서 `v
 ### MCP 직접 등록 - OAuth (대안)
 
 ```bash
-codex mcp add vox --url https://mcp.tryvox.co/
+codex mcp add vox --url https://mcp.tryvox.co/mcp
 codex mcp login vox
 ```
 
@@ -112,7 +112,7 @@ codex mcp login vox
 
 ```toml
 [mcp_servers.vox]
-url = "https://mcp.tryvox.co/"
+url = "https://mcp.tryvox.co/mcp"
 bearer_token_env_var = "VOX_API_KEY"
 ```
 
@@ -126,7 +126,7 @@ bearer_token_env_var = "VOX_API_KEY"
 {
   "$schema": "https://opencode.ai/config.json",
   "mcp": {
-    "vox": { "type": "remote", "url": "https://mcp.tryvox.co/" }
+    "vox": { "type": "remote", "url": "https://mcp.tryvox.co/mcp" }
   }
 }
 ```
@@ -147,7 +147,7 @@ opencode mcp auth vox
   "mcp": {
     "vox": {
       "type": "remote",
-      "url": "https://mcp.tryvox.co/",
+      "url": "https://mcp.tryvox.co/mcp",
       "oauth": false,
       "headers": { "Authorization": "Bearer {env:VOX_API_KEY}" }
     }
@@ -164,7 +164,7 @@ opencode mcp auth vox
 ```json
 {
   "mcpServers": {
-    "vox": { "url": "https://mcp.tryvox.co/" }
+    "vox": { "url": "https://mcp.tryvox.co/mcp" }
   }
 }
 ```
@@ -175,7 +175,7 @@ opencode mcp auth vox
 {
   "mcpServers": {
     "vox": {
-      "url": "https://mcp.tryvox.co/",
+      "url": "https://mcp.tryvox.co/mcp",
       "headers": { "Authorization": "Bearer ${env:VOX_API_KEY}" }
     }
   }
@@ -193,7 +193,7 @@ opencode mcp auth vox
   "servers": {
     "vox": {
       "type": "http",
-      "url": "https://mcp.tryvox.co/"
+      "url": "https://mcp.tryvox.co/mcp"
     }
   }
 }
@@ -208,7 +208,7 @@ opencode mcp auth vox
   "servers": {
     "vox": {
       "type": "http",
-      "url": "https://mcp.tryvox.co/",
+      "url": "https://mcp.tryvox.co/mcp",
       "headers": {
         "Authorization": "Bearer ${input:vox-api-key}"
       }
