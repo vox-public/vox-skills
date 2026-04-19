@@ -18,14 +18,14 @@ claude mcp add --transport http vox https://mcp.tryvox.co/mcp
 
 ### OpenAI Codex
 
-Plugin (권장):
+Plugin (권장, 2026-04+):
 ```bash
-git clone https://github.com/vox-public/vox-skills.git
-cd vox-skills
-codex
+codex marketplace add vox-public/vox-skills
 ```
 
-Codex 안에서 `/plugins`를 실행하고 `vox.ai Plugins` marketplace에서 `vox-ai`를 설치한다.
+그 뒤 plugin 목록에서 `vox-ai`를 설치한다.
+- Codex App: **Plugins** 화면에서 `vox-ai` → **Add to Codex**
+- Codex CLI: `codex` 실행 후 `/plugins` → `vox-ai` → **Install plugin**
 
 MCP 직접 등록:
 ```bash
