@@ -51,6 +51,7 @@
 ## Unreleased
 
 ### Changed
+- Codex plugin 설치 경로를 2026-04 신규 `codex marketplace add vox-public/vox-skills` 단일 명령으로 전환했다. `README.md`, `vox-onboarding/references/quickstart-ko.md`, `vox-onboarding/references/mcp-vox-integration.md`의 기존 `git clone → cd → codex → /plugins` 흐름을 모두 대체하고 App(**Plugins → Add to Codex**)과 CLI(`/plugins → Install plugin`) 설치를 병기했다. docs `docs/ai/openai-codex` 개편과 정합한다.
 - `vox-onboarding` Step 4(인바운드 안내)를 공개 MCP surface와 정합화했다. `update_telephone_number`가 Phase 1 public이 아니므로 번호-에이전트 연결은 웹 앱(`/dashboard/{organizationId}/numbers`)으로 안내하도록 바꿨다.
 - `vox-onboarding` Related Resources의 MCP Tools 목록을 실제 public(`list_telephone_numbers`만 read-only)으로 정리하고 `list_organizations`를 명시했다.
 - vox MCP의 **OAuth-only** contract를 온보딩 문서에도 반영했다. `SKILL.md` Step 1, `quickstart-ko.md`, `references/mcp-vox-integration.md`에서 `Authorization: Bearer ${VOX_API_KEY}` / `bearer_token_env_var` 등 **제거된 API token 방식** 안내를 모두 걷어내고 클라이언트별 OAuth 경로만 남겼다. 서버가 받지 않는 방식을 가이드해 유저를 막다른 길로 보내는 문제를 제거한다.

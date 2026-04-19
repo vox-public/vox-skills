@@ -6,24 +6,18 @@ vox.ai 개발자를 위한 Codex/Claude plugin + Agent Skills 레포입니다.
 
 ### OpenAI Codex Plugin (권장)
 
-이 repo는 Codex workspace install 구조를 이미 포함합니다. repo root에서 Codex를 열고 plugin을 설치하세요.
+터미널에서 한 줄로 vox.ai 마켓플레이스를 등록합니다 (2026-04+ Codex).
 
 ```bash
-git clone https://github.com/vox-public/vox-skills.git
-cd vox-skills
-codex
+codex marketplace add vox-public/vox-skills
 ```
 
-Codex 안에서:
+그 뒤 plugin 목록에서 `vox-ai`를 설치합니다.
 
-1. `/plugins` 실행
-2. marketplace에서 `vox.ai Plugins` 선택
-3. `vox-ai` 설치
-4. 필요하면 OAuth 로그인 완료
+- **Codex App**: **Plugins** 화면에서 `vox-ai` → **Add to Codex**
+- **Codex CLI**: `codex` 실행 후 `/plugins` → `vox-ai` → **Install plugin**
 
-Plugin 설치 후 MCP 서버와 스킬이 함께 활성화됩니다.
-
-repo를 clone한 뒤 Codex가 이미 열려 있었다면 재시작하세요.
+설치 중 브라우저에서 vox.ai OAuth 로그인 창이 열립니다. 설치 후에는 Codex를 재시작해야 skill과 MCP 서버가 현재 세션에 로드됩니다.
 
 ### Claude Code Plugin
 
