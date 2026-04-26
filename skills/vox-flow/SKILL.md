@@ -77,7 +77,7 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 4. node 수는 최소화 — 불필요한 분할은 edge 관리를 복잡하게 하고 유지보수 비용이 증가한다.
 5. 변수 이름은 snake_case, 의미가 명확한 이름 사용 — condition node와 변수 렌더러가 snake_case를 전제로 동작하며, 모호한 이름(val1, temp)은 노드 간 전달 시 혼동을 일으킨다.
 6. 전환조건에 "다음 단계 이름"을 쓰지 않는다 — exit 조건만 정의해야 노드 순서가 바뀌어도 LLM이 올바르게 판단한다.
-7. **산출물은 대시보드 입력용** — flow 설계 결과물은 대시보드 flow editor에서 수동 입력한다. REST API(`PATCH /v2/agents/{id}` with `flow_data`)로 프로그래밍 수정이 가능하지만, 현재 MCP tools에는 `flow_data` 파라미터가 없으므로 MCP 클라이언트에서 직접 flow를 수정할 수 없다. 노드 markdown을 사람이 읽고 UI에 옮길 수 있는 형태로 출력한다.
+7. **산출물 경로는 두 가지** — (a) 대시보드 flow editor 에 사람이 직접 입력하는 노드 markdown, (b) v3 REST API (`PATCH /v3/agents/{id}` with `flow_data`) 또는 동등한 vox MCP `create_agent` / `update_agent` 의 `flow_data` 파라미터로 보내는 JSON. 두 surface 모두 동일한 v3 schema 를 받는다 (snake_case + edge-level discriminated union condition). 수정은 항상 **전체 교체** 방식 — 기존 노드 일부만 patch 하지 않고 nodes/edges 전체를 다시 보낸다. schema 상세 → `references/flow-guide.md` 의 "v3 Flow Schema" + `references/node-types.md`.
 
 ## Ownership Boundary
 
