@@ -88,6 +88,9 @@ Flow 에이전트(multi-node)가 필요한 경우 → `vox-flow` 스킬로 hando
 - `get_agent` — 에이전트 상세 조회 (현재 prompt, 설정 확인)
 - `list_agents` — 에이전트 목록
 - `get_call` — 통화 로그 조회 (진단 시 transcript 확인)
+- `get_schema(namespace='agent-schema', schema_type='agent-data-create')` — `create_agent.data` shape 확인
+- `get_schema(namespace='agent-schema', schema_type='agent-data-update')` — `update_agent.data` shape 확인
+- `get_schema(namespace='flow-schema', schema_type='flow-data')` — flow agent graph shape 확인 (필요 시 `vox-flow`로 handoff)
 
 ### Docs (vox-docs search)
 - `docs/build/overview` — 에이전트 빌드 개요
