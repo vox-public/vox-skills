@@ -1,64 +1,55 @@
 {
-  "_comment": "voxai/web defaultFlowObject 기준. 새 flow agent 생성 시 이 구조로 초기화됨.",
+  "_comment": "v3 flow_data 의 가장 작은 합법 형태 (begin -> conversation -> endCall). 모든 필드는 snake_case. 노드 사이의 분기는 노드 내부가 아니라 edge.condition 에 위치. node-types.md 와 flow-guide.md 의 'EdgeCondition' 섹션이 schema 의 source-of-truth. 이 예시 안에 position/viewport/edge.id/sourceHandle 같은 v2 vox-web editor 메타는 없음 — v3 API surface 는 받지 않음 (보내도 silently drop).",
 
   "nodes": [
     {
       "id": "begin-1",
       "type": "begin",
       "data": {
-        "name": "Begin #1",
-        "firstLineType": "aiFirst"
-      },
-      "position": { "x": 0, "y": 0 }
+        "name": "Begin",
+        "first_line_type": "aiFirst",
+        "pause_before_speaking_seconds": 0
+      }
     },
     {
       "id": "conversation-1",
       "type": "conversation",
       "data": {
-        "name": "Conversation #1",
-        "promptType": "dynamic",
-        "prompt": "안녕하세요 무엇을 도와드릴까요?",
-        "staticSentence": "",
-        "transitions": [
-          { "id": "tr-1", "condition": "" },
-          { "id": "tr-2", "condition": "" }
-        ],
-        "loopCondition": "",
-        "isSkipUserResponse": false,
-        "isAllowInterruption": true,
-        "globalNodeSettings": {
-          "isGlobalNode": false,
-          "transitionCondition": ""
-        }
-      },
-      "position": { "x": 450, "y": 0 }
+        "name": "Greeting",
+        "message": {
+          "mode": "generated",
+          "content": "안녕하세요. 무엇을 도와드릴까요?"
+        },
+        "is_skip_user_response": false,
+        "is_allow_interruption": true
+      }
     },
     {
       "id": "endcall-1",
       "type": "endCall",
       "data": {
-        "name": "EndCall #1",
-        "promptType": "none",
-        "prompt": "",
-        "staticSentence": "",
-        "globalNodeSettings": {
-          "isGlobalNode": false,
-          "transitionCondition": ""
+        "name": "End",
+        "message": {
+          "mode": "static",
+          "content": "감사합니다. 통화를 종료합니다."
         }
-      },
-      "position": { "x": 988, "y": 275 }
+      }
     }
   ],
 
   "edges": [
     {
-      "id": "edge-begin-to-conv",
-      "type": "custom",
       "source": "begin-1",
       "target": "conversation-1",
-      "animated": true
+      "condition": { "type": "fallback" }
+    },
+    {
+      "source": "conversation-1",
+      "target": "endcall-1",
+      "condition": {
+        "type": "ai",
+        "prompt": "고객이 더 이상 도움이 필요 없다고 한 경우, 또는 안내가 끝난 경우"
+      }
     }
-  ],
-
-  "viewport": { "x": 100, "y": 300, "zoom": 0.55 }
+  ]
 }

@@ -1,8 +1,12 @@
-# Node Types 상세 스펙
+# Node Types 상세 스펙 (v3 API schema)
+
+본 파일은 vox.ai 의 v3 flow schema (vox MCP `create_agent`/`update_agent` 의 `flow_data`, REST `/v3/agents` 와 동일) 의 노드 타입별 필드를 정의한다. 모든 필드는 **snake_case**. 노드 사이의 분기 조건은 노드 안이 아니라 **edge** 에 위치한다 (구 v2 모델의 `transitions[]` / `logicalTransitions[]` / `sourceHandle` 폐지) — edge schema 는 [flow-guide.md](flow-guide.md) 의 "EdgeCondition" 섹션 참조.
+
+알려지지 않은 필드는 서버가 validation error 없이 silently drop. 보낸 필드가 응답에 없으면 schema 어긋남이다.
 
 ## 목차
 
-- [공통 타입](#공통-타입) — NodeTransitionData, GlobalNodeSettings, Edge 연결
+- [공통 value objects](#공통-value-objects) — Message, GlobalConfig, NodeKnowledgeConfig, ExtractionConfiguration, VariableDef, ApiConfiguration, ApiResponseVariable, TransferConfiguration, SipHeader, AgentMapping
 - [begin](#begin) — 시작
 - [conversation](#conversation) — 대화
 - [tool](#tool) — 도구 실행
@@ -16,143 +20,176 @@
 - [note](#note) — 메모
 - [Deprecated](#deprecated) — function, knowledge
 
+모든 노드의 `data` 는 두 공통 필드를 가질 수 있다.
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `name` | string? | 에디터 표시용 라벨. |
+| `global` | GlobalConfig? | 값이 있으면 global node — 조건 일치 시 어디서든 진입. 값이 없으면 일반 노드. |
+
 ---
 
-## 공통 타입
+## 공통 value objects
 
-### NodeTransitionData
+### Message
 
-conversation, tool, api, sendSms, transferCall, transferAgent 노드가 사용하는 전환 조건 구조.
-
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `id` | string | 전환 ID — edge의 `sourceHandle`과 매핑됨 |
-| `condition` | string? | 자연어 전환 조건. `{{variable}}` 참조 가능 |
-| `isSkipUserResponse` | boolean? | 유저 응답 없이 즉시 전환 |
-| `isFallback` | boolean? | fallback 전환 여부 (tool/api/transfer 노드에서 자동 생성) |
-
-### GlobalNodeSettings
-
-conversation, endCall, sendSms 노드에서 사용. 활성화하면 flow 어디서든 이 노드로 이동 가능.
+conversation / endCall 노드의 발화 표현. 구 v2 의 `promptType` + `prompt` + `staticSentence` 3 필드를 단일화한 형태.
 
 | 필드 | 타입 | 설명 |
-|------|------|------|
-| `isGlobalNode` | boolean | 글로벌 노드 활성화 |
-| `transitionCondition` | string | 글로벌 전환 조건 (예: "통화 끊어달라고 하면") |
+|---|---|---|
+| `mode` | `"generated" \| "static" \| "none"` | LLM 생성 / 고정 발화 / 발화 없음 |
+| `content` | string | mode 에 따라 (generated → prompt, static → 고정 문장, none → "") |
 
-### AgentLLM
+- conversation 노드의 `message.mode = "none"` 은 runtime 거부.
+- endCall 노드는 `mode = "none"` 허용 (즉시 종료).
 
-노드별 LLM 오버라이드. 미지정 시 에이전트 기본 LLM을 사용한다.
+### GlobalConfig
 
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `model` | string | 모델 ID |
-| `temperature` | number? | 생성 온도 |
+```
+{ "enter_condition": "통화 끊어달라고 한 경우" }
+```
+
+global node 활성화는 노드 `data.global` 에 위 객체를 넣는다. 값 자체가 없으면 (`data` 에 `global` 키 부재) 일반 노드. 자연어 진입 조건만 갖는다.
 
 ### NodeKnowledgeConfig
 
-노드별 지식베이스 설정. conversation 노드에서 사용.
+conversation 노드의 RAG 설정.
+
+| 필드 | 타입 | 기본값 |
+|---|---|---|
+| `rag_enabled` | bool | false |
+| `knowledge_ids` | int[] | null |
+
+### ExtractionConfiguration
+
+extraction 노드의 추출 설정.
+
+| 필드 | 타입 | 기본값 |
+|---|---|---|
+| `extraction_prompt` | string | "" |
+| `variables` | VariableDef[] | [] |
+
+### VariableDef
+
+```
+{ "variable_name": "preferred_time", "variable_type": "string", "variable_description": "고객이 원하는 예약 시간" }
+```
+
+| 필드 | 타입 | 제약 |
+|---|---|---|
+| `variable_name` | string | 정규식 `^[a-zA-Z][a-zA-Z0-9_]{0,39}$` (snake_case 권장) |
+| `variable_type` | `"string" \| "number" \| "boolean"` | 기본 `"string"` |
+| `variable_description` | string | LLM 추출 가이드. 기본 "" |
+
+### ApiConfiguration
+
+api 노드의 HTTP 호출 설정.
+
+| 필드 | 타입 | 기본값 / 비고 |
+|---|---|---|
+| `method` | `"GET" \| "POST" \| "PUT" \| "DELETE"` | 기본 `"GET"`. (PATCH 미지원) |
+| `url` | string | `{{var}}` 치환 지원 |
+| `authorization_enabled` | bool | 기본 false |
+| `auth_type` | `"None" \| "Basic" \| "Bearer"` | 기본 `"None"` |
+| `auth_credentials` | string? | 인증 토큰/키 |
+| `auth_encode_required` | bool | Basic Auth Base64 인코딩 필요 여부, 기본 false |
+| `headers_enabled` | bool | 기본 false |
+| `headers` | dict[str, str] | 기본 `{}` |
+| `body_enabled` | bool | 기본 false |
+| `body` | string? | JSON string |
+| `timeout_seconds` | int (>0) | 기본 10 |
+
+### ApiResponseVariable
+
+api 응답에서 추출할 변수 매핑.
 
 | 필드 | 타입 | 설명 |
-|------|------|------|
-| `ragEnabled` | boolean | RAG 활성화 여부 |
-| `knowledgeIds` | number[]? | 사용할 지식베이스 ID 목록 |
+|---|---|---|
+| `variable_name` | string | 저장할 변수 이름 |
+| `json_path` | string | JSONPath 표현식 (예: `$.data.user.id`) |
 
-### TransferConfigurationItem
+### TransferConfiguration
 
 transferCall 노드의 전환 대상 설정.
 
-| 필드 | 타입 | 기본값 | 설명 |
-|------|------|--------|------|
-| `transferType` | `"phone" \| "sip"` | `"phone"` | 전환 방식 |
-| `transferTo` | string | | 전화번호 또는 SIP URI |
-| `transferCondition` | string? | | 전환 조건 설명 |
+| 필드 | 타입 | 기본값 |
+|---|---|---|
+| `transfer_to` | string | 대상 번호 또는 SIP URI |
+| `transfer_type` | `"phone" \| "sip"` | 기본 `"phone"` |
+| `transfer_condition` | string? | 전환 조건 설명 (선택) |
 
-### SipHeaderItem
+### SipHeader
 
-SIP 전환 시 커스텀 헤더. 최대 10개.
+transferCall 의 SIP REFER 헤더 (옵션).
+
+| 필드 | 타입 |
+|---|---|
+| `name` | string |
+| `value` | string |
+
+### AgentMapping
+
+transferAgent 노드의 대상 에이전트 매핑.
 
 | 필드 | 타입 | 설명 |
-|------|------|------|
-| `name` | string | 헤더 이름 |
-| `value` | string | 헤더 값 |
-
-### Edge 연결 메커니즘
-
-노드 간 연결은 `edge`로 표현된다. **핵심**: edge의 `sourceHandle`이 소스 노드의 `transition.id`와 매핑됨.
-
-```
-Node A (conversation)                Edge                    Node B
-  transitions: [                    {
-    { id: "tr-1",          ←——→       sourceHandle: "tr-1",
-      condition: "예약 원하면" }        source: "node-a",
-  ]                                    target: "node-b"
-                                    }
-```
-
-- 하나의 transition에 하나의 edge만 연결 (1:1)
-- condition 노드는 `logicalTransitions[].id`가 sourceHandle
-- begin 노드는 transition 없이 직접 edge 연결
+|---|---|---|
+| `agent_id` | string (UUID) | 전환 대상 에이전트의 UUID |
+| `agent_version` | `"current" \| "production" \| "v{n}"` | 기본 `"current"`. `v{n}` 은 `n>=1`. null 거부. |
 
 ---
 
 ## begin
 
-flow 시작점. flow당 1개 자동 생성, 삭제/추가 불가.
+flow 시작점. flow 당 1 개 자동 생성, 삭제 불가.
 
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `name` | string | 노드 이름 |
-| `firstLineType` | `"userFirst" \| "aiFirst"` | 첫 발화 주체 |
-| `pauseBeforeSpeakingSeconds` | number? | AI 발화 전 대기 시간(초) |
+| 필드 | 타입 | 기본값 |
+|---|---|---|
+| `name` | string? | |
+| `global` | GlobalConfig? | |
+| `first_line_type` | `"aiFirst" \| "userFirst"` ? | null 이면 agent 의 `data.prompt.first_line_type` 상속 |
+| `pause_before_speaking_seconds` | float (0..5) | 0.0 |
 
 - `aiFirst`: 에이전트가 먼저 인사. `userFirst`: 고객 발화 대기 후 시작.
-- begin에서 나가는 edge는 1개만 허용.
+- begin 의 out-edge 는 보통 1 개, condition 은 `{type:"fallback"}`.
 
 ---
 
 ## conversation
 
-대화 수행 노드. flow의 핵심.
+대화 수행 노드. flow 의 핵심.
 
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `name` | string | 노드 이름 |
-| `promptType` | `"static" \| "dynamic"` | 발화 모드 |
-| `prompt` | string | dynamic 모드 프롬프트 (LLM이 생성) |
-| `staticSentence` | string | static 모드 고정 멘트 (TTS 직접 발화) |
-| `firstMessage` | string? | 노드 진입 시 첫 발화 (prompt 실행 전) |
-| `transitions` | NodeTransitionData[] | 전환 조건 목록 |
-| `loopCondition` | string | 조건 충족까지 반복 |
-| `isSkipUserResponse` | boolean | 유저 응답 없이 다음으로 |
-| `globalNodeSettings` | GlobalNodeSettings | 글로벌 노드 설정 |
-| `isAllowInterruption` | boolean? | 발화 중 끼어들기 허용 |
-| `llm` | AgentLLM? | 노드별 LLM 오버라이드 |
-| `knowledge` | NodeKnowledgeConfig? | 노드별 지식베이스 (ragEnabled, knowledgeIds) |
+| 필드 | 타입 | 기본값 |
+|---|---|---|
+| `name` | string? | |
+| `global` | GlobalConfig? | |
+| `message` | Message? | 발화. `mode="none"` 거부 |
+| `first_message` | string? | 노드 진입 시 첫 발화 (message 실행 전) |
+| `loop_condition` | string? | 조건 충족까지 노드 안에서 반복 |
+| `is_skip_user_response` | bool | 기본 false |
+| `is_allow_interruption` | bool | 기본 true |
+| `knowledge` | NodeKnowledgeConfig? | RAG 설정 |
+| `knowledge_ids` (deprecated) | int[]? | v2 legacy. 신규는 `knowledge.knowledge_ids` 사용. |
+| `rag_enabled` (deprecated) | bool? | v2 legacy. 신규는 `knowledge.rag_enabled` 사용. |
 
-- `promptType: "dynamic"` — LLM이 prompt 기반으로 응답 생성
-- `promptType: "static"` — staticSentence를 TTS로 그대로 읽음
-- `transitions`: 자연어 condition으로 exit 조건 정의. `{{variable}}` 참조 가능.
-- `loopCondition`: 비어 있으면 반복 없음. 값이 있으면 조건 불충족 시 현재 노드 유지.
-- `knowledge`: `ragEnabled: true` + `knowledgeIds` 설정 시 해당 지식베이스에서 RAG 수행.
+- conversation 노드의 out-edge condition 은 보통 `{type:"ai", prompt:"…"}`. 자연어 exit 조건. 여러 개 + 보통 마지막에 `{type:"fallback"}` 1 개.
+- `loop_condition` 은 비어 있으면 반복 없음. 값이 있으면 조건 불충족 시 같은 노드 반복.
+- `knowledge.rag_enabled = true` + `knowledge.knowledge_ids` 설정 시 RAG.
 
 ---
 
 ## tool
 
-도구 실행 노드. vox.ai에 등록된 tool을 호출.
+도구 실행 노드. vox.ai 에 등록된 tool 호출.
 
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `name` | string | 노드 이름 |
-| `promptType` | `"none" \| "static" \| "dynamic"` | 실행 전 발화 모드 |
-| `prompt` | string | dynamic 프롬프트 |
-| `staticSentence` | string | static 고정 멘트 |
-| `transitions` | NodeTransitionData[] | 전환 조건 (+ fallback 자동 생성) |
-| `toolId` | string? | 실행할 tool ID |
+| 필드 | 타입 |
+|---|---|
+| `name` | string? |
+| `global` | GlobalConfig? |
+| `tool_id` | string? — UUID (신규) 또는 legacy function id 문자열 |
+| `prompt` | string? — 실행 전 발화 프롬프트 (선택) |
 
-- fallback transition이 자동 추가됨 (편집/삭제 불가). tool 실행 실패 시 fallback edge로 진행.
-- `promptType: "none"` — 발화 없이 바로 tool 실행.
+- 호출 실패 시 path 는 out-edge 에 `{type:"fallback"}` edge 로 표현.
+- legacy `agentToolId` (int) 는 v3 API 노출 안 됨 — 보내도 drop, 내부 reference 로만 보존.
 
 ---
 
@@ -160,127 +197,73 @@ flow 시작점. flow당 1개 자동 생성, 삭제/추가 불가.
 
 HTTP API 호출 노드.
 
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `name` | string | 노드 이름 |
-| `promptType` | `"none" \| "static" \| "dynamic"` | 실행 전 발화 모드 |
-| `prompt` | string | dynamic 프롬프트 |
-| `staticSentence` | string | static 고정 멘트 |
-| `transitions` | NodeTransitionData[] | 전환 조건 (+ fallback 자동 생성) |
-| `apiConfiguration` | APIConfiguration | API 설정 |
-| `responseVariables` | APIResponseVariable[] | 응답 변수 추출 |
+| 필드 | 타입 |
+|---|---|
+| `name` | string? |
+| `global` | GlobalConfig? |
+| `api_configuration` | ApiConfiguration (필수) |
+| `response_variables` | ApiResponseVariable[] (기본 `[]`) |
+| `prompt` | string? — 호출 전 발화 프롬프트 (선택) |
 
-**APIConfiguration:**
+- 호출 실패 path 는 out-edge `{type:"fallback"}`.
+- `response_variables` 의 변수는 flow 변수로 등록되어 이후 노드에서 `{{variable_name}}` 으로 참조.
 
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `method` | `GET \| POST \| PUT \| DELETE \| PATCH` | HTTP 메서드 |
-| `url` | string | 요청 URL |
-| `authorizationEnabled` | boolean | 인증 사용 여부 |
-| `authType` | `None \| Basic \| Bearer` | 인증 방식 |
-| `authCredentials` | string? | 인증 토큰/키 |
-| `authEncodeRequired` | boolean | Basic Auth Base64 인코딩 필요 여부 |
-| `headersEnabled` | boolean | 커스텀 헤더 사용 여부 |
-| `headers` | Record<string, string> | 헤더 key-value |
-| `bodyEnabled` | boolean | 요청 body 사용 여부 |
-| `body` | string? | 요청 body (JSON string) |
-| `timeoutSeconds` | number | 타임아웃(초) |
+---
 
-**APIResponseVariable:**
+## sendSms
 
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `variableName` | string | 저장할 변수 이름 |
-| `jsonPath` | string | JSONPath 표현식 (예: `$.data.user.id`) |
+SMS 발송 노드. 통화 중 SMS 메시지를 전송. 다른 conversation/endCall 과 다르게 **flat 구조** (Message 객체 사용 안 함) — DB / runtime / web editor schema 와 일치.
 
-- fallback transition 자동 추가 (편집/삭제 불가).
-- `responseVariables`로 추출한 변수는 flow 변수로 등록되어 이후 노드에서 `{{variable_name}}`으로 참조 가능.
+| 필드 | 타입 | 기본값 |
+|---|---|---|
+| `name` | string? | |
+| `global` | GlobalConfig? | |
+| `prompt_type` | `"static" \| "dynamic"` | 기본 `"dynamic"` |
+| `prompt` | string? | `prompt_type="dynamic"` 일 때 SMS body 생성 프롬프트 |
+| `static_sentence` | string? | `prompt_type="static"` 일 때 고정 메시지 본문 |
+| `static_title` | string? | static LMS/MMS 제목 (선택) |
+| `static_image_file_keys` | string[] (max 3) | static MMS 첨부 — `POST /v2/files` 가 반환한 opaque `file_key` 만 (storage path / public URL 금지) |
+| `sms_from_number` | string? | 발신번호 override. SMS 가능 번호여야 하고 미지정 시 통화 컨텍스트 default 사용 |
+
+- SMS 가능 전화번호가 조직에 있어야 사용 가능.
+- 성공 / 실패 path 는 out-edge 에 각각 `{type:"ai"}` (또는 logic) 와 `{type:"fallback"}` 으로 표현.
 
 ---
 
 ## condition
 
-조건 분기 노드. 변수 값에 따라 다른 edge로 진행.
+조건 분기 노드. **`data` 에 `name` / `global` 외 어떤 필드도 들어가지 않는다.** 분기는 100% out-edge 에 위치.
 
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `name` | string | 노드 이름 |
-| `logicalTransitions` | LogicalTransition[] | 조건부 전환 목록 |
+| 필드 | 타입 |
+|---|---|
+| `name` | string? |
+| `global` | GlobalConfig? |
 
-**LogicalTransition:**
+분기는 out-edge 의 `condition` 으로:
+- `{type:"logic", op:"and"|"or", conditions:[SingleCondition,...]}` edge 여러 개 (각각 한 분기)
+- 마지막에 `{type:"fallback"}` edge 1 개 (Else)
 
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `id` | string | 전환 ID |
-| `condition` | LogicalCondition | 조건 그룹 |
+`SingleCondition` / `ConditionOperator` 상세 → [flow-guide.md](flow-guide.md) 의 "EdgeCondition" 섹션.
 
-**LogicalCondition:**
-
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `conditions` | SingleCondition[] | 개별 조건 목록 |
-| `logicalOperator` | `and \| or` | 조건 결합 방식 |
-
-**SingleCondition:**
-
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `variable` | string | 비교 대상 변수 |
-| `operator` | OperatorEnum | 비교 연산자 |
-| `value` | string? | 비교 값 (EXISTS/DOES_NOT_EXIST는 불필요) |
-
-**OperatorEnum (10종):**
-
-| Operator | 의미 | 값 필요 |
-|----------|------|---------|
-| `equals` | 같음 (=) | Yes |
-| `not_equals` | 같지 않음 (≠) | Yes |
-| `contains` | 포함 (∈) | Yes |
-| `does_not_contain` | 미포함 (∉) | Yes |
-| `greater_than` | 보다 큼 (>) | Yes |
-| `less_than` | 보다 작음 (<) | Yes |
-| `greater_than_or_equal` | 보다 크거나 같음 (≥) | Yes |
-| `less_than_or_equal` | 보다 작거나 같음 (≤) | Yes |
-| `exists` | 존재함 (∃) | No |
-| `does_not_exist` | 존재하지 않음 (¬∃) | No |
-
-- 조건 노드에는 별도 prompt가 없음 — 순수 논리 분기만 수행.
-- 각 logicalTransition이 하나의 edge에 대응.
-- 조건을 만족하는 첫 번째 transition으로 진행 (위→아래 순서).
+> 구 v2 의 `logicalTransitions[]` / `LogicalCondition` / 노드 내부 분기 필드는 **모두 사라짐**. condition 노드의 data 안에 분기 필드를 넣어 보내면 silently drop.
 
 ---
 
 ## extraction
 
-변수 추출 노드. LLM이 대화 컨텍스트에서 정보를 추출하여 flow 변수로 저장.
+변수 추출 노드. LLM 이 대화 컨텍스트에서 정보를 추출하여 flow 변수로 저장.
 
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `name` | string | 노드 이름 |
-| `promptType` | `"dynamic"` (고정) | 항상 dynamic |
-| `prompt` | string | 추출 지시 프롬프트 |
-| `extractionConfiguration` | ExtractionConfiguration | 추출 설정 |
-| `isSkipUserResponse` | boolean | 항상 true (유저 응답 불필요) |
-| `llm` | AgentLLM? | 노드별 LLM 오버라이드 |
-
-**ExtractionConfiguration:**
-
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `extractionPrompt` | string | 추출 지시 프롬프트 |
-| `variables` | VariableDefinition[] | 추출 대상 변수 목록 |
-
-**VariableDefinition:**
-
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `variableName` | string | 변수 이름 (snake_case) |
-| `variableType` | `"string" \| "number" \| "boolean"` | 변수 타입 |
-| `variableDescription` | string | 변수 설명 (LLM 추출 가이드) |
+| 필드 | 타입 | 기본값 |
+|---|---|---|
+| `name` | string? | |
+| `global` | GlobalConfig? | |
+| `extraction_configuration` | ExtractionConfiguration | (필수, 기본은 빈 config) |
+| `prompt` | string? | extraction 추가 컨텍스트 (선택) |
+| `is_skip_user_response` | bool | 기본 true (응답 대기 안 함) |
 
 - 유저 응답을 기다리지 않고 기존 대화 컨텍스트에서 즉시 추출.
-- 추출된 변수는 flow 변수로 등록, 이후 노드에서 `{{variable_name}}`으로 참조.
-- extraction 노드는 transition 없이 단일 edge로 다음 노드에 연결 (begin과 동일 방식).
+- 추출된 변수는 flow 변수로 등록되어 이후 노드에서 `{{variable_name}}` 으로 참조.
+- out-edge 는 보통 단일 `{type:"fallback"}` (begin 과 동일 패턴).
 
 ---
 
@@ -288,23 +271,22 @@ HTTP API 호출 노드.
 
 통화 전환 노드. 외부 번호로 통화를 전환.
 
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `name` | string | 노드 이름 |
-| `promptType` | `"none" \| "static" \| "dynamic"` | 전환 전 발화 모드 |
-| `prompt` | string | dynamic 프롬프트 |
-| `transferConfiguration` | TransferConfigurationItem | 전환 대상 설정 |
-| `transferType` | `"cold" \| "warm"` | 전환 방식 |
-| `transferMessageType` | `"static" \| "dynamic"`? | warm transfer 상담원 멘트 모드 |
-| `displayedCallerId` | `"agent" \| "user"` | 발신번호 표시 |
-| `warmTransferPrompt` | string? | warm transfer 시 상담원에게 전달할 프롬프트 |
-| `warmTransferStaticSentence` | string? | warm transfer static 멘트 |
-| `sipHeaders` | SipHeaderItem[]? | SIP 헤더 |
-| `transitions` | NodeTransitionData[] | 전환 조건 (+ fallback 자동 생성) |
+| 필드 | 타입 | 기본값 |
+|---|---|---|
+| `name` | string? | |
+| `global` | GlobalConfig? | |
+| `transfer_configuration` | TransferConfiguration (필수) | 대상 번호 / SIP / 조건 |
+| `transfer_type` | `"cold" \| "warm"` | 기본 `"cold"` |
+| `transfer_message_type` | `"static" \| "dynamic"` ? | warm 안내 메시지 모드. 기본 `"static"` |
+| `warm_transfer_prompt` | string? | warm transfer 시 상담원에게 전달할 프롬프트 |
+| `warm_transfer_static_sentence` | string? | warm static 멘트 |
+| `displayed_caller_id` | `"agent" \| "user"` | 기본 `"agent"` |
+| `sip_headers` | SipHeader[]? | SIP REFER 헤더 (선택) |
+| `prompt` | string? | 전환 전 발화 프롬프트 (선택) |
 
 - **cold transfer**: 고객을 바로 상담원에게 넘김 (에이전트 퇴장).
 - **warm transfer**: 에이전트가 상담원에게 먼저 컨텍스트 전달 후 고객 연결.
-- fallback transition 자동 추가. 전환 실패 시 fallback edge로 진행.
+- 전환 실패 path 는 out-edge `{type:"fallback"}`.
 
 ---
 
@@ -312,16 +294,16 @@ HTTP API 호출 노드.
 
 에이전트 전환 노드. 다른 vox.ai 에이전트로 대화를 넘김.
 
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `name` | string | 노드 이름 |
-| `agentId` | number | 전환 대상 에이전트 ID |
-| `agentVersion` | string? | 에이전트 버전 |
-| `preserveChatContext` | boolean? | 대화 컨텍스트 유지 여부 |
-| `transitions` | NodeTransitionData[] | 전환 조건 (+ fallback 자동 생성) |
+| 필드 | 타입 | 기본값 |
+|---|---|---|
+| `name` | string? | |
+| `global` | GlobalConfig? | |
+| `agent` | AgentMapping? | `{agent_id: UUID, agent_version: "current"\|"production"\|"v{n}"}` 객체. **flat `agent_id`/`agent_version` 으로 보내면 안 됨.** |
+| `preserve_chat_context` | bool | 기본 false |
+| `prompt` | string? | 전환 전 발화 프롬프트 (선택) |
 
-- `preserveChatContext: true` — 이전 대화 내역을 새 에이전트에게 전달.
-- fallback transition 자동 추가.
+- `preserve_chat_context: true` — 이전 대화 내역을 새 에이전트에게 전달.
+- 전환 실패 path 는 out-edge `{type:"fallback"}`.
 
 ---
 
@@ -329,61 +311,42 @@ HTTP API 호출 노드.
 
 통화 종료 노드.
 
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `name` | string | 노드 이름 |
-| `promptType` | `"none" \| "static" \| "dynamic"` | 종료 전 발화 모드 |
-| `prompt` | string | dynamic 프롬프트 |
-| `staticSentence` | string | static 고정 멘트 |
-| `globalNodeSettings` | GlobalNodeSettings | 글로벌 노드 설정 |
+| 필드 | 타입 |
+|---|---|
+| `name` | string? |
+| `global` | GlobalConfig? |
+| `message` | Message? — 종료 직전 발화. `mode="none"` 허용 (즉시 종료) |
 
-- 종료 멘트 발화 후 통화 종료.
-- global node로 설정 시 어디서든 "통화 끊어주세요" 등의 발화로 이 노드로 이동 가능.
+- global node 로 설정 시 (`data.global = {enter_condition: "고객이 통화 종료를 요청한 경우"}`) 어디서든 이 노드로 진입 가능.
 
 ---
 
 ## note
 
-메모 노드. 실행되지 않으며 flow editor에서 설명/주석 용도.
+메모 노드. 실행되지 않으며 flow editor 에서 설명/주석 용도.
 
 | 필드 | 타입 | 설명 |
-|------|------|------|
-| `name` | string | 노드 이름 |
-| `content` | string | 마크다운 내용 |
-| `width` | number? | 노드 너비 |
-| `height` | number? | 노드 높이 |
+|---|---|---|
+| `name` | string? | |
+| `global` | GlobalConfig? | (사실상 의미 없음, runtime 미실행) |
+| `content` | string? | 노트 본문 |
+| `width` | float? | 에디터 resize 너비 (px) — runtime 무관 |
+| `height` | float? | 에디터 resize 높이 (px) — runtime 무관 |
+| `prompt` | string? | legacy 필드 — `content` 우선 |
 
-- 별도 addable 카테고리 (isAddable: false이지만 별도 UI로 추가).
-- 실행 흐름에 영향 없음. 팀 커뮤니케이션용.
-
----
-
-## sendSms
-
-SMS 발송 노드. 통화 중 SMS 메시지를 전송.
-
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `name` | string | 노드 이름 |
-| `promptType` | `"static" \| "dynamic"` | SMS 내용 생성 모드 |
-| `prompt` | string | dynamic 모드 프롬프트 |
-| `staticSentence` | string | static 모드 고정 메시지 |
-| `transitions` | NodeTransitionData[] | 전환 조건 (성공 + fallback 자동 생성) |
-| `globalNodeSettings` | GlobalNodeSettings | 글로벌 노드 설정 |
-
-- SMS 발송 가능한 전화번호가 조직에 있어야 사용 가능.
-- 자동으로 "요청 성공 시" + "요청 실패 시" 두 transition이 생성됨.
+- 실행 흐름에 영향 없음.
+- 보통 in-edge / out-edge 도 없는 floating node 로 둠.
 
 ---
 
 ## Deprecated
 
-아래 노드 타입은 더 이상 신규 flow에서 사용하지 않는다. 기존 flow에서는 동작하지만 대시보드에서 추가 불가.
+아래 노드 타입은 더 이상 신규 flow 에서 사용하지 않는다. 기존 flow 에서는 동작하지만 대시보드에서 추가 불가.
 
 ### function (→ tool)
 
-`tool` 노드로 대체됨. 기존 flow에서 `function` 타입이 보이면 `tool` 노드와 동일하게 동작한다.
+`tool` 노드로 대체됨. DB 에 `type=function` + `functionId` 인 노드는 v3 API 가 `type=tool` + `tool_id=functionId` 로 노출.
 
 ### knowledge (→ conversation)
 
-`conversation` 노드의 `knowledge` 설정으로 통합됨. `conversation` 노드에서 `ragEnabled: true` + `knowledgeIds`를 설정하면 동일한 기능.
+`conversation` 노드의 `knowledge` 설정으로 통합됨. `conversation.data.knowledge.rag_enabled = true` + `knowledge.knowledge_ids` 로 동일 기능.
