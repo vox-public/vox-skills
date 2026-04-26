@@ -82,6 +82,8 @@ Plugin을 설치한 경우에는 `/vox-ai:vox-onboarding`(Claude Code/Codex/Cowo
 | `list_built_in_tools` | 빌트인 도구 목록 |
 | `list_custom_tools` | 커스텀 도구 목록 |
 | `create_custom_tool` | 커스텀 도구 생성 |
+| `list_schemas` | public schema 목록 (agent / flow / tool 등) |
+| `get_schema` | 특정 schema body 조회 (namespace + schema_type) |
 | `list_telephone_numbers` | 보유 번호 조회 (read-only) |
 
 번호 구매, 번호-에이전트 연결, 대량 발신 캠페인은 이 phase에서 공개 MCP 도구가 없다. 웹 앱(`https://www.tryvox.co/dashboard/{organizationId}/numbers`)에서 수행한다.
