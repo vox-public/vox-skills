@@ -1,5 +1,5 @@
 {
-  "_comment": "Canonical agent defaults. Keep in sync with voxai/web AgentDefaultConfig.ts, voxai/mcp _DEFAULT_AGENT_DATA, and voxai/api-server schema defaults.",
+  "_comment": "Canonical agent defaults. Mirror in voxai/web AgentDefaultConfig.ts and voxai/api-server (app/api/v3/schemas/agent/defaults.py + class defaults in data.py).",
 
   "prompt": {
     "prompt": "",
@@ -28,8 +28,8 @@
     "language": "ko-KR"
   },
 
-  "postCall": {
-    "actions": []
+  "speech": {
+    "responsiveness": 1.0
   },
 
   "callSettings": {
@@ -45,16 +45,25 @@
     "dtmfTimeoutSeconds": 3
   },
 
-  "toolIds": [],
-  "builtInTools": [],
+  "postCall": {
+    "actions": []
+  },
 
   "security": {
     "optOutSensitiveDataStorage": false
   },
 
-  "speech": {
-    "isAllowInterruption": true,
-    "isAllowTurnDetection": true,
-    "responsiveness": 1.0
-  }
+  "webhookSettings": {
+    "callDataWebhookUrl": null,
+    "inboundCallWebhookUrl": null
+  },
+
+  "knowledge": {
+    "ragEnabled": false,
+    "knowledgeIds": []
+  },
+
+  "presetDynamicVariables": {},
+  "toolIds": [],
+  "builtInTools": []
 }
