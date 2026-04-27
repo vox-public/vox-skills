@@ -1,6 +1,6 @@
 ---
 name: vox-flow
-description: "Use when the user is designing a vox.ai flow agent — selecting node types, planning branching logic, wiring transitions, extracting variables between nodes, configuring global nodes, converting a call-center script into flow nodes, visualizing scripts as Mermaid flowcharts, or reviewing flow designs. Flow agents are the multi-node extension of prompt agents for complex scenarios. Trigger on 'flow 설계', '스크립트를 노드로 변환해줘', 'flow vs single prompt', '플로우차트 그려줘', '노드 설계', 'flow 리뷰해줘', 'condition node 설정', '플로우 검증', '노드 연결 어떻게 해', or any vox flow agent question."
+description: "Use when the user is designing a vox.ai flow agent — selecting node types, planning branching logic, wiring transitions, extracting variables between nodes, configuring global nodes, converting a call-center script into flow nodes, visualizing scripts as Mermaid flowcharts, or reviewing flow designs. Flow agents are the multi-node extension of prompt agents for complex scenarios. Trigger on 'flow 설계', '스크립트를 노드로 변환해줘', 'flow vs single prompt', '플로우차트 그려줘', '노드 설계', 'flow 리뷰해줘', 'condition node 설정', '플로우 검증', '노드 연결 어떻게 해', or any vox.ai flow agent question."
 ---
 
 # vox-flow
@@ -18,8 +18,11 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 - **default-flow-data.json** — flow 기본 스키마 (begin→conversation→endCall). **flow 구조를 이해할 때 읽기.** See [references/default-flow-data.json](references/default-flow-data.json)
 - **flow-guide.md** — flow 설계 통합 가이드 (edge 메커니즘, 변수 흐름, 설계 원칙). **flow를 처음 설계할 때 읽기.** See [references/flow-guide.md](references/flow-guide.md)
 - **flow-sketch.md** — 스크립트 → Mermaid flowchart 시각화. **1단계: 스크립트를 처음 받았을 때 읽기.** See [references/flow-sketch.md](references/flow-sketch.md)
-- **node-creation.md** — 확정된 차트의 각 노드 → 상세 설계. **2단계: flowchart 확정 후 읽기.** See [references/node-creation.md](references/node-creation.md)
-- **node-types.md** — 노드 타입별 필드/설정 상세. **특정 노드의 설정 옵션이 필요할 때 읽기.** See [references/node-types.md](references/node-types.md)
+- **node-creation.md** — flowchart/스크립트 → 노드 markdown 변환 workflow. **2단계 시작 시 먼저 읽기.** See [references/node-creation.md](references/node-creation.md)
+- **conversation-markdown.md** — conversation 노드 static/generated 작성법. **대화 노드 문구와 exit 조건을 쓸 때 읽기.** See [references/conversation-markdown.md](references/conversation-markdown.md)
+- **execution-node-markdown.md** — extraction/condition/api/transfer/sendSms/tool/endCall 작성법. **대화 외 노드를 쓸 때 읽기.** See [references/execution-node-markdown.md](references/execution-node-markdown.md)
+- **node-examples.md** — 긴 예시 모음. **출력 톤이나 구조 예시가 필요할 때만 읽기.** See [references/node-examples.md](references/node-examples.md)
+- **node-types.md** — 노드 타입 선택 기준 + schema endpoint 사용 규칙. **특정 노드의 JSON 설정 옵션이 필요하면 먼저 schema endpoint 를 호출하기.** See [references/node-types.md](references/node-types.md)
 - **flow-review.md** — 설계물 체크리스트 기반 검증. **3단계: 설계 완료 후 또는 "리뷰해줘" 요청 시 읽기.** See [references/flow-review.md](references/flow-review.md)
 
 공통 reference (`vox-agents`에 위치):
@@ -36,18 +39,20 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 스크립트 → flow 변환 시 3단계로 진행:
 
 1. **시각화 (flow-sketch)**: 스크립트 → Mermaid flowchart + 노드 요약 테이블
-2. **상세 설계 (node creation)**: 확정된 차트의 각 노드 → flow node markdown
+2. **상세 설계 (node creation)**: 확정된 차트의 각 노드 → flow node markdown. `node-creation.md`를 시작점으로 읽고 필요한 노드 계열 reference만 추가로 읽는다.
 3. **리뷰 (flow review)**: 체크리스트 기반 검증, CRITICAL/WARN/INFO 분류
 
 사용자가 시각화만 요청하면 1단계만. "노드로 변환해줘"면 1→2단계. "리뷰해줘"면 3단계.
 
-## Node Type 요약 (Active 11종)
+## Node Type 요약
+
+아래 표는 설계 대화를 위한 개념 요약이다. 실제 `flow_data` JSON 을 작성할 때는 이 표나 로컬 reference 를 schema source 로 쓰지 말고, 먼저 MCP `get_schema(namespace='flow-schema', schema_type='flow-data')` 를 호출해 현재 node type, field, enum, required 여부를 확인한다.
 
 | Node | 용도 |
 |------|------|
-| `begin` | flow 시작점 (자동 생성) |
+| `begin` | flow 시작점 |
 | `conversation` | LLM 기반 대화 수행 |
-| `tool` | vox 등록 도구 실행 |
+| `tool` | vox.ai 등록 도구 실행 |
 | `api` | HTTP API 호출 + 응답 변수 추출 |
 | `sendSms` | SMS 발송 |
 | `condition` | 변수 기반 조건 분기 (대화 없음) |
@@ -57,7 +62,7 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 | `endCall` | 통화 종료 |
 | `note` | 메모 (실행 없음) |
 
-각 노드의 필드/설정 상세 → `node-types.md` 참조. Deprecated: `function` (→ `tool`), `knowledge` (→ conversation node-level)
+각 노드의 의미/사용 판단 → `node-types.md` 참조. Deprecated: `function` (→ `tool`), `knowledge` (→ conversation node-level). 정확한 schema 는 항상 MCP schema endpoint 결과를 따른다.
 
 ## 설계 패턴
 
@@ -72,12 +77,13 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 ## Core Operating Rules
 
 1. **공통 규칙 먼저** — flow에서도 실패 원인의 대부분은 음성 UX 위반(장문 발화, 부정확한 사실)이므로, `vox-agents`의 voice-ai-playbook 규칙(사실성 우선, 트레이드오프, 런타임 vs 개발 산출물 구분)이 flow에도 동일하게 적용된다.
-2. 이 문서에 없는 node type이나 설정을 추측하지 않는다 — 존재하지 않는 설정을 안내하면 사용자가 대시보드에서 찾을 수 없어 디버깅에 시간을 낭비한다.
+2. node type, field, enum, required 여부를 추측하지 않는다 — `flow_data` 작성 직전에 `get_schema(namespace='flow-schema', schema_type='flow-data')` 를 호출하고 그 결과를 기준으로 JSON 을 만든다.
 3. deprecated node(`function`, `knowledge`)는 신규 flow에 사용하지 않는다 — 대시보드에서 더 이상 추가할 수 없고, 향후 런타임 지원이 제거될 수 있다.
 4. node 수는 최소화 — 불필요한 분할은 edge 관리를 복잡하게 하고 유지보수 비용이 증가한다.
 5. 변수 이름은 snake_case, 의미가 명확한 이름 사용 — condition node와 변수 렌더러가 snake_case를 전제로 동작하며, 모호한 이름(val1, temp)은 노드 간 전달 시 혼동을 일으킨다.
 6. 전환조건에 "다음 단계 이름"을 쓰지 않는다 — exit 조건만 정의해야 노드 순서가 바뀌어도 LLM이 올바르게 판단한다.
-7. **산출물 경로는 두 가지** — (a) 대시보드 flow editor 에 사람이 직접 입력하는 노드 markdown, (b) v3 REST API (`PATCH /v3/agents/{id}` with `flow_data`) 또는 동등한 vox MCP `create_agent` / `update_agent` 의 `flow_data` 파라미터로 보내는 JSON. 두 surface 모두 동일한 v3 schema 를 받는다 (snake_case + edge-level discriminated union condition). 수정은 항상 **전체 교체** 방식 — 기존 노드 일부만 patch 하지 않고 nodes/edges 전체를 다시 보낸다. schema 상세 → `references/flow-guide.md` 의 "v3 Flow Schema" + `references/node-types.md`.
+7. **산출물 경로는 두 가지** — (a) 대시보드 flow editor 에 사람이 직접 입력하는 노드 markdown, (b) v3 REST API (`PATCH /v3/agents/{id}` with `flow_data`) 또는 동등한 vox.ai MCP `create_agent` / `update_agent` 의 `flow_data` 파라미터로 보내는 JSON. JSON surface 는 schema endpoint 가 authoritative 하며, 수정은 항상 **전체 교체** 방식 — 기존 노드 일부만 patch 하지 않고 nodes/edges 전체를 다시 보낸다.
+8. **Schema endpoint 우선** — `references/node-types.md` 는 node 선택과 실수 방지 playbook 이다. 실제 필드 목록을 복사하지 말고, 작업 중 받은 `get_schema` 결과를 기준으로 `flow_data` 를 작성한다. 전송 후 `get_agent` 로 round-trip 확인해 unknown field drop 을 잡는다.
 
 ## Ownership Boundary
 
@@ -91,14 +97,14 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 
 ## Related Resources
 
-### MCP Tools (vox)
-- `create_agent` — flow 에이전트 생성 (agent_type: "flow")
+### MCP Tools (vox.ai)
+- `create_agent` — flow 에이전트 생성 (`type: "flow"`)
 - `update_agent` — 에이전트 설정 수정
 - `get_agent` — 기존 에이전트 설정 확인 (flow_data 포함)
 - `list_agents` — 에이전트 목록
 - `get_schema(namespace='flow-schema', schema_type='flow-data')` — flow_data JSON Schema (node·edge·condition `$defs` 포함). `create_agent` / `update_agent` 의 `flow_data` 구성 전에 호출.
 
-### Docs (vox-docs)
+### Docs (vox.ai docs / vox-docs)
 - `docs/build/flow/overview` — 플로우 에이전트 개요
 - `docs/build/flow/nodes/overview` — 노드 타입 개요
 - `docs/build/flow/nodes/begin-node` — 시작 노드

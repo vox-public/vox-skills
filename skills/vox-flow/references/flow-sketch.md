@@ -64,16 +64,16 @@
 | 구간 성격 | 추천 노드 타입 | 비고 |
 |----------|--------------|------|
 | 대화/질문/응답 | conversation | |
-| 정보 추출 (이름, 번호 등) | extraction | 항상 자동 전환 (`isSkipUserResponse: true`) — 대화형 노드가 아님 |
+| 정보 추출 (이름, 번호 등) | extraction | 보통 사용자 응답을 기다리지 않고 다음 edge 로 진행 — 대화형 노드가 아님 |
 | 변수 기반 분기 | condition | |
 | 외부 API 호출 | api | |
 | 도구 실행 | tool | |
 | 상담원 전환 | transferCall | |
 | 다른 에이전트로 전환 | transferAgent | |
 | 일방적 안내 후 종료 | endCall | |
-| 일방적 안내 후 계속 | conversation (static, skipUserResponse) | |
+| 일방적 안내 후 계속 | conversation (static, 사용자 응답 대기 없음) | |
 
-각 노드 타입의 필드/설정 상세는 [node-types.md](node-types.md) 참조.
+노드 타입 선택 기준은 [node-types.md](node-types.md)를 참조한다. JSON field/enum/required 여부는 MCP schema endpoint 결과를 따른다.
 
 #### conversation vs condition — 가장 중요한 구분
 

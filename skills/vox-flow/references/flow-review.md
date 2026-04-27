@@ -4,8 +4,10 @@ flow agent 설계물(flowchart + 노드 상세 설계)을 체크리스트 기반
 
 검증 기준은 같은 디렉토리의 레퍼런스를 따른다:
 - [flow-sketch.md](flow-sketch.md) — Mermaid 모양 규칙, 패턴
-- [node-creation.md](node-creation.md) — 노드 작성 포맷, 전환조건/멘트 규칙
-- [node-types.md](node-types.md) — 노드 타입 필드 상세
+- [node-creation.md](node-creation.md) — 노드 작성 workflow, 전환조건/멘트 공통 규칙
+- [conversation-markdown.md](conversation-markdown.md) — conversation 노드 작성 규칙
+- [execution-node-markdown.md](execution-node-markdown.md) — execution/transfer/tool 노드 작성 규칙
+- [node-types.md](node-types.md) — 노드 선택 기준과 schema endpoint 사용 규칙
 - variable-system.md — 변수 시스템 (`vox-agents/references/`에 위치)
 
 ## 입력
@@ -47,21 +49,21 @@ flow agent 설계물(flowchart + 노드 상세 설계)을 체크리스트 기반
 | B2 | CRITICAL | 전환조건에 "다음 단계 이름" 포함 | "다음은 XX로 넘어간다" 금지. exit 조건만 기술 |
 | B3 | CRITICAL | begin/endCall 누락 | flow에 begin과 endCall이 각각 최소 1개 존재해야 함 |
 | B4 | WARN | 목적 단일성 | 한 노드의 목적이 2개 이상이면 분리 검토 |
-| B5 | WARN | 전환조건이 고객 발화 기반 아님 | "안내완료", "처리완료" 같은 에이전트 행동 기반 조건. skipUserResponse 노드 제외 |
+| B5 | WARN | 전환조건이 고객 발화 기반 아님 | "안내완료", "처리완료" 같은 에이전트 행동 기반 조건. 사용자 응답을 기다리지 않는 실행 노드 제외 |
 | B6 | WARN | exit 상태 수 부족 | conversation 노드에 exit 상태가 1개뿐이면 거절/보류 분기 누락 가능 |
-| B7 | WARN | 턴 운영 위반 | 한 턴 3문장 초과 (skipUserResponse 노드 제외) |
+| B7 | WARN | 턴 운영 위반 | 한 턴 3문장 초과 (사용자 응답을 기다리지 않는 실행 노드 제외) |
 | B8 | WARN | content depth 초과 | 리스트 depth 3단 이상 중첩 |
 | B9 | WARN | transition conditions 중첩 | 전환조건에 하위 불릿/번호 사용 |
 | B10 | WARN | content에 전환조건 응대 포함 | content 안에 전환조건 성립 시의 응대 멘트가 있는가. 전환 성립 시 즉시 다음 노드로 이동하므로 해당 멘트는 절대 발화되지 않음. "다음 노드로 전환" 같은 시스템 동작 설명도 마찬가지 |
-| B11 | WARN | message.mode 미명시 | conversation 노드의 `data.message.mode` (`generated`/`static`)가 명시되어 있는가. `generated` (구 dynamic) 면 `first_message` 가 있는가 |
+| B11 | WARN | 발화 mode 미명시 | conversation 노드의 발화 mode 가 명시되어 있는가. JSON 작성 시 정확한 field/enum 은 schema endpoint 결과를 따르는가 |
 | B12 | INFO | static/dynamic 선택 적절성 | FAQ 대응/재확인이 필요한 노드에 static 사용, 또는 단순 수락/거절 노드에 dynamic 사용 등 모드 선택이 부적절한 경우 |
-| B13 | INFO | skipUserResponse 적절성 | 일방 안내 노드에 skipUserResponse 설정 여부 |
+| B13 | INFO | 사용자 응답 대기 여부 | 일방 안내/실행 노드에서 사용자 응답 대기 없이 다음 edge 로 진행해야 하는지 명시했는가 |
 | B14 | INFO | 멘트 품질 | 큰따옴표 감싸기, TTS 불가 특수문자, 자연스러운 존댓말 |
 | B15 | INFO | `{{변수}}` 누락 | 원본 스크립트의 런타임 변수가 빠지지 않았는지 |
 | B16 | CRITICAL | extraction 포맷 | extraction 노드에 추출 변수 목록(변수명/타입/설명)이 정의되어 있는가. transition conditions가 "자동 전환"으로 표기되어 있는가 |
 | B17 | CRITICAL | condition 분기 완전성 | condition 노드의 분기 조건이 모든 케이스를 커버하는가. else/default 분기가 존재하는가 |
 | B18 | WARN | condition 변수 소비 | condition 노드에서 참조하는 변수가 앞선 extraction/api 노드에서 실제로 생성되는가 |
-| B19 | WARN | api 응답 변수 정의 | api 노드에 `response_variables` (`variable_name` + `json_path`) 가 정의되어 있는가 |
+| B19 | WARN | api 응답 변수 정의 | api 노드에 응답 변수 추출 의도가 정의되어 있는가. JSON 작성 시 정확한 field shape 는 schema endpoint 결과를 따르는가 |
 | B20 | WARN | Global Node 설정 여부 | 스크립트에 "언제든" 예외가 있으면 해당 endCall/conversation에 Global Node 설정이 있는가 |
 
 ### C. Flowchart ↔ 노드 설계 정합성
@@ -72,6 +74,16 @@ flow agent 설계물(flowchart + 노드 상세 설계)을 체크리스트 기반
 | C2 | CRITICAL | 노드 이름 불일치 | flowchart 라벨과 노드 설계의 `## name`이 다른 경우 |
 | C3 | WARN | 전환조건 라벨 불일치 | flowchart edge 라벨과 노드 설계 transition conditions의 exit 상태명이 불일치 |
 | C4 | WARN | 분기 구조 불일치 | flowchart의 분기 수와 노드 설계의 exit 상태 수가 다른 경우 |
+
+### D. MCP/API JSON 준비도
+
+| ID | 심각도 | 항목 | 판단 기준 |
+|----|--------|------|----------|
+| D1 | CRITICAL | schema endpoint 미확인 | MCP/API `flow_data` JSON 을 만들거나 수정하면서 `get_schema(namespace="flow-schema", schema_type="flow-data")` 결과를 확인하지 않은 경우 |
+| D2 | CRITICAL | 과거 field 복사 | `agentId`, `promptType`, `staticSentence`, node 내부 `transitions[]` 등 과거 데이터 형태를 schema 확인 없이 JSON field 로 사용 |
+| D3 | CRITICAL | fallback edge 누락 | 실패/else/default path 가 필요한데 `flow_data.edges` 에 명시하지 않고 자동 생성된다고 가정 |
+| D4 | WARN | round-trip 미확인 | `create_agent` / `update_agent` 후 `get_agent` 로 unknown field drop 여부를 확인하지 않음 |
+| D5 | WARN | agent data schema 미확인 | agent `data` 를 함께 보냈는데 `agent-schema` create/update schema 를 확인하지 않음 |
 
 ## 출력 포맷
 

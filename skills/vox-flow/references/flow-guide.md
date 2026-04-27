@@ -2,7 +2,24 @@
 
 vox.ai flow agent 의 구조와 설계 원칙을 이해하기 위한 가이드. flow 를 처음 설계하거나, 기존 flow 를 수정할 때 읽는다.
 
-본 가이드는 **v3 API schema** 기준이다 (vox MCP `create_agent` / `update_agent` 의 `flow_data` 와 동일). v2 REST 가 별도로 있으나 v3 와 동일 표면을 노출하므로 본 가이드 한 벌로 처리한다.
+본 가이드는 **v3 API / vox.ai MCP `flow_data` workflow** 기준이다. 정확한 node type, data field, enum, required 여부는 문서에 고정하지 않고 MCP schema endpoint 결과를 따른다.
+
+## Schema-first workflow
+
+flow JSON 을 작성하거나 수정할 때는 먼저 현재 schema 를 가져온다.
+
+```text
+get_schema(namespace="flow-schema", schema_type="flow-data")
+```
+
+agent `data` 도 같이 다루면 필요한 schema 를 별도로 가져온다.
+
+```text
+get_schema(namespace="agent-schema", schema_type="agent-data-create")
+get_schema(namespace="agent-schema", schema_type="agent-data-update")
+```
+
+이 문서와 `node-types.md` 는 설계 원칙과 실수 방지용이다. 실제 payload 는 schema endpoint 응답을 기준으로 만들고, 전송 후 `get_agent` 로 round-trip 확인한다.
 
 ## v3 Flow Schema
 
@@ -24,14 +41,13 @@ FlowData {
 ```
 FlowNode {
   id: string                  // flow 안에서 unique. 1..64 chars.
-  type: NodeType              // begin | conversation | condition | extraction | api | tool
-                              //   | transferCall | transferAgent | sendSms | endCall | note
-  data: NodeData              // type 별 schema (snake_case). 11 노드 타입의 field 셋은 node-types.md.
+  type: NodeType              // schema endpoint 의 enum 기준
+  data: NodeData              // type 별 schema 는 schema endpoint 기준
 }
 ```
 
 - 노드 사이의 분기는 **여기 안에 없음.** 분기는 전부 edge.condition 로 승격됐다 (구 `transitions[]` / `logicalTransitions[]` 모델 폐지).
-- `position` (x/y), `width`, `height`, `viewport` 등 layout 메타는 v3 API surface 가 받지 않는다 — 에디터 layout 은 서버가 별도로 관리하며, flow_data 안에 보내도 silently drop.
+- `position`, `viewport`, edge id/handle 같은 editor/legacy 메타는 schema endpoint 가 노출할 때만 보낸다. 기억으로 추가하면 silently drop 될 수 있다.
 - 모든 노드의 `data` 에는 공통 필드 `name?` (에디터 라벨) 과 `global?: GlobalConfig` (값이 있으면 global node — 어디서든 진입) 이 있다.
 
 ### FlowEdge
@@ -47,7 +63,7 @@ FlowEdge {
 ```
 
 - edge 에는 **id 가 없다**. flow 내 unique 키는 `(source, target, condition, skip_user_response, is_global)` 5-tuple.
-- `sourceHandle` / `targetHandle` / `type:"custom"` / `animated` 같은 필드는 없다 (구 v2 vox-web editor 모델). 보내도 drop.
+- `sourceHandle` / `targetHandle` / `type:"custom"` / `animated` 같은 필드는 없다 (구 v2 vox.ai web editor 모델). 보내도 drop.
 - `is_global=true` 인 edge 는 global node 의 진입선 — 보통 자동 관리.
 
 ### EdgeCondition (분기 본진)
@@ -82,20 +98,7 @@ FlowEdge {
 }
 ```
 
-`ConditionOperator` (10 종):
-
-| Operator | 의미 | 값 필요 |
-|---|---|---|
-| `equals` | 같음 | Yes |
-| `not_equals` | 같지 않음 | Yes |
-| `contains` | 포함 | Yes |
-| `does_not_contain` | 미포함 | Yes |
-| `greater_than` | 보다 큼 | Yes |
-| `greater_than_or_equal` | 보다 크거나 같음 | Yes |
-| `less_than` | 보다 작음 | Yes |
-| `less_than_or_equal` | 보다 작거나 같음 | Yes |
-| `exists` | 존재 | No |
-| `does_not_exist` | 존재 안 함 | No |
+`ConditionOperator` 의 현재 enum 과 `value` 필요 여부는 schema endpoint 결과를 따른다. 로컬 문서에 있는 과거 operator 목록을 기억으로 쓰지 않는다.
 
 condition 노드의 out-edge 에서 주로 쓰임. conversation 노드 out-edge 에도 쓸 수 있음.
 
@@ -123,7 +126,7 @@ flow 에서 변수는 노드 간 데이터를 전달하는 핵심 메커니즘.
 | 방법 | 노드 | 설명 |
 |---|---|---|
 | system | (자동) | `{{current_time}}`, `{{call_from}}`, `{{call_to}}` 등 플랫폼 제공 |
-| agent 설정 | (사전 주입) | `{{customer_name}}` 등 통화 시작 전 주입 (agent.data.variables) |
+| agent 설정 | (사전 주입) | `{{customer_name}}` 등 통화 시작 전 주입 (`agent.data.presetDynamicVariables`) |
 | extraction | extraction 노드 | LLM 이 대화에서 추출 → flow 변수로 저장. 변수 정의는 `extraction_configuration.variables[]` 의 `variable_name` / `variable_type` / `variable_description` |
 | api response | api 노드 | JSONPath 로 API 응답에서 추출. 매핑은 `response_variables[]` 의 `variable_name` / `json_path` |
 
@@ -222,7 +225,14 @@ graph LR
 
 ## API / MCP 로 Flow 만들고 수정
 
-vox MCP 와 v3 REST 모두 동일한 `flow_data` schema 를 받는다. **수정은 전체 교체 (full replacement)** — 기존 nodes / edges 일부만 patch 하는 모드는 없다. PATCH 시에도 nodes / edges 전체를 다시 보낸다.
+vox.ai MCP 와 v3 REST 모두 동일한 `flow_data` schema 를 받는다. **수정은 전체 교체 (full replacement)** — 기존 nodes / edges 일부만 patch 하는 모드는 없다. PATCH 시에도 nodes / edges 전체를 다시 보낸다.
+
+작업 순서:
+
+1. `get_schema(namespace="flow-schema", schema_type="flow-data")` 로 현재 flow schema 를 확인한다.
+2. agent `data` 를 보낼 경우 `get_schema(namespace="agent-schema", schema_type="agent-data-create")` 또는 `agent-data-update` 를 확인한다.
+3. `create_agent(type="flow", data=..., flow_data=...)` 또는 `update_agent(flow_data=...)` 를 호출한다.
+4. `get_agent` 로 다시 읽어 unknown field drop, enum mismatch, 누락 edge 를 확인한다.
 
 ### 생성 (REST 또는 MCP)
 
@@ -237,7 +247,7 @@ POST /v3/agents
 }
 ```
 
-vox MCP (Claude Code 등 client 에서 호출):
+vox.ai MCP (Claude Code 등 client 에서 호출):
 ```
 mcp__vox__create_agent(
   name="My Flow Agent",
@@ -257,7 +267,7 @@ PATCH /v3/agents/{id}
 }
 ```
 
-vox MCP:
+vox.ai MCP:
 ```
 mcp__vox__update_agent(
   agent_id="<UUID>",
@@ -274,11 +284,11 @@ REST:
 GET /v3/agents/{id}    # 응답에 flow_data 포함
 ```
 
-vox MCP:
+vox.ai MCP:
 ```
 mcp__vox__get_agent(agent_id="<UUID>")   # 응답에 flow_data 포함
 ```
 
 ### Round-trip 검증 (필수)
 
-`flow_data` 는 unknown 필드를 silent drop 한다. 전송 후 항상 응답을 다시 비교해서 의도한 노드 / 엣지 / 필드가 그대로 들어갔는지 확인. 보낸 필드가 응답에 없으면 schema 어긋남 — `node-types.md` 의 해당 노드 타입 field 명을 다시 확인하라.
+`flow_data` 는 unknown 필드를 silent drop 할 수 있다. 전송 후 항상 응답을 다시 비교해서 의도한 노드 / 엣지 / 필드가 그대로 들어갔는지 확인한다. 보낸 필드가 응답에 없으면 로컬 문서를 고치려 들기 전에 schema endpoint 결과와 payload 를 다시 대조한다.

@@ -1,5 +1,5 @@
 {
-  "_comment": "v3 flow_data 의 가장 작은 합법 형태 (begin -> conversation -> endCall). 모든 필드는 snake_case. 노드 사이의 분기는 노드 내부가 아니라 edge.condition 에 위치. node-types.md 와 flow-guide.md 의 'EdgeCondition' 섹션이 schema 의 source-of-truth. 이 예시 안에 position/viewport/edge.id/sourceHandle 같은 v2 vox-web editor 메타는 없음 — v3 API surface 는 받지 않음 (보내도 silently drop).",
+  "_comment": "v3 flow_data 의 최소 예시 (begin -> conversation -> endCall). schema source-of-truth 는 MCP get_schema(namespace='flow-schema', schema_type='flow-data') 결과다. 노드 사이의 분기는 노드 내부가 아니라 edge.condition 에 위치한다. position/viewport/edge.id/sourceHandle 같은 editor/legacy 메타는 schema endpoint 가 노출할 때만 보낸다.",
 
   "nodes": [
     {

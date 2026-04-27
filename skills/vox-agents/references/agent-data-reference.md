@@ -2,16 +2,23 @@
 
 MCP `create_agent` / `update_agent` 사용 시 `agent.data`의 동작 규칙을 정리한 레퍼런스.
 
-**스키마 기본값** → [default-agent-data.json](default-agent-data.json)을 먼저 읽어라. 모든 필드와 기본값이 들어 있다.
+정확한 field, enum, required 여부는 MCP schema endpoint 가 authoritative 하다. 이 파일은 실수하기 쉬운 운영 규칙만 요약한다.
+
+```text
+get_schema(namespace="agent-schema", schema_type="agent-data-create")
+get_schema(namespace="agent-schema", schema_type="agent-data-update")
+```
+
+[default-agent-data.json](default-agent-data.json)은 기본 payload 예시와 seed 로만 사용한다. schema source 로 간주하지 않는다.
 
 ## Root 필수 필드
 
-`prompt`, `stt`, `llm`, `voice`, `postCall`, `toolIds` — 이 6개가 없으면 검증 에러.
-나머지(`builtInTools`, `speech`, `callSettings`, `security`, `knowledge`, `webhookSettings`, `presetDynamicVariables`, `isMemoryEnabled`)는 선택.
+schema endpoint 결과를 따른다. 현재 기본 payload 에서는 `prompt`, `stt`, `llm`, `voice`, `postCall`, `toolIds`를 핵심 root 로 다룬다.
+나머지(`builtInTools`, `speech`, `callSettings`, `security`, `knowledge`, `webhookSettings`, `presetDynamicVariables`)는 schema 결과에 맞춰 선택적으로 보낸다.
 
 ## 필드별 핵심 규칙
 
-스키마 전체는 JSON 참조. 여기는 **LLM이 실수하기 쉬운 규칙만** 정리한다.
+스키마 전체는 `get_schema` 결과를 참조한다. 여기는 **LLM이 실수하기 쉬운 규칙만** 정리한다.
 
 ### prompt
 
@@ -62,39 +69,35 @@ MCP `create_agent` / `update_agent` 사용 시 `agent.data`의 동작 규칙을 
 
 ### builtInTools
 
-`builtInTools[]`는 아래 toolType 중 하나를 따른다.
+`builtInTools[]`는 tool schema surface 를 따른다. tool type 별 required field 를 이 문서에 복사하지 말고, MCP schema endpoint 에서 현재 built-in tool schema 를 조회한다.
 
-| toolType | 필수 필드 |
-|----------|-----------|
-| `end_call` | `toolType`, `name` |
-| `transfer_call` | `toolType`, `name`, `transferConfiguration` |
-| `transfer_agent` | `toolType`, `name`, `transferAgentId` |
-| `send_sms` | `toolType`, `name` |
-| `send_dtmf` | `toolType`, `name` |
-| `skill` | `toolType`, `name`, `skillPayload` |
+```text
+list_schemas(namespace="tool-schema", category="built_in")
+get_schema(namespace="tool-schema", schema_type="<built-in-tool-schema>")
+```
 
 ## MCP 동작 규칙
 
 ### create_agent
 
-- `name`, `agent_type`, `prompt`, `data` 파라미터 지원.
-- MCP가 [default-agent-data.json](default-agent-data.json) 기반 기본값과 병합하여 생성.
-- `data` 없이 `prompt`만 전달해도 동작 — 기본값에 `data.prompt.prompt`만 덮어씀.
-- `agent_type`: `"single_prompt"` | `"flow"` (기본 `"single_prompt"`)
+- 현재 MCP 입력은 `name`, `type`, `data`, `flow_data` 기준이다.
+- `type`: `"single_prompt"` | `"flow"` (기본 `"single_prompt"`).
+- top-level `prompt`, `agent_type`, `llm`, `voice` shortcut 을 가정하지 않는다. 설정은 `data` object 안에 넣는다.
+- `flow` agent 를 실사용 가능한 상태로 만들 때는 `flow_data` 를 함께 보낸다. 단순 shell agent 생성 여부는 API/MCP contract 를 확인한다.
+- `data` 를 작성하기 전에 `get_schema(namespace="agent-schema", schema_type="agent-data-create")` 를 호출한다.
 
 ### update_agent
 
-지원 입력: `name`, `prompt`, `data`, `llm`, `stt`, `voice`, `postCall`, `callSettings`, `knowledge`, `webhookSettings`, `security`, `speech`, `presetDynamicVariables`, `builtInTools`, `toolIds`
+현재 MCP 입력은 `agent_id`, `name`, `data`, `flow_data` 기준이다. agent 설정 변경은 top-level shortcut 이 아니라 `data` 안의 sub-schema 로 보낸다.
 
 동작:
 1. 기존 `agent.data`를 읽음
-2. 입력된 필드를 **replace** (부분 merge 아님 — 해당 섹션 전체를 교체)
-3. 정규화(normalize)
-4. 스키마 밖 필드 strip
-5. JSON Schema 검증 + 비즈니스 검증
-6. 저장
+2. 변경할 sub-schema 의 현재 값을 보존해야 하면 전체 subtree 를 다시 구성
+3. `get_schema(namespace="agent-schema", schema_type="agent-data-update")` 로 update shape 확인
+4. `update_agent(agent_id=..., data=...)` 호출
+5. `get_agent()`로 round-trip 확인
 
-**replace semantics가 핵심이다** — `builtInTools`에 `end_call` 하나만 넣으면 기존 도구가 전부 사라진다. 반드시 `get_agent()`로 현재 값을 읽고, 수정 후 전체를 다시 보내라.
+**sub-schema replacement semantics가 핵심이다** — `builtInTools`에 `end_call` 하나만 넣으면 기존 도구가 전부 사라질 수 있다. 반드시 `get_agent()`로 현재 값을 읽고, 수정 후 보존할 sibling 값을 함께 다시 보내라.
 
 ## 실전 예시
 
@@ -103,19 +106,26 @@ MCP `create_agent` / `update_agent` 사용 시 `agent.data`의 동작 규칙을 
 ```text
 create_agent(
   name="CS 상담 에이전트",
-  prompt="당신은 CS 상담 에이전트입니다..."
+  type="single_prompt",
+  data={
+    "prompt": {
+      "prompt": "당신은 CS 상담 에이전트입니다..."
+    }
+  }
 )
 ```
 
-`data` 없이도 기본값이 자동 병합된다.
+생략한 top-level agent data 는 서버 기본값으로 채워질 수 있지만, 정확한 required/default 동작은 `agent-data-create` schema 결과를 따른다.
 
 ### update_agent — 프롬프트 + LLM 변경
 
 ```text
 update_agent(
   agent_id="agent-uuid",
-  prompt="수정된 프롬프트...",
-  llm={"model": "gpt-4o-mini", "temperature": 0.2}
+  data={
+    "prompt": {"prompt": "수정된 프롬프트..."},
+    "llm": {"model": "gpt-4o-mini", "temperature": 0.2}
+  }
 )
 ```
 
@@ -126,15 +136,17 @@ update_agent(
 get_agent(agent_id="agent-uuid")
 # → data.builtInTools: [{"toolType": "end_call", "name": "end_call"}]
 
-# 2. 기존 + 신규를 합쳐서 전체를 보냄
+# 2. list_schemas/get_schema 로 built-in tool schema 확인
+
+# 3. 기존 + 신규를 합쳐서 전체를 보냄
 update_agent(
   agent_id="agent-uuid",
-  builtInTools=[
-    {"toolType": "end_call", "name": "end_call"},
-    {"toolType": "transfer_call", "name": "transfer_to_human",
-     "transferConfiguration": [{"transferType": "phone", "transferTo": "010-1234-5678"}],
-     "transferType": "cold"}
-  ]
+  data={
+    "builtInTools": [
+      {"toolType": "end_call", "name": "end_call"},
+      {"...": "schema endpoint 결과에 맞춘 신규 built-in tool payload"}
+    ]
+  }
 )
 ```
 
