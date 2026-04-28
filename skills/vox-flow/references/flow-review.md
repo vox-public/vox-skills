@@ -8,6 +8,7 @@ flow agent 설계물(flowchart + 노드 상세 설계)을 체크리스트 기반
 - [conversation-markdown.md](conversation-markdown.md) — conversation 노드 작성 규칙
 - [execution-node-markdown.md](execution-node-markdown.md) — execution/transfer/tool 노드 작성 규칙
 - [node-types.md](node-types.md) — 노드 선택 기준과 schema endpoint 사용 규칙
+- [hidden-contracts.md](hidden-contracts.md) — schema 표면만 보고는 알 수 없는 운영 규칙 (skip_user_response, LogicCondition.value, api default, edge↔transition 매칭 등)
 - variable-system.md — 변수 시스템 (`vox-agents/references/`에 위치)
 
 ## 입력
@@ -84,6 +85,18 @@ flow agent 설계물(flowchart + 노드 상세 설계)을 체크리스트 기반
 | D3 | CRITICAL | fallback edge 누락 | 실패/else/default path 가 필요한데 `flow_data.edges` 에 명시하지 않고 자동 생성된다고 가정 |
 | D4 | WARN | round-trip 미확인 | `create_agent` / `update_agent` 후 `get_agent` 로 unknown field drop 여부를 확인하지 않음 |
 | D5 | WARN | agent data schema 미확인 | agent `data` 를 함께 보냈는데 `agent-schema` create/update schema 를 확인하지 않음 |
+| D6 | CRITICAL | extraction/condition/api/sendSms/tool/transferCall/transferAgent outgoing edge `skip_user_response` | 응답 비기대형 노드의 outgoing edge 에 `skip_user_response=true` 가 누락되면 통화 데드락 (`flow_error`). [`hidden-contracts.md` §1](hidden-contracts.md#1-응답-비기대형-노드의-outgoing-transition-skip_user_responsetrue) |
+| D7 | CRITICAL | LogicCondition.value 가 string | number / boolean 직접 값이면 web editor 크래시. boolean 변수 비교는 ai condition 으로 우회했는가. [`hidden-contracts.md` §2](hidden-contracts.md#2-logiccondition-value-는-string--boolean-비교-우회) |
+| D8 | CRITICAL | api 노드 default 8 필드 명시 | `authorization_enabled`, `auth_type`, `auth_credentials`, `auth_encode_required`, `headers_enabled`, `headers`, `body_enabled`, `body` 모두 명시. [`hidden-contracts.md` §3](hidden-contracts.md#3-api-노드-api_configuration-default-필드-모두-명시) |
+| D9 | CRITICAL | conversation 노드 out-edge 에 fallback | conversation 노드의 out-edge 에 `condition.type="fallback"` 사용 금지. ai condition 자연어로 |
+| D10 | WARN | PATCH 시 사용자 web editor 수정분 보존 | `update_agent` 직전 `get_agent` 으로 사용자 추가 노드/엣지 확인 + diff/merge 했는가. [`hidden-contracts.md` §6](hidden-contracts.md#6-flow_data-patch-시-사용자-web-editor-수정분-보존) |
+| D11 | WARN | begin → next 형식 | `begin` outgoing edge 에 `condition.type="ai"` 또는 `skip_user_response=true` 보내도 server override. 단일 fallback edge 만 |
+| D12 | WARN | transferAgent.agentId 타입 | `agentId` 가 int (내부 ID) 인지. `list_agents` UUID 와 혼동 안 했는가. [`hidden-contracts.md` §7](hidden-contracts.md#7-transferagentagentid-는-int-내부-id) |
+| D13 | WARN | sendSms 필수 필드 명시 | `prompt_type` + (`prompt` 또는 `static_sentence` + `static_title`) + outgoing edge `skip_user_response=true` 모두 명시 |
+| D14 | WARN | 변수명 유일성 | flow 전체에서 변수명 중복 없는가 (extraction 간, api response variable 포함) |
+| D15 | INFO | 노드/transition id 형식 | nanoid (10-12자 [a-zA-Z0-9_-]) 또는 UUID 사용했는가 |
+| D16 | INFO | extraction 변수 정규화 | description 에 형식 + 예시가 명시되어 있는가 (정규화는 빌트인 미지원이라 description + 후속 prompt 로 보정) |
+| D17 | INFO | api plain text 응답 처리 | `json_path="$"` + 후속 conversation prompt 에 trim/정제 지시가 있는가 |
 
 ## 출력 포맷
 

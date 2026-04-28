@@ -7,7 +7,7 @@
 - [입력](#입력)
 - [출력](#출력)
 - [작업 절차](#작업-절차) — 1 분석 → 2 노드 도출 → 3 Mermaid → 4 테이블 → 5 핸드오프 → 6 피드백
-- [패턴 라이브러리](#패턴-라이브러리) — Linear / Branching / Data Collection / Multi-stage Sales / Extraction→Condition / API→Condition / Transfer
+- [패턴 라이브러리](#패턴-라이브러리) — Linear / Branching / Data Collection / Multi-stage Sales / Extraction→Condition / API→Condition / Transfer / API Success-Failure
 - [운영 규칙](#운영-규칙)
 
 ## 입력
@@ -316,6 +316,23 @@ flowchart TD
     C -->|자체해결| E
 ```
 > `([])` begin/end, `[]` conversation, `{{}}` transferCall
+
+### API Success / Failure 분리 (외부 호출 + 실패 복구)
+```mermaid
+flowchart TD
+    A([시작]) --> B[정보수집]
+    B -->|수집완료| C[/주문번호추출/]
+    C --> D[(주문조회API)]
+    D -->|성공| E{주문상태}
+    D -->|실패| F{{상담원연결}}
+    E -->|배송완료| G[배송완료안내]
+    E -->|배송중| H[배송중안내]
+    G --> Z([종료])
+    H --> Z
+    F --> Z
+```
+> `([])` begin/end, `[]` conversation, `[//]` extraction, `[()]` api, `{}` condition, `{{}}` transferCall
+> 핵심: api 노드의 outgoing 은 두 갈래로 — **성공 path 는 변수 채워짐 가정의 condition / 다음 conversation**, **실패 path 는 fallback edge 로 전환 또는 안내**. fallback edge 한 줄로 합쳐서 단일 출구만 두지 않는다.
 
 ## 운영 규칙
 

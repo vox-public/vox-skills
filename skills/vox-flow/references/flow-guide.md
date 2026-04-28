@@ -100,6 +100,8 @@ FlowEdge {
 
 `ConditionOperator` 의 현재 enum 과 `value` 필요 여부는 schema endpoint 결과를 따른다. 로컬 문서에 있는 과거 operator 목록을 기억으로 쓰지 않는다.
 
+**`value` 는 항상 string 으로 보낸다.** number / boolean 직접 보내면 web editor 가 크래시하고, boolean 변수 비교 시 runtime 의 `str()` 비교 케이스 차이로 매치가 실패할 수 있다. 자세한 회피법은 [`hidden-contracts.md` §2](hidden-contracts.md#2-logiccondition-value-는-string--boolean-비교-우회).
+
 condition 노드의 out-edge 에서 주로 쓰임. conversation 노드 out-edge 에도 쓸 수 있음.
 
 **(3) Fallback condition** — 같은 source 노드의 다른 모든 condition 이 매치 안 될 때 default.
@@ -129,6 +131,34 @@ flow 에서 변수는 노드 간 데이터를 전달하는 핵심 메커니즘.
 | agent 설정 | (사전 주입) | `{{customer_name}}` 등 통화 시작 전 주입 (`agent.data.presetDynamicVariables`) |
 | extraction | extraction 노드 | LLM 이 대화에서 추출 → flow 변수로 저장. 변수 정의는 `extraction_configuration.variables[]` 의 `variable_name` / `variable_type` / `variable_description` |
 | api response | api 노드 | JSONPath 로 API 응답에서 추출. 매핑은 `response_variables[]` 의 `variable_name` / `json_path` |
+
+### extraction 변수 vs postCall 변수 — 어디에 두느냐
+
+vox.ai 는 통화 중 추출값을 두 곳에 보관할 수 있다. **단순 기록과 분기/발화 사용을 분리** 하지 않으면 extraction 노드만 비대해지고 단순 기록 변수가 쓸데없는 노드 부담을 만든다.
+
+| 항목 | extraction 노드 (flow 변수) | postCall (`agent.data.postCall.actions`) |
+|---|---|---|
+| **언제** | 추출한 값을 **이후 대화/분기/api/sendSms 등에서 사용** 할 때 | 통화 종료 후 **단순 기록 / 분석 / CRM 적재** 만 할 때 |
+| **저장 시점** | 추출 즉시 flow 변수로 즉시 사용 가능 | 통화 종료 후 일괄 저장 (대화 중 사용 불가) |
+| **분기 사용** | condition 노드의 `{{variable}}` 비교에 직접 사용 | 사용 불가 |
+| **발화 사용** | conversation `{{variable}}` 렌더링 가능 | 사용 불가 |
+| **type 옵션** | string / number / boolean | string / number / boolean / **enum** (`enumOptions` 필수) |
+| **노드 필요** | extraction 노드 추가 필요 | 노드 추가 불필요 |
+
+**판단 흐름**:
+1. 추출한 값을 이후 conversation prompt 에 넣을 건가? → extraction
+2. condition 또는 logic edge 에서 `{{variable}}` 비교할 건가? → extraction
+3. api 호출의 url / body / headers 에 넣을 건가? → extraction
+4. 위 셋 다 아니라면 → **postCall**. 통화 종료 후 분석/CRM 용으로만 쓰는 값.
+
+**예시**:
+- `cancel_reason` (취소 사유 — 통화 후 분석만) → postCall ✅
+- `new_datetime` (변경 일시 — 다음 노드의 conversation 에서 발화) → extraction ✅
+- `member_grade` (회원 등급 — condition 노드의 logic 분기에서 사용) → extraction ✅
+- `feedback_text` (자유 답변 — 통화 후 검토만) → postCall ✅
+- `wants_consultation` (상담 희망 — branch 노드에서 사용) → extraction ✅
+
+postCall 의 정확한 schema 와 enum 처리는 `vox-agents/references/agent-data-reference.md` 의 postCall 섹션을 참조한다.
 
 ### 변수 소비
 
@@ -277,6 +307,19 @@ mcp__vox__update_agent(
 
 전체 nodes / edges 다시 보내는 형태. 일부만 빼면 그 노드/엣지가 삭제된다.
 
+#### PATCH 직전 사용자 수정분 보존 (필수)
+
+flow_data 는 **전체 교체** 이지만, 사용자가 web editor 에서 직접 추가/수정한 노드·엣지가 server 에 보존되어 있을 수 있다. 이전 버전으로 PATCH 하면 **사용자 작업이 silent 로 삭제** 된다.
+
+작업 순서:
+
+1. `get_agent(agent_id=...)` 으로 현재 flow_data 조회
+2. 응답의 nodes / edges 를 우리가 만들 nodes / edges 와 diff
+3. 사용자가 추가한 (id 가 우리 의도에 없는) 노드/엣지는 **그대로 보존** 한 채 PATCH
+4. PATCH 후 `get_agent` 재호출해 round-trip 검증
+
+사용자 추가 엣지는 형식이 우리 형식과 다를 수 있다 — 빈/짧은 ai prompt 또는 `condition.type="fallback"` + `skip_user_response=false` 식. 둘 다 schema 가 받아주는 정상 형식이므로 형식 통일 시도하지 말고 그대로 둔다. 자세한 contract 는 [`hidden-contracts.md` §6](hidden-contracts.md#6-flow_data-patch-시-사용자-web-editor-수정분-보존).
+
 ### 조회
 
 REST:
@@ -291,4 +334,14 @@ mcp__vox__get_agent(agent_id="<UUID>")   # 응답에 flow_data 포함
 
 ### Round-trip 검증 (필수)
 
-`flow_data` 는 unknown 필드를 silent drop 할 수 있다. 전송 후 항상 응답을 다시 비교해서 의도한 노드 / 엣지 / 필드가 그대로 들어갔는지 확인한다. 보낸 필드가 응답에 없으면 로컬 문서를 고치려 들기 전에 schema endpoint 결과와 payload 를 다시 대조한다.
+`flow_data` 는 unknown 필드를 silent drop 할 수 있고, 일부 필드는 server 가 **silently override** 한다 (예: `begin → next` 의 condition / skip_user_response). 전송 후 항상 응답을 다시 비교해서 다음을 확인한다.
+
+체크리스트:
+
+1. **보낸 필드가 응답에 모두 살아있나** — 누락은 schema 어긋남 (extra 필드 silent drop) 신호. 로컬 문서가 아니라 schema endpoint 결과로 다시 대조.
+2. **`skip_user_response` default override 됐나** — extraction / api 등 응답 비기대형 노드의 outgoing edge 에 `true` 로 보냈는데 응답이 `false` 면 데드락 위험 ([`hidden-contracts.md` §1](hidden-contracts.md#1-응답-비기대형-노드의-outgoing-transition-skip_user_responsetrue)).
+3. **`condition.type` 이 의도한 값으로 저장됐나** — `begin → next` 는 `ai` 보내도 `fallback` 으로 강제됨. 다른 노드는 보낸 값 그대로여야 함.
+4. **사용자 web editor 수정분이 살아있나** — PATCH 라면 우리가 보내지 않은 (id 가 우리 의도에 없는) 노드/엣지가 응답에 살아있어야 함. 사라졌으면 사용자 작업을 덮어쓴 것 ([`hidden-contracts.md` §6](hidden-contracts.md#6-flow_data-patch-시-사용자-web-editor-수정분-보존)).
+5. **fallback edge 가 web editor 시각화에 안 보인다는 보고가 들어오면** — 응답 데이터에는 정상이면 web editor 렌더링 버그 ([`hidden-contracts.md` §4](hidden-contracts.md#4-edge--transition-매칭은-sourcehandle--transitionid)). 데이터에서 빠졌으면 schema 어긋남.
+
+이 체크리스트를 12 항목 self-check ([`hidden-contracts.md` 빠른 self-check](hidden-contracts.md#빠른-self-check)) 와 함께 PATCH 의 사후 점검 루틴으로 사용한다.

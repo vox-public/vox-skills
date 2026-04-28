@@ -21,6 +21,7 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 - **node-creation.md** — flowchart/스크립트 → 노드 markdown 변환 workflow. **2단계 시작 시 먼저 읽기.** See [references/node-creation.md](references/node-creation.md)
 - **conversation-markdown.md** — conversation 노드 static/generated 작성법. **대화 노드 문구와 exit 조건을 쓸 때 읽기.** See [references/conversation-markdown.md](references/conversation-markdown.md)
 - **execution-node-markdown.md** — extraction/condition/api/transfer/sendSms/tool/endCall 작성법. **대화 외 노드를 쓸 때 읽기.** See [references/execution-node-markdown.md](references/execution-node-markdown.md)
+- **hidden-contracts.md** — schema 표면만으로는 알 수 없는 운영 규칙 12 항목 (skip_user_response 데드락, LogicCondition.value string, api default 필드, edge↔transition 매칭 등). **flow_data JSON 을 만들거나 수정하기 직전에 빠르게 훑기.** See [references/hidden-contracts.md](references/hidden-contracts.md)
 - **node-examples.md** — 긴 예시 모음. **출력 톤이나 구조 예시가 필요할 때만 읽기.** See [references/node-examples.md](references/node-examples.md)
 - **node-types.md** — 노드 타입 선택 기준 + schema endpoint 사용 규칙. **특정 노드의 JSON 설정 옵션이 필요하면 먼저 schema endpoint 를 호출하기.** See [references/node-types.md](references/node-types.md)
 - **flow-review.md** — 설계물 체크리스트 기반 검증. **3단계: 설계 완료 후 또는 "리뷰해줘" 요청 시 읽기.** See [references/flow-review.md](references/flow-review.md)
@@ -36,13 +37,14 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 
 ## Workflow
 
-스크립트 → flow 변환 시 3단계로 진행:
+스크립트 → flow 변환 시 4단계로 진행:
 
 1. **시각화 (flow-sketch)**: 스크립트 → Mermaid flowchart + 노드 요약 테이블
 2. **상세 설계 (node creation)**: 확정된 차트의 각 노드 → flow node markdown. `node-creation.md`를 시작점으로 읽고 필요한 노드 계열 reference만 추가로 읽는다.
 3. **리뷰 (flow review)**: 체크리스트 기반 검증, CRITICAL/WARN/INFO 분류
+4. **MCP 호출 (배포)**: schema 확인 → 사용자 수정분 fetch → create / update → round-trip 확인. 자세한 절차는 `flow-guide.md` 의 "API / MCP 로 Flow 만들고 수정" + "Round-trip 검증" 섹션, 운영 규칙은 `hidden-contracts.md` 12 항목 self-check 를 따른다.
 
-사용자가 시각화만 요청하면 1단계만. "노드로 변환해줘"면 1→2단계. "리뷰해줘"면 3단계.
+사용자가 시각화만 요청하면 1단계만. "노드로 변환해줘"면 1→2단계. "리뷰해줘"면 3단계. "에이전트 만들어줘 / 수정해줘"는 1→4단계 또는 기존 설계가 있으면 3→4단계.
 
 ## Node Type 요약
 
@@ -80,10 +82,12 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 2. node type, field, enum, required 여부를 추측하지 않는다 — `flow_data` 작성 직전에 `get_schema(namespace='flow-schema', schema_type='flow-data')` 를 호출하고 그 결과를 기준으로 JSON 을 만든다.
 3. deprecated node(`function`, `knowledge`)는 신규 flow에 사용하지 않는다 — 대시보드에서 더 이상 추가할 수 없고, 향후 런타임 지원이 제거될 수 있다.
 4. node 수는 최소화 — 불필요한 분할은 edge 관리를 복잡하게 하고 유지보수 비용이 증가한다.
-5. 변수 이름은 snake_case, 의미가 명확한 이름 사용 — condition node와 변수 렌더러가 snake_case를 전제로 동작하며, 모호한 이름(val1, temp)은 노드 간 전달 시 혼동을 일으킨다.
+5. 변수 이름은 snake_case, 의미가 명확한 이름 사용, flow 전체에서 유일하게 — condition node와 변수 렌더러가 snake_case를 전제로 동작하며, 모호한 이름(val1, temp)은 노드 간 전달 시 혼동을 일으킨다.
 6. 전환조건에 "다음 단계 이름"을 쓰지 않는다 — exit 조건만 정의해야 노드 순서가 바뀌어도 LLM이 올바르게 판단한다.
 7. **산출물 경로는 두 가지** — (a) 대시보드 flow editor 에 사람이 직접 입력하는 노드 markdown, (b) v3 REST API (`PATCH /v3/agents/{id}` with `flow_data`) 또는 동등한 vox.ai MCP `create_agent` / `update_agent` 의 `flow_data` 파라미터로 보내는 JSON. JSON surface 는 schema endpoint 가 authoritative 하며, 수정은 항상 **전체 교체** 방식 — 기존 노드 일부만 patch 하지 않고 nodes/edges 전체를 다시 보낸다.
 8. **Schema endpoint 우선** — `references/node-types.md` 는 node 선택과 실수 방지 playbook 이다. 실제 필드 목록을 복사하지 말고, 작업 중 받은 `get_schema` 결과를 기준으로 `flow_data` 를 작성한다. 전송 후 `get_agent` 로 round-trip 확인해 unknown field drop 을 잡는다.
+9. **PATCH 직전 사용자 수정분 보존** — `update_agent` 호출 직전 `get_agent` 으로 현재 flow_data 조회 후, 우리가 만들 nodes/edges 와 diff 해 사용자가 web editor 에서 추가/수정한 항목은 그대로 남긴 채 PATCH 한다. 전체 교체 방식이라 diff 없이 보내면 사용자 작업이 silent 삭제된다 (자세한 절차는 `flow-guide.md` 의 "PATCH 직전 사용자 수정분 보존" 섹션).
+10. **Hidden contracts 12 항목 self-check** — schema endpoint 표면만으로는 알 수 없는 운영 규칙 (skip_user_response 데드락, LogicCondition.value string 강제, api default 8 필드, edge ↔ transition 매칭 등) 12 가지가 있다. `flow_data` JSON 을 보내기 직전 `references/hidden-contracts.md` 의 빠른 self-check 를 1 회 훑는다.
 
 ## Ownership Boundary
 

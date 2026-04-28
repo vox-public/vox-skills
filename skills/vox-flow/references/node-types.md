@@ -39,20 +39,27 @@ schema 결과를 받은 뒤에만 `create_agent(type="flow", data=..., flow_data
 
 ## Edge and transition rules
 
-- 노드 내부에 구 v2 `transitions[]`, `logicalTransitions[]`, `sourceHandle` 같은 editor/legacy field 를 넣지 않는다.
+- 노드 내부에 구 v2 `transitions[]`, `logicalTransitions[]` 같은 legacy field 를 임의로 넣지 않는다. schema endpoint 가 노출하는 형태만 따른다.
 - 분기는 `edges[].condition` 으로 표현한다. condition 의 정확한 union shape 는 schema endpoint 를 확인한다.
 - fallback 은 자동으로 생긴다고 가정하지 않는다. JSON 을 보낼 때 필요한 fallback path 는 `edges` 안에 명시한다.
-- `position`, `viewport`, `sourceHandle`, `targetHandle`, animated edge 등 layout/editor field 는 API payload 기준이 아니다. 필요 여부는 schema endpoint 와 round-trip 결과로만 판단한다.
+- `position`, `viewport`, `targetHandle`, animated edge 등 layout/editor field 는 API payload 기준이 아니다. 필요 여부는 schema endpoint 와 round-trip 결과로만 판단한다.
+- **edge 가 web editor 에 안 그려지는 가장 흔한 원인은 `edge.sourceHandle` 이 source 노드의 transition.id 와 매칭이 안 될 때다.** schema endpoint 가 transition 을 노출하면 매칭을 정확히 유지한다 ([`hidden-contracts.md` §4](hidden-contracts.md#4-edge--transition-매칭은-sourcehandle--transitionid)).
 
 ## High-risk nodes
 
-아래 node 는 과거 데이터 형태와 현재 v3 surface 가 자주 섞인다. 작성 전 schema endpoint 결과를 반드시 대조한다.
+아래 node 는 schema 표면만 보고는 알 수 없는 contract 가 있어 작성 전 schema endpoint + [`hidden-contracts.md`](hidden-contracts.md) 를 같이 본다.
 
-- `transferAgent`: 과거 flat `agentId` 표현을 그대로 쓰지 않는다. 현재 schema 결과의 target agent mapping shape 를 따른다.
-- `sendSms`: message object 와 섞지 않는다. SMS node 전용 field shape 를 schema 결과에서 확인한다.
-- `api`: 지원 HTTP method, auth, body, response variable shape 를 schema 결과에서 확인한다. 임의로 `PATCH` 등을 추가하지 않는다.
+- `begin`: outgoing edge 에 transitions 를 넣지 않는다. `condition.type=ai` 또는 `skip_user_response=true` 를 보내도 server 가 silently `fallback` + `false` 로 강제 ([`hidden-contracts.md` §1](hidden-contracts.md#1-응답-비기대형-노드의-outgoing-transition-skip_user_responsetrue), §5).
+- `conversation`: outgoing edge 에 `condition.type="fallback"` 사용 금지. 거절/예외도 ai condition 자연어로 ([`hidden-contracts.md` §5](hidden-contracts.md#5-fallback-은-응답-비기대형-분기-노드에서만)). first_message 와 변수 값의 어휘 중복 회피는 `conversation-markdown.md` 참조.
+- `extraction`: outgoing edge 의 `skip_user_response=true` 명시 누락 시 통화 데드락 (`flow_error`). 변수 정규화는 빌트인 미지원 — description 에 형식 + 예시 필수 ([`hidden-contracts.md` §1, §11](hidden-contracts.md#1-응답-비기대형-노드의-outgoing-transition-skip_user_responsetrue)).
+- `condition`: node `data` 안에 분기 조건을 넣지 않는다. 분기 조건은 edge condition. **`LogicCondition.value` 는 항상 string** — boolean 변수 비교는 ai condition 으로 우회 ([`hidden-contracts.md` §2](hidden-contracts.md#2-logiccondition-value-는-string--boolean-비교-우회)).
+- `api`: 지원 HTTP method, auth, body, response variable shape 를 schema 결과에서 확인한다. 임의로 `PATCH` 등을 추가하지 않는다. **`api_configuration` default 8 필드 모두 명시** 하지 않으면 web editor 크래시. plain text 응답은 `json_path="$"` + 후속 prompt 정제 ([`hidden-contracts.md` §3, §12](hidden-contracts.md#3-api-노드-api_configuration-default-필드-모두-명시)).
+- `transferCall`: 번호 미정 시 placeholder + 사용자 후속 작업 안내. 빈 값 금지.
+- `transferAgent`: **`agentId` 는 int 내부 ID** — `list_agents()` UUID 가 아님. placeholder `agentId: 0` 후 사용자가 web editor 에서 선택 ([`hidden-contracts.md` §7](hidden-contracts.md#7-transferagentagentid-는-int-내부-id)).
+- `sendSms`: schema 검증 약함. `prompt_type` / `prompt` 또는 `static_sentence` + `static_title` / outgoing edge `skip_user_response=true` 모두 직접 명시 ([`hidden-contracts.md` §10](hidden-contracts.md#10-sendsms-노드는-schema-검증이-약하므로-필수-필드-모두-명시)).
 - `tool`: built-in tool 과 custom tool 을 섞지 않는다. custom tool 실행 node 와 agent `data.builtInTools` 설정은 별도 schema surface 다.
-- `condition`: node `data` 안에 분기 조건을 넣지 않는다. 분기 조건은 edge condition 이다.
+
+flow_data 의 변수명은 flow 전체에서 유일하게 ([`hidden-contracts.md` §8](hidden-contracts.md#8-변수명은-flow-전체에서-유일하게)). 노드/transition id 는 nanoid 또는 UUID 권장 ([`hidden-contracts.md` §9](hidden-contracts.md#9-노드transition-id-는-nanoid-또는-uuid)).
 
 ## Review checklist
 
