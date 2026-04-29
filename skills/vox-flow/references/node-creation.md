@@ -84,8 +84,7 @@
 - condition 노드는 앞선 extraction/api 에서 만든 변수를 소비하는가?
 - api 노드는 호출 목적, 대기 멘트 여부, 응답 변수 의도가 있는가?
 - transfer/sendSms/tool 실패 path 가 필요한 경우 fallback edge 로 보낼 의도가 명시되어 있는가?
-- transferAgent 노드는 `agent.agent_id` (UUID), tool 노드는 `tool_id` 가 명시되어 있는가? (누락 시 dry-run 차단)
-- JSON 으로 변환하려는 경우 schema endpoint 호출 + `validate_flow_data` dry-run 단계가 표시되어 있는가?
+- JSON 으로 변환하려는 경우 schema endpoint 호출 + dry-run 단계가 표시되어 있는가? (식별자 필수 / dry-run / warnings 전달 등 세부 체크는 [flow-review.md](flow-review.md) 의 D · E · F 섹션 참조)
 
 ## JSON conversion gate
 

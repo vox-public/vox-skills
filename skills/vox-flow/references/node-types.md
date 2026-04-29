@@ -21,13 +21,7 @@ schema 결과를 받은 뒤에만 `create_agent(type="flow", data=..., flow_data
 
 ## Dry-run before create / update
 
-`flow_data` 를 `create_agent` / `update_agent` 로 보내기 직전에 항상 MCP `validate_flow_data(flow_data=...)` 를 호출한다. 응답:
-
-- `errors[]` — 차단 오류. 비어있을 때만 진짜 호출한다.
-- `warnings[]` — 자동 보정 또는 권장 사항. 사용자에게 한 줄로 요약 전달.
-- `fixed_flow_data` — 자동 보정이 적용된 결과. 있으면 그것을 보낸다.
-
-**nested config default 는 외워서 채우지 않는다.** `api_configuration` 의 인증/헤더/바디 옵션, `extraction_configuration`, `transfer_configuration`, `knowledge`, `message` 같은 nested 객체는 사용자가 의도한 키만 명시하면 누락 필드를 백엔드가 default 로 보충한다. 식별자 (`url`, `agent.agent_id`, `tool_id`) 만 책임지고 채우면 된다. 외운 default 를 강제로 넣다가 schema 진화에 뒤처지지 않도록 주의.
+`flow_data` 를 `create_agent` / `update_agent` 로 보내기 직전 호출 절차와 응답 처리는 SKILL.md 의 Core Operating Rules #9~#10 과 [Response Handling](../SKILL.md#response-handling) 을 따른다. 핵심만 짚으면: dry-run 응답의 `errors` 가 비었을 때만 보내고, `warnings` / `flow_warnings` 는 사용자에게 전달한다.
 
 ## Node selection guide
 
@@ -58,10 +52,10 @@ schema 결과를 받은 뒤에만 `create_agent(type="flow", data=..., flow_data
 
 아래 node 는 과거 데이터 형태와 현재 v3 surface 가 자주 섞인다. 작성 전 schema endpoint 결과를 반드시 대조한다.
 
-- `transferAgent`: 과거 flat `agentId` 표현을 그대로 쓰지 않는다. 현재 schema 결과의 target agent mapping shape 를 따른다. **`agent.agent_id` (UUID) 누락 시 dry-run 이 `transfer_agent_missing_agent` 로 차단**.
+- `transferAgent`: 과거 flat `agentId` 표현을 그대로 쓰지 않는다. 현재 schema 결과의 nested `agent.{agent_id, agent_version}` shape 를 따른다. **`agent.agent_id` 누락 시 dry-run 차단**.
 - `sendSms`: message object 와 섞지 않는다. SMS node 전용 field shape 를 schema 결과에서 확인한다.
 - `api`: 지원 HTTP method, auth, body, response variable shape 를 schema 결과에서 확인한다. 임의로 `PATCH` 등을 추가하지 않는다.
-- `tool`: built-in tool 과 custom tool 을 섞지 않는다. custom tool 실행 node 와 agent `data.builtInTools` 설정은 별도 schema surface 다. **`tool_id` 누락 시 dry-run 이 `tool_missing_tool_id` 로 차단**.
+- `tool`: built-in tool 과 custom tool 을 섞지 않는다. custom tool 실행 node 와 agent `data.builtInTools` 설정은 별도 schema surface 다. **`tool_id` 누락 시 dry-run 차단**.
 - `condition`: node `data` 안에 분기 조건을 넣지 않는다. 분기 조건은 edge condition 이다.
 
 ## Review checklist
@@ -69,7 +63,5 @@ schema 결과를 받은 뒤에만 `create_agent(type="flow", data=..., flow_data
 1. `get_schema(namespace="flow-schema", schema_type="flow-data")` 를 호출했는가?
 2. schema 결과에 없는 field 를 과거 문서나 UI 기억만으로 넣지 않았는가?
 3. fallback, failure, else path 를 필요한 `edges` 로 명시했는가?
-4. `validate_flow_data(flow_data=...)` 로 dry-run 했고 `errors === []` 인가? `warnings` 는 사용자에게 전달했는가?
-5. `create_agent` / `update_agent` 후 `get_agent` 로 round-trip 확인했는가?
-6. 응답에서 사라진 field 가 있다면, 해당 field 를 제거하거나 schema 결과 기준으로 다시 작성했는가?
-7. 응답 dict 의 `flow_warnings` 가 있으면 사용자에게 전달했는가?
+4. dry-run 절차 (`validate_flow_data` → `errors === []` 확인 → `warnings` / `flow_warnings` 사용자 전달) 를 거쳤는가? 자세한 응답 처리 룰은 SKILL.md [Response Handling](../SKILL.md#response-handling).
+5. `create_agent` / `update_agent` 후 `get_agent` 로 round-trip 확인했는가? 응답에서 사라진 field 가 있다면 schema 결과 기준으로 다시 작성했는가?

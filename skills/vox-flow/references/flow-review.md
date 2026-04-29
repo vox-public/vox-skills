@@ -91,7 +91,7 @@ schema 자체는 통과해도 사용자가 갑자기 통화 끊긴 듯한 경험
 
 | ID | 심각도 | 항목 | 판단 기준 |
 |----|--------|------|----------|
-| E1 | CRITICAL | api 노드 명시적 실패 분기 | 모든 api 노드에 성공 edge 외 명시적 실패 edge 가 있고, 실패 edge 의 target 이 endCall 직행이 아니라 retry / 양해 안내 conversation 노드인가. fallback → endCall 로 흘리면 사용자가 갑자기 끊긴 인상을 받는다. |
+| E1 | CRITICAL | api 노드 명시적 실패 분기 | 모든 api 노드에 성공 edge 외 명시적 실패 edge 가 있고, 실패 edge 의 target 이 endCall 직행이 아니라 retry / 양해 안내 conversation 노드인가. (anti-pattern / 권장 JSON 은 [execution-node-markdown.md#api](execution-node-markdown.md#api)) |
 | E2 | WARN | tool / sendSms 실패 분기 흡수 | tool / sendSms 노드의 실패 fallback edge 가 endCall 직행이 아닌 안내/재시도 conversation 으로 흡수되는가. |
 
 ### F. dry-run + 식별자 필수 필드
@@ -101,8 +101,8 @@ schema 자체는 통과해도 사용자가 갑자기 통화 끊긴 듯한 경험
 | ID | 심각도 | 항목 | 판단 기준 |
 |----|--------|------|----------|
 | F1 | CRITICAL | dry-run 미수행 | `flow_data` 를 `create_agent` / `update_agent` 로 보내기 전에 `validate_flow_data` 를 호출하지 않았는가. 이 단계가 없으면 차단 오류가 그대로 사용자에게 노출되고 자동 보정 결과도 안 보인다. |
-| F2 | CRITICAL | transferAgent 식별자 누락 | 모든 `transferAgent` 노드가 `agent.agent_id` (UUID) 를 가지는가. 누락 시 `transfer_agent_missing_agent` 로 차단된다. `agent_version` 도 함께 명시 권장. |
-| F3 | CRITICAL | tool 식별자 누락 | 모든 `tool` 노드가 `tool_id` 를 가지는가. 누락 시 `tool_missing_tool_id` 로 차단된다. |
+| F2 | CRITICAL | transferAgent 식별자 누락 | 모든 `transferAgent` 노드가 `agent.agent_id` (UUID) 를 가지는가. `agent_version` 도 함께 명시 권장. (누락 시 dry-run 차단) |
+| F3 | CRITICAL | tool 식별자 누락 | 모든 `tool` 노드가 `tool_id` 를 가지는가. (누락 시 dry-run 차단) |
 | F4 | WARN | warnings 미반영 | dry-run / create / update 응답의 `warnings` 또는 `flow_warnings` 를 사용자에게 한 줄도 전달하지 않았는가. 자동 보정 사실은 다음 작업 때 사람이 다시 의도와 맞춰야 하므로 반드시 알린다. |
 
 ## 출력 포맷
