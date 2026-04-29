@@ -51,6 +51,7 @@
 ## Unreleased
 
 ### Changed
+- `vox-flow` references에 api 노드 실패 분기 설계 규칙을 추가했다. api 호출 실패 fallback edge가 곧바로 endCall로 흘러가면 사용자가 통화가 갑자기 끊긴 인상을 받기 때문에, 짧은 양해 안내 conversation 노드로 흡수한 뒤 마무리하도록 가이드한다. `execution-node-markdown.md`에 anti-pattern / 권장 JSON 예시를 두고, `node-examples.md`에 짝꿍 노드(API 실패 안내 conversation) 예시를 추가했으며, `flow-review.md`에는 통화 흐름 안전성 섹션 E를 신설해 E1 CRITICAL(api 실패 분기 + 안내 노드 흡수)와 E2 WARN(tool/sendSms 실패 흡수)을 두었다.
 - `vox-flow`를 schema endpoint 우선 운영 방식으로 정리했다. 노드별 JSON field 목록을 로컬 reference에 고정하지 않고, `get_schema(namespace="flow-schema", schema_type="flow-data")`와 agent data schema를 호출한 뒤 `create_agent(type="flow", data=..., flow_data=...)` / `update_agent(flow_data=...)`를 수행하도록 안내한다.
 - `vox-flow` node markdown 작성 가이드를 경량 라우터(`node-creation.md`)와 세부 reference(`conversation-markdown.md`, `execution-node-markdown.md`, `node-examples.md`)로 분리했다. 대시보드 입력용 markdown과 MCP/API `flow_data` JSON을 명확히 구분해 오래된 v2 shape가 섞이는 문제를 줄인다.
 - Codex plugin 설치 경로를 2026-04 신규 `codex marketplace add vox-public/vox-skills` 단일 명령으로 전환했다. `README.md`, `vox-onboarding/references/quickstart-ko.md`, `vox-onboarding/references/mcp-vox-integration.md`의 기존 `git clone → cd → codex → /plugins` 흐름을 모두 대체하고 App(**Plugins → Add to Codex**)과 CLI(`/plugins → Install plugin`) 설치를 병기했다. docs `docs/ai/openai-codex` 개편과 정합한다.
