@@ -36,13 +36,14 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 
 ## Workflow
 
-스크립트 → flow 변환 시 3단계로 진행:
+스크립트 → flow 변환 시 4단계로 진행:
 
 1. **시각화 (flow-sketch)**: 스크립트 → Mermaid flowchart + 노드 요약 테이블
 2. **상세 설계 (node creation)**: 확정된 차트의 각 노드 → flow node markdown. `node-creation.md`를 시작점으로 읽고 필요한 노드 계열 reference만 추가로 읽는다.
 3. **리뷰 (flow review)**: 체크리스트 기반 검증, CRITICAL/WARN/INFO 분류
+4. **dry-run 검증 (validate_flow_data)**: JSON 산출물이 준비되면 MCP `validate_flow_data` 를 호출해 결과를 사용자에게 한두 줄로 요약. errors 발생 시 노드 ID + rule 을 짚어 한 차례 수정 후 재검증한다. 통과 후에만 `create_agent` / `update_agent` 호출.
 
-사용자가 시각화만 요청하면 1단계만. "노드로 변환해줘"면 1→2단계. "리뷰해줘"면 3단계.
+사용자가 시각화만 요청하면 1단계만. "노드로 변환해줘"면 1→2단계. "리뷰해줘"면 3단계. JSON 으로 보내려면 4단계까지.
 
 ## Node Type 요약
 
@@ -84,6 +85,47 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 6. 전환조건에 "다음 단계 이름"을 쓰지 않는다 — exit 조건만 정의해야 노드 순서가 바뀌어도 LLM이 올바르게 판단한다.
 7. **산출물 경로는 두 가지** — (a) 대시보드 flow editor 에 사람이 직접 입력하는 노드 markdown, (b) v3 REST API (`PATCH /v3/agents/{id}` with `flow_data`) 또는 동등한 vox.ai MCP `create_agent` / `update_agent` 의 `flow_data` 파라미터로 보내는 JSON. JSON surface 는 schema endpoint 가 authoritative 하며, 수정은 항상 **전체 교체** 방식 — 기존 노드 일부만 patch 하지 않고 nodes/edges 전체를 다시 보낸다.
 8. **Schema endpoint 우선** — `references/node-types.md` 는 node 선택과 실수 방지 playbook 이다. 실제 필드 목록을 복사하지 말고, 작업 중 받은 `get_schema` 결과를 기준으로 `flow_data` 를 작성한다. 전송 후 `get_agent` 로 round-trip 확인해 unknown field drop 을 잡는다.
+9. **flow_data 전송 전 dry-run 먼저** — `create_agent` / `update_agent` 의 `flow_data` 를 보내기 전, MCP `validate_flow_data(flow_data=...)` 를 먼저 호출해 dry-run 한다. 응답의 `errors` 가 비었을 때만 진짜 호출하고, `warnings` 는 사용자에게 한두 줄로 요약 전달한다. 이걸 생략하면 (a) 차단 오류가 사용자에게 400/422 로 그대로 노출되고, (b) 자동 보정이 일어났음을 사용자가 알 길이 없다. dry-run 을 건너뛴 경우라도 `create_agent` / `update_agent` 응답 dict 의 `flow_warnings` 필드로 자동 보정 정보는 받을 수 있다 (차단 오류 사전 차단만 안 될 뿐).
+10. **nested config default 는 백엔드가 채운다** — `api_configuration` 의 인증/헤더/바디 옵션, `extraction_configuration`, `transfer_configuration`, `knowledge`, `message` 같은 nested 객체의 모든 필드를 LLM 이 외워 채울 필요 없다. `url`, `agent_id`, `tool_id` 처럼 누락 시 진짜 차단 오류가 나는 식별자만 명시하고, 나머지는 사용자가 의도적으로 지정한 키만 보낸다. 외운 default 를 강제로 채워 넣으면 schema 진화에 뒤처지고 dry-run warnings 만 늘어난다.
+
+## Response Handling
+
+`validate_flow_data` / `create_agent` / `update_agent` 의 검증 결과를 어떻게 다루는지 정리.
+
+### `validate_flow_data` 응답
+
+- `valid: true` + `warnings: []` → 안전. 그대로 `create_agent` / `update_agent` 호출.
+- `valid: true` + `warnings: [...]` → 자동 보정이 적용되었거나 권장 사항이 있음. 사용자에게 한두 줄로 요약 후 진행 (예: "api 노드 X 에 실패 fallback 자동 추가됨"). 응답의 `fixed_flow_data` 가 있으면 그것을 그대로 보낸다.
+- `valid: false` → `errors[]` 의 각 항목 (`rule`, `node_id`, `message`, `suggestion`) 을 읽고 1회 수정 후 재검증. 같은 rule 이 다시 나오면 사용자에게 보고하고 멈춘다.
+
+### `create_agent` / `update_agent` 422 / 400 응답
+
+응답 envelope 가 `{"error": {"code": "VALIDATION_ERROR", "details": {"source": "flow_validator", "errors": [...]}}}` 형태이면 `details.errors[]` 를 위 dry-run 과 동일한 룰별 처리로 다룬다. 그 외 (스키마 자체 검증 실패) 는 그래프 구조 위반이므로 nodes / edges 자체를 점검한다.
+
+### `create_agent` / `update_agent` 200 응답의 `flow_warnings`
+
+응답 dict 에 `flow_warnings: [{rule, node_id, message}, ...]` 가 머지되어 들어온다. dry-run 을 생략하고 바로 보낸 경우에도 자동 보정 사실을 받을 수 있다. 끝 항목이 `{"truncated": true}` 면 일부가 잘려 표시된 것. 자동 보정이 일어난 사실을 사용자에게 한 줄로 알린다 — 모르고 지나가면 다음 작업 때 보정 결과를 사람이 다시 의도와 맞춰야 한다.
+
+### 룰 ID 빠른 참조
+
+차단 오류 (errors, 사전에 막아야 할 것):
+- `transfer_agent_missing_agent` — transferAgent 노드의 `agent.agent_id` 누락
+- `tool_missing_tool_id` — tool 노드의 `tool_id` 누락
+- `no_terminal_reachable` — begin 으로부터 endCall / transferCall / transferAgent 도달 경로 없음
+- `operator_value_type_mismatch` — logic operator 의 numeric value 가 비-numeric
+
+경고 (warnings, 자동 보정 후 알림):
+- `api_missing_failure_edge` — api 노드 fallback edge 자동 추가됨 (단, target 이 endCall 직행이라면 사용자 의도대로 안내 conversation 으로 다시 라우팅 권장)
+- `condition_unknown_variable` — logic 변수 미정의 (오타 의심)
+- `unreachable_node` — 도달 불가 노드
+- `variable_naming_non_snake_case` — 변수명 권장 형식 위반
+
+조용한 자동 보정 (silent, 알림 없음):
+- `trim_variable_names` — 변수명 trailing 공백/개행 trim
+- `inject_nested_defaults` — nested config 누락 필드 default 보충
+- `add_missing_outgoing_edges` — 비-terminal 노드 누락 outgoing edge 자동 추가
+- `add_skip_response_fallback` — `is_skip_user_response: true` 노드 fallback safety net 자동 추가
+- `add_condition_fallback` — condition 노드 fallback edge 자동 추가
 
 ## Ownership Boundary
 
@@ -103,6 +145,7 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 - `get_agent` — 기존 에이전트 설정 확인 (flow_data 포함)
 - `list_agents` — 에이전트 목록
 - `get_schema(namespace='flow-schema', schema_type='flow-data')` — flow_data JSON Schema (node·edge·condition `$defs` 포함). `create_agent` / `update_agent` 의 `flow_data` 구성 전에 호출.
+- `validate_flow_data(flow_data=...)` — flow_data dry-run. 응답: `{valid, fixed_flow_data, warnings, errors}`. `create_agent` / `update_agent` 직전에 호출해 차단 오류를 사전 차단하고 자동 보정 결과를 사용자에게 전달한다.
 
 ### Docs (vox.ai docs / vox-docs)
 - `docs/build/flow/overview` — 플로우 에이전트 개요
