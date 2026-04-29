@@ -50,10 +50,8 @@
 
 ## Unreleased
 
-### Added
-- `vox-flow` 에 `validate_flow_data` dry-run 워크플로우를 통합했다. `SKILL.md` Workflow 를 4단계로 확장(4단계: dry-run 검증)하고 Core Operating Rules에 #9(전송 전 dry-run 우선)와 #10(nested config default 는 백엔드가 채움)을 추가했으며, Response Handling 섹션을 신설해 `validate_flow_data` 응답 / 422·400 응답 / 200 응답의 `flow_warnings` 필드 처리 방식과 차단 오류·경고·조용한 자동 보정 룰 ID 빠른 참조를 정리했다. Related Resources MCP Tools 목록에 `validate_flow_data` 를 추가했다. references 쪽도 정합화 — `flow-review.md` 에 섹션 F(dry-run + 식별자 필수 필드: F1 dry-run 미수행, F2 transferAgent.agent_id, F3 tool.tool_id, F4 warnings 미반영) 추가, `execution-node-markdown.md` 의 transferAgent/tool 작성 규칙에 식별자 필수와 dry-run 차단 rule 명시, `node-types.md` 에 Dry-run before create/update 섹션과 high-risk node 별 차단 rule 명시, `node-creation.md` 의 JSON conversion gate / self-check 에 dry-run 단계 추가. 사용자 입장에서 (1) 차단 오류가 400/422 로 노출되는 일을 줄이고, (2) 자동 보정이 일어난 사실을 빠짐없이 전달하도록 가이드한다.
-
 ### Changed
+- `vox-flow` 에 `validate_flow_data` dry-run 워크플로우를 통합했다. SKILL.md Workflow 를 4단계로 확장(4단계: dry-run 검증)하고 Core Operating Rules #9(전송 전 dry-run)·#10(nested config default 는 백엔드가 채움)을 추가했으며, Response Handling 섹션을 신설해 응답별 처리 룰과 룰 ID 빠른 참조를 정리했다. references 도 정합화 — `flow-review.md` 섹션 F(dry-run + 식별자 필수), `execution-node-markdown.md` / `node-types.md` / `node-creation.md` 의 dry-run 단계 통합. 사용자 입장에서 (1) 차단 오류가 400/422 로 노출되는 일을 줄이고, (2) 자동 보정 사실이 빠짐없이 전달되도록 한다.
 - `vox-flow` references에 api 노드 실패 분기 설계 규칙을 추가했다. api 호출 실패 fallback edge가 곧바로 endCall로 흘러가면 사용자가 통화가 갑자기 끊긴 인상을 받기 때문에, 짧은 양해 안내 conversation 노드로 흡수한 뒤 마무리하도록 가이드한다. `execution-node-markdown.md`에 anti-pattern / 권장 JSON 예시를 두고, `node-examples.md`에 짝꿍 노드(API 실패 안내 conversation) 예시를 추가했으며, `flow-review.md`에는 통화 흐름 안전성 섹션 E를 신설해 E1 CRITICAL(api 실패 분기 + 안내 노드 흡수)와 E2 WARN(tool/sendSms 실패 흡수)을 두었다.
 - `vox-flow`를 schema endpoint 우선 운영 방식으로 정리했다. 노드별 JSON field 목록을 로컬 reference에 고정하지 않고, `get_schema(namespace="flow-schema", schema_type="flow-data")`와 agent data schema를 호출한 뒤 `create_agent(type="flow", data=..., flow_data=...)` / `update_agent(flow_data=...)`를 수행하도록 안내한다.
 - `vox-flow` node markdown 작성 가이드를 경량 라우터(`node-creation.md`)와 세부 reference(`conversation-markdown.md`, `execution-node-markdown.md`, `node-examples.md`)로 분리했다. 대시보드 입력용 markdown과 MCP/API `flow_data` JSON을 명확히 구분해 오래된 v2 shape가 섞이는 문제를 줄인다.
