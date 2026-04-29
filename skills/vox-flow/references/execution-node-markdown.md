@@ -86,9 +86,31 @@
 - [variable_name]: [JSONPath 표현식] — [설명]
 
 ## transition conditions
-- 성공: API 응답 정상 수신 시 다음 노드로 진행.
-- 실패: API 호출 실패 시 fallback edge로 진행. (JSON 변환 시 edge 명시)
+- 성공: API 응답 정상 수신 시 다음 노드로 진행. ai-edge 또는 logic-edge — 응답 변수 (`{{response_var}}`) 가 채워졌는지 기준으로 판단.
+- 실패: API 호출 실패 시 [실패 안내 노드]로 진행. fallback edge. **endCall 직행 금지** — 사용자에게 사정 안내 후 재시도 또는 정중한 마무리.
 ```
+
+작성 규칙:
+- 성공 분기와 **명시적 실패 분기** 를 항상 한 쌍으로 설계한다. api 노드는 timeout, 5xx, 응답 형식 오류 등 실패 가능성이 일상이므로 silent termination(=fallback → endCall) 으로 처리하면 사용자가 갑자기 끊긴 듯한 경험을 한다.
+- 실패 분기는 보통 conversation 노드(예: "지금 시스템이 잠시 어렵네요, 다시 안내드릴게요")로 받아서 양해 멘트 → 마무리 흐름으로 흡수한다.
+
+**Anti-pattern (피하기):**
+
+```json
+{ "source": "node_api", "target": "node_end",
+  "condition": { "type": "fallback" }, "skip_user_response": false }
+```
+
+→ 호출 실패 시 안내 한마디 없이 endCall. 사용자는 갑자기 끊긴 인상을 받는다.
+
+**권장 패턴:**
+
+```json
+{ "source": "node_api", "target": "node_api_failure_apology",
+  "condition": { "type": "fallback" }, "skip_user_response": false }
+```
+
+`node_api_failure_apology` 는 짧은 사과/안내 conversation 노드 — "조회가 어려워서 확인 후 다시 안내드릴게요" 정도. 그 다음에 endCall 로 마무리.
 
 ## endCall
 
