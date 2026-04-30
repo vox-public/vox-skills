@@ -21,7 +21,7 @@ schema 결과를 받은 뒤에만 `create_agent(type="flow", data=..., flow_data
 
 ## Dry-run before create / update
 
-`flow_data` 를 `create_agent` / `update_agent` 로 보내기 직전 호출 절차와 응답 처리는 SKILL.md 의 Core Operating Rules #9~#10 과 [Response Handling](../SKILL.md#response-handling) 을 따른다. 핵심만 짚으면: dry-run 응답의 `errors` 가 비었을 때만 보내고, `warnings` / `flow_warnings` 는 사용자에게 전달한다.
+`flow_data` 를 `create_agent` / `update_agent` 로 보내기 직전 호출 절차와 응답 처리는 SKILL.md 의 Core Operating Rules #9~#10 과 [Response Handling](../SKILL.md#response-handling) 을 따른다. 핵심만 짚으면: dry-run 응답의 `errors` 가 비었을 때만 보내고, dry-run `warnings` 와 create / update 200 응답의 `result.message` 자동 보정 안내는 사용자에게 전달한다.
 
 ## Node selection guide
 
@@ -63,5 +63,5 @@ schema 결과를 받은 뒤에만 `create_agent(type="flow", data=..., flow_data
 1. `get_schema(namespace="flow-schema", schema_type="flow-data")` 를 호출했는가?
 2. schema 결과에 없는 field 를 과거 문서나 UI 기억만으로 넣지 않았는가?
 3. fallback, failure, else path 를 필요한 `edges` 로 명시했는가?
-4. dry-run 절차 (`validate_flow_data` → `errors === []` 확인 → `warnings` / `flow_warnings` 사용자 전달) 를 거쳤는가? 자세한 응답 처리 룰은 SKILL.md [Response Handling](../SKILL.md#response-handling).
+4. dry-run 절차 (`validate_flow_data` → `errors === []` 확인 → `warnings` 사용자 전달, create / update 후에는 `result.message` 도 전달) 를 거쳤는가? 자세한 응답 처리 룰은 SKILL.md [Response Handling](../SKILL.md#response-handling).
 5. `create_agent` / `update_agent` 후 `get_agent` 로 round-trip 확인했는가? 응답에서 사라진 field 가 있다면 schema 결과 기준으로 다시 작성했는가?

@@ -95,4 +95,4 @@
 3. `node-creation.md`의 markdown 용어를 JSON field 로 직접 복사하지 않는다.
 4. fallback/실패/else path 는 자동 생성된다고 가정하지 말고 `edges` 로 명시한다.
 5. `validate_flow_data(flow_data=...)` 로 dry-run. `errors === []` 일 때만 다음 단계로 간다. `warnings` 는 사용자에게 한 줄로 전달한다.
-6. `create_agent` / `update_agent` 후 `get_agent` 로 round-trip 확인한다. 응답 dict 의 `flow_warnings` 가 있으면 함께 전달한다.
+6. `create_agent` / `update_agent` 후 `get_agent` 로 round-trip 확인한다. 응답 본문의 `result.message` 에 자동 보정 안내가 있으면 함께 전달한다.
