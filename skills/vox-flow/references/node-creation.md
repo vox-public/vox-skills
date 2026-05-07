@@ -80,6 +80,7 @@
 - 각 노드의 목적이 하나인가?
 - conversation 노드에 static/generated 의도가 명시되어 있는가?
 - generated conversation 에 첫 발화와 노드 안 재질문 방식이 명시되어 있는가?
+- JSON/MCP 생성 직전 generated conversation 의 `data.prompt` 에 역할, 목표, 범위, 변수, 금지사항, 전환 판단이 채워져 있고 `[[...]]` 작성용 placeholder 가 남지 않았는가?
 - extraction 노드는 추출 소스, 변수명, 타입, 기대 출력 예시가 있는가?
 - condition 노드는 앞선 extraction/api 에서 만든 변수를 소비하는가?
 - api 노드는 호출 목적, 대기 멘트 여부, 응답 변수 의도가 있는가?

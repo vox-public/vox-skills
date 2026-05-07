@@ -113,6 +113,48 @@
 
 `node_api_failure_apology` 는 짧은 사과/안내 conversation 노드 — "조회가 어려워서 확인 후 다시 안내드릴게요" 정도. 그 다음에 endCall 로 마무리.
 
+### JSON shape (api 노드)
+
+api 노드의 `data` 는 모두 camelCase 다. `headers` 는 **객체** (`{ "X-Foo": "bar" }`) 이지 배열이 아니다. body 가 있으면 `bodyEnabled: true`, headers 가 있으면 `headersEnabled: true` 를 같이 둔다 (없는 키는 보내지 않는다).
+
+```json
+{
+  "id": "api_lookup",
+  "type": "api",
+  "position": {"x": 640, "y": 0},
+  "data": {
+    "name": "주문 조회",
+    "apiConfiguration": {
+      "method": "POST",
+      "url": "https://api.example.com/orders/lookup",
+      "headersEnabled": true,
+      "headers": {"Content-Type": "application/json"},
+      "bodyEnabled": true,
+      "body": "{\"order_last4\":\"{{order_last4}}\"}",
+      "timeoutSeconds": 10
+    },
+    "responseVariables": [
+      {"variableName": "order_id", "jsonPath": "$.order_id"},
+      {"variableName": "order_found", "jsonPath": "$.found"}
+    ],
+    "logicalTransitions": [
+      {"id": "lt_found", "condition": {
+        "logicalOperator": "and",
+        "conditions": [{"variable": "order_found", "operator": "equals", "value": "true"}]
+      }}
+    ],
+    "transitions": [
+      {"id": "tr_lookup_fail", "condition": "요청 실패 시", "isFallback": true, "isSkipUserResponse": true}
+    ]
+  }
+}
+```
+
+흔한 실수:
+- `api_configuration`, `response_variables`, `logical_transitions` (snake_case) 로 보내면 v3 가 거절한다.
+- `headers: [{"key": "...", "value": "..."}]` (배열) 로 보내면 거절된다 — 객체 매핑이다.
+- 응답 변수의 jsonPath 는 `$.found` 같은 mock 친화 키만 쓴다. 도메인 키 (`$.data.order_id`) 는 scenario_test mock 에 없어서 logical transition 이 항상 false 로 평가된다.
+
 ## endCall
 
 통화를 종료한다. 종료 직전 발화를 할 수도 있고 즉시 종료할 수도 있다.
