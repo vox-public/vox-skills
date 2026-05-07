@@ -145,6 +145,8 @@ api / function / tool / sendSms 는 `"요청 실패 시"`, transferAgent / trans
 - **conversation → next**: source node `data.transitions[]` 에 자연어 `condition` row 를 만들고, edge `sourceHandle` 을 그 row id 로 둔다.
 - **condition → branch**: source node `data.logicalTransitions[]` 에 logic row 를 만들고, fallback 은 `data.transitions[]` 에 `isFallback:true` row 로 둔다.
 - **api / tool → success / failure**: 성공 path 는 success/logical transition row, 실패 path 는 canonical fallback transition row 로 둔다.
+- **static conversation → endCall / next**: 고정 멘트를 말한 뒤 넘어가는 row 도 일반 transition 이다. `isSkipUserResponse:true` 를 붙이면 editor 가 source handle 을 숨겨 edge 가 끊긴 것처럼 보일 수 있다. 다만 최종 안내 후 바로 종료만 남은 one-shot 문구는 static conversation 을 따로 만들지 말고 endCall 의 종료 멘트로 흡수하는 편이 안전하다. static conversation 은 사용자 응답을 기다리며 같은 문구를 반복할 수 있다.
+- **fallback row**: `isFallback:true` 만으로 실패 branch 의미를 표현한다. fallback row 에 `isSkipUserResponse:true` 를 같이 붙이지 않는다.
 
 ## 변수 흐름
 
@@ -205,6 +207,8 @@ conversation → extraction → condition → api → conversation
 
 extraction 노드는 기존 대화 컨텍스트에서 추출한다. 필요한 정보가 대화에 아직 없으면 extraction 이 빈 값을 반환한다. 반드시 conversation 노드에서 정보를 수집한 후 extraction 을 배치한다. extraction 은 `data.isSkipUserResponse: true` 가 기본이라 사용자 응답을 기다리지 않는다.
 
+conversation 에서 필요한 정보가 모두 모였으면 "확인했습니다. 진행하겠습니다" 같은 중간 발화로 같은 노드에 머물지 말고 즉시 extraction 으로 전환되도록 prompt 와 transition condition 을 작성한다. 정보 수집 노드가 전환하지 않으면 뒤의 API/SMS 노드는 실행되지 않는다.
+
 ### 6. Condition 노드는 logic 분기 전용
 
 condition 노드의 deterministic 분기는 `data.logicalTransitions[]` 에 둔다. 마지막 default path 는 `data.transitions[]` 의 `isFallback:true` row 하나와 그 row 를 가리키는 edge 로 둔다.
@@ -247,10 +251,10 @@ graph LR
 graph LR
   begin --> 대화 --> transferCall
   transferCall -->|성공| endCall
-  transferCall -->|실패| 안내 --> endCall
+  transferCall -->|실패| sendSms -->|SMS 실패| endCall
 ```
 
-통화 전환 실패 시 fallback edge 로 안내 후 종료.
+통화 전환 실패 시 fallback edge 로 콜백 안내 SMS 를 시도할 수 있다. SMS 가 실패하면 endCall 종료 멘트에서 "문자는 실패했지만 콜백 접수/예상 연락 시간은 본 통화로 안내"를 직접 말하고 종료한다. 같은 static 안내 conversation 을 반복시키지 않는다.
 
 ## API / MCP 로 Flow 만들고 수정
 

@@ -54,7 +54,7 @@ schema 결과를 받은 뒤에만 `create_agent(type="flow", data=..., flow_data
   - **`isFallback: true` 는 canonical 한국어 문구를 명시한다** (생략 금지):
     - `api`, `function`, `tool`, `sendSms` → `condition: "요청 실패 시"`
     - `transferAgent`, `transferCall` → `condition: "에러 발생 시"`
-  - `isSkipUserResponse: true` 는 condition 을 생략 가능 (UI 가 "유저 응답 건너뛰기" 라벨로 렌더).
+  - `isSkipUserResponse: true` 는 extraction 처럼 이미 확보된 대화 컨텍스트를 바로 처리해야 하는 skip transition 에만 쓴다. static conversation 이 endCall 로 이어지는 row, 또는 api / sendSms / tool / transferCall / transferAgent 의 fallback row 에 붙이지 않는다. editor 가 skip row 를 숨겨 edge 가 끊긴 것처럼 보일 수 있다.
   - 그 외 모든 transition 은 노드 컨텍스트에 맞는 구체적 문장을 작성한다. 예: `"주문 번호를 받았을 때"`, `"고객이 환불을 요청한 경우"`, `"API 응답이 200 OK 일 때"`, `"payment_status 값이 '결제완료' 인 경우"`. 단순한 `"성공"` / `"실패"` 보다 어떤 조건에서 분기하는지를 풀어 쓴다.
 - `position` 은 모든 노드에서 필수다. 픽셀 좌표 `{x: number, y: number}` 를 보내지 않으면 백엔드가 `NODE_POSITION_REQUIRED` 로 거절한다. 기본은 **가로 정렬** — `x` 를 320 step 으로 늘려가며 좌→우로 흐르게 두고, 분기 경로만 `y ± 240` 으로 위/아래 분리한다.
 - `viewport`, `animated`, `selected`, `measured` 같은 나머지 editor field 는 schema endpoint 와 round-trip 결과로만 판단한다.
@@ -65,6 +65,8 @@ schema 결과를 받은 뒤에만 `create_agent(type="flow", data=..., flow_data
 
 - `transferAgent`: 과거 flat `agentId` 표현을 그대로 쓰지 않는다. 현재 schema 결과의 nested `agent.{agent_id, agent_version}` shape 를 따른다. **`agent.agent_id` 누락 시 dry-run 차단**.
 - `sendSms`: message object 와 섞지 않는다. SMS node 전용 field shape 를 schema 결과에서 확인한다.
+- `sendSms` 실패: 앞선 업무 API 가 성공했다면 fallback 은 "업무는 완료, 문자만 실패"를 말하는 endCall 로 보낸다. generic failure endCall 로 보내면 성공한 예약/등록/접수를 실패처럼 뒤집는다.
+- `endCall`: 종료 멘트가 필요한 경우 node data 의 종료 응답 필드를 schema 로 확인한다. 최종 one-shot 안내만 남았다면 별도 static conversation 대신 endCall 종료 멘트에 넣는 편이 반복을 줄인다.
 - `api`: 지원 HTTP method, auth, body, response variable shape 를 schema 결과에서 확인한다. 임의로 `PATCH` 등을 추가하지 않는다.
 - `tool`: built-in tool 과 custom tool 을 섞지 않는다. custom tool 실행 node 와 agent `data.builtInTools` 설정은 별도 schema surface 다. **`tool_id` 누락 시 dry-run 차단**.
 - `condition`: deterministic 분기는 `data.logicalTransitions[]`, fallback 은 `data.transitions[]` 에 둔다 (v3 저장 surface 는 `edge.condition` 을 사용하지 않는다).

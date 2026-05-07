@@ -111,7 +111,22 @@
   "condition": { "type": "fallback" }, "skip_user_response": false }
 ```
 
-`node_api_failure_apology` 는 짧은 사과/안내 conversation 노드 — "조회가 어려워서 확인 후 다시 안내드릴게요" 정도. 그 다음에 endCall 로 마무리.
+`node_api_failure_apology` 는 짧은 사과/안내 conversation 노드 — "조회가 어려워서 확인 후 다시 안내드릴게요" 정도. 최종 종료만 남았다면 별도 static conversation 을 만들지 말고 endCall 종료 멘트에 복구 안내를 넣어도 된다. 중요한 것은 사용자가 빈 종료처럼 느끼지 않게 하는 것이다.
+
+### Post-success SMS fallback
+
+업무 처리 API 가 이미 성공한 뒤 `sendSms` 가 실패하면, 실패 안내는 **업무 결과를 보존**해야 한다. SMS 실패를 전체 처리 실패처럼 말하면 안 된다.
+
+권장:
+
+- 성공 endCall: "접수가 완료되었습니다. 접수번호는 {{request_id}}입니다. 확인 문자를 보내드렸습니다. 감사합니다."
+- SMS 실패 endCall: "접수는 완료되었습니다. 다만 문자 발송만 지금 어렵습니다. 접수번호는 {{request_id}}이고, 필요하면 데스크에서 이 번호로 확인해 주세요. 감사합니다."
+
+피하기:
+
+- "시스템 처리나 문자 발송을 완료하지 못했습니다."
+- "담당 부서에서 순차 처리 예정입니다."
+- API 성공 변수(`{{request_id}}`, `{{booking_id}}`, `{{processed}}`)를 무시하고 generic failure 로 종료.
 
 ### JSON shape (api 노드)
 
@@ -144,7 +159,7 @@ api 노드의 `data` 는 모두 camelCase 다. `headers` 는 **객체** (`{ "X-F
       }}
     ],
     "transitions": [
-      {"id": "tr_lookup_fail", "condition": "요청 실패 시", "isFallback": true, "isSkipUserResponse": true}
+      {"id": "tr_lookup_fail", "condition": "요청 실패 시", "isFallback": true}
     ]
   }
 }
@@ -158,6 +173,8 @@ api 노드의 `data` 는 모두 camelCase 다. `headers` 는 **객체** (`{ "X-F
 ## endCall
 
 통화를 종료한다. 종료 직전 발화를 할 수도 있고 즉시 종료할 수도 있다.
+
+최종 안내만 남은 경우에는 endCall 의 종료 멘트를 적극 사용한다. 별도 static conversation node 로 "안내 → endCall" 을 만들면 사용자 응답을 기다리며 같은 문구가 반복될 수 있다.
 
 ```md
 ## name
@@ -208,6 +225,8 @@ api 노드의 `data` 는 모두 camelCase 다. `headers` 는 **객체** (`{ "X-F
 - 실패: 전환 실패 시 fallback edge로 진행. (JSON 변환 시 edge 명시)
 ```
 
+JSON 변환 시 `data.transferConfiguration.transferTo` 는 필수다. 실패 row 는 `{"condition":"에러 발생 시","isFallback":true}` 로 만들고 `isSkipUserResponse` 를 붙이지 않는다. fallback row 에 skip flag 를 붙이면 editor 에서 source handle 이 숨겨져 선이 끊긴 것처럼 보일 수 있다.
+
 ## transferAgent
 
 같은 조직 내 다른 vox.ai 에이전트로 대화를 넘긴다.
@@ -228,6 +247,8 @@ api 노드의 `data` 는 모두 camelCase 다. `headers` 는 **객체** (`{ "X-F
 - 성공: 에이전트 전환 성공 시 현재 에이전트 퇴장.
 - 실패: 전환 실패 시 fallback edge로 진행. (JSON 변환 시 edge 명시)
 ```
+
+JSON 변환 시 실패 row 는 `{"condition":"에러 발생 시","isFallback":true}` 로 만들고 `isSkipUserResponse` 를 붙이지 않는다.
 
 작성 규칙:
 - **`agent.agent_id` (UUID) 는 필수** — 누락 시 dry-run 이 차단한다. `agent_version` 도 함께 명시 권장: 미지정 시 latest 가 어떤 버전인지 알기 어려워 운영 추적이 힘들다.
@@ -256,6 +277,11 @@ api 노드의 `data` 는 모두 camelCase 다. `headers` 는 **객체** (`{ "X-F
 - 성공: SMS 발송 성공 시 다음 노드로 진행.
 - 실패: SMS 발송 실패 시 fallback edge로 진행. (JSON 변환 시 edge 명시)
 ```
+
+작성 규칙:
+- 업무 API 성공 후의 SMS 실패 fallback 은 "업무는 완료, 문자만 실패" endCall 로 보낸다.
+- SMS 실패 fallback 에서 이미 성공한 예약/등록/접수 결과를 실패로 뒤집지 않는다.
+- scenario_test 에서는 SMS 가 지원되지 않아 실패할 수 있으므로, fallback 멘트는 본 통화 안에서 접수번호/콜백 시간/확인 방법을 직접 안내하도록 쓴다.
 
 ## tool
 
