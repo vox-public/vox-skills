@@ -41,13 +41,53 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 1. **시각화 (flow-sketch)**: 스크립트 → Mermaid flowchart + 노드 요약 테이블
 2. **상세 설계 (node creation)**: 확정된 차트의 각 노드 → flow node markdown. `node-creation.md`를 시작점으로 읽고 필요한 노드 계열 reference만 추가로 읽는다.
 3. **리뷰 (flow review)**: 체크리스트 기반 검증, CRITICAL/WARN/INFO 분류
-4. **dry-run 검증 (validate_flow_data)**: JSON 산출물이 준비되면 MCP `validate_flow_data` 를 호출해 결과를 사용자에게 한두 줄로 요약하고, errors / warnings 처리는 [Response Handling](#response-handling) 을 따른다. errors 가 비었을 때에만 `create_agent` / `update_agent` 호출.
+4. **dry-run 검증 (validate_flow_data)**: JSON 작성 직전에 [Schema Fetching](#schema-fetching) 으로 schema 를 가져와 JSON 을 만들고, MCP `validate_flow_data` 를 호출해 결과를 사용자에게 한두 줄로 요약한다. errors / warnings 처리는 [Response Handling](#response-handling) 을 따른다. errors 가 비었을 때에만 `create_agent` / `update_agent` 호출.
 
 사용자가 시각화만 요청하면 1단계만. "노드로 변환해줘"면 1→2단계. "리뷰해줘"면 3단계. JSON 으로 보내려면 4단계까지.
 
+## Schema Fetching
+
+`flow_data` JSON 을 작성하기 직전에 schema 를 가져온다. **default 는 단일 호출이다.**
+
+### Default — `flow-data` minimal 한 번
+
+```text
+get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")
+```
+
+이 한 응답에 envelope (`nodes[]`, `edges[]`, `viewport`) 와 모든 node type 의 `data` shape (`BeginData`, `ConversationData`, `ApiData`, `ConditionData`, `ExtractionData`, `SendSmsData`, `ToolData`, `TransferCallData`, `TransferAgentData`, `EndCallData`, `NoteData`, `FunctionData`) 가 `$defs` 로 함께 포함되어 온다. `detail="minimal"` 은 description / title / examples 를 재귀적으로 strip 해 응답을 약 41% (≈ 12,660 → 7,460 tokens) 줄인다.
+
+agent `data` 도 같이 보낼 경우 별도로 한 번 더 호출한다.
+
+```text
+get_schema(namespace="agent-schema", schema_type="agent-data-create", detail="minimal")
+get_schema(namespace="agent-schema", schema_type="agent-data-update", detail="minimal")
+```
+
+### Per-node fallback — narrow case 에만
+
+`flow-data` 가 이미 모든 node $defs 를 포함하므로 일반적으로 per-node `get_schema(node-{type})` 호출은 필요하지 않다. 다음 좁은 경우에만 보조적으로 사용한다.
+
+- flow 가 매우 큼 (15+ 노드, 다양한 type) + LLM context budget 이 빡빡해서 minimal envelope 도 부담스러울 때
+- 같은 flow 를 반복 patch 하면서 envelope 은 캐시하고 한 노드 type 의 detail 만 다시 standard 모드로 보고 싶을 때
+
+이 경우에만:
+
+```text
+list_schemas(namespace="flow-schema", category="flow-node")          # 카탈로그 metadata only
+get_schema(namespace="flow-schema", schema_type="node-{type}")       # 그 type 만
+```
+
+`list_schemas` 응답은 `schema: null` 인 metadata-only 목록 (어떤 node type 이 존재하는지) 이고, 실제 schema body 는 `get_schema` 로 받는다.
+
+### 절대 하지 말 것
+
+- `get_schema(flow-data)` + `get_schema(node-{type})` 동시 호출 — flow-data 가 이미 그 node 의 $def 를 포함하므로 토큰만 중복.
+- `detail="standard"` 를 default 로 사용 — minimal 로 시작하고, description 이 정말 필요할 때만 standard 로 다시 호출.
+
 ## Node Type 요약
 
-아래 표는 설계 대화를 위한 개념 요약이다. 실제 `flow_data` JSON 을 작성할 때는 이 표나 로컬 reference 를 schema source 로 쓰지 말고, 먼저 MCP `get_schema(namespace='flow-schema', schema_type='flow-data')` 를 호출해 현재 node type, field, enum, required 여부를 확인한다.
+아래 표는 설계 대화를 위한 개념 요약이다. 실제 `flow_data` JSON 을 작성할 때는 이 표나 로컬 reference 를 schema source 로 쓰지 말고, [Schema Fetching](#schema-fetching) 에 따라 `get_schema('flow-data', detail='minimal')` 한 번을 호출해 현재 node type, field, enum, required 여부를 확인한다.
 
 | Node | 용도 |
 |------|------|
@@ -78,7 +118,7 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 ## Core Operating Rules
 
 1. **공통 규칙 먼저** — flow에서도 실패 원인의 대부분은 음성 UX 위반(장문 발화, 부정확한 사실)이므로, `vox-agents`의 voice-ai-playbook 규칙(사실성 우선, 트레이드오프, 런타임 vs 개발 산출물 구분)이 flow에도 동일하게 적용된다.
-2. node type, field, enum, required 여부를 추측하지 않는다 — `flow_data` 작성 직전에 `get_schema(namespace='flow-schema', schema_type='flow-data')` 를 호출하고 그 결과를 기준으로 JSON 을 만든다.
+2. node type, field, enum, required 여부를 추측하지 않는다 — `flow_data` 작성 직전에 `get_schema(namespace='flow-schema', schema_type='flow-data', detail='minimal')` 를 한 번 호출하고 그 결과를 기준으로 JSON 을 만든다. 이 한 응답에 envelope 과 모든 node type 의 `data` shape 가 함께 들어온다. per-node `get_schema(node-{type})` 는 narrow case 의 보조 호출이지 default 가 아니다. 자세한 패턴은 [Schema Fetching](#schema-fetching).
 3. deprecated node(`function`)와 unsupported node(`knowledge`)는 신규 flow에 사용하지 않는다 — 지식 기반 응답이 필요하면 `conversation` node의 node-level knowledge 설정을 사용한다.
 4. node 수는 최소화 — 불필요한 분할은 edge 관리를 복잡하게 하고 유지보수 비용이 증가한다.
 5. 변수 이름은 snake_case, 의미가 명확한 이름 사용 — condition node와 변수 렌더러가 snake_case를 전제로 동작하며, 모호한 이름(val1, temp)은 노드 간 전달 시 혼동을 일으킨다.
@@ -87,7 +127,7 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 8. **검증/비교는 정답 데이터 출처가 있어야 한다** — 본인확인, 예약조회, 계약검증처럼 사용자의 답을 기존 데이터와 비교해야 하는 flow 는 먼저 정답값 출처를 정한다. API node 의 responseVariables 또는 통화 시작 전 주입된 preset dynamic variables 가 없으면 "일치 확인"이라고 말하거나 condition 으로 검증하지 않는다. 그런 경우는 정보 수집 flow 로 낮추거나, 조회 API 를 추가한다.
 9. **동일 인물/동일 대상 shortcut 을 명시한다** — "계약자와 학습자가 본인", "예약자와 방문자가 동일"처럼 앞에서 받은 답이 뒤 질문의 답을 결정하면 다시 묻지 않는다. extraction 에서 동일성 변수(`is_same_person` 등)를 만들고 condition 으로 재사용 path 와 추가질문 path 를 나눈다.
 10. **산출물 경로는 두 가지** — (a) 대시보드 flow editor 에 사람이 직접 입력하는 노드 markdown, (b) v3 REST API (`PATCH /v3/agents/{id}` with `flow_data`) 또는 동등한 vox.ai MCP `create_agent` / `update_agent` 의 `flow_data` 파라미터로 보내는 JSON. JSON surface 는 schema endpoint 가 authoritative 하며, 수정은 항상 **전체 교체** 방식 — 기존 노드 일부만 patch 하지 않고 nodes/edges 전체를 다시 보낸다.
-11. **Schema endpoint 우선** — `references/node-types.md` 는 node 선택과 실수 방지 playbook 이다. 실제 필드 목록을 복사하지 말고, 작업 중 받은 `get_schema` 결과를 기준으로 `flow_data` 를 작성한다. 전송 후 `get_agent` 로 round-trip 확인해 unknown field drop 을 잡는다.
+11. **Schema endpoint 우선** — `references/node-types.md` 는 node 선택과 실수 방지 playbook 이다. 실제 필드 목록을 복사하지 말고, 작업 중 받은 `get_schema(flow-data, minimal)` 결과를 기준으로 `flow_data` 를 작성한다. 전송 후 `get_agent` 로 round-trip 확인해 unknown field drop 을 잡는다.
 12. **flow_data 전송 전 dry-run 먼저** — `create_agent` / `update_agent` 의 `flow_data` 를 보내기 전, MCP `validate_flow_data(flow_data=...)` 를 먼저 호출해 dry-run 한다. 응답의 `errors` 가 비었을 때만 진짜 호출하고, `warnings` 는 사용자에게 한두 줄로 요약 전달한다. 이걸 생략하면 (a) 차단 오류가 사용자에게 400/422 로 그대로 노출되고, (b) 자동 보정이 일어났음을 사용자가 알 길이 없다. dry-run 을 건너뛴 경우라도 `create_agent` / `update_agent` 응답 본문의 `result.message` 에 자동 보정 안내 텍스트가 실려오므로, 그 내용을 사용자에게 그대로 전달한다 (차단 오류 사전 차단만 안 될 뿐).
 13. **nested config default 는 백엔드가 채운다** — `api_configuration` 의 인증/헤더/바디 옵션, `extraction_configuration`, `transfer_configuration`, `knowledge`, `message` 같은 nested 객체의 모든 필드를 LLM 이 외워 채울 필요 없다. `url`, `agent_id`, `tool_id` 처럼 누락 시 진짜 차단 오류가 나는 식별자만 명시하고, 나머지는 사용자가 의도적으로 지정한 키만 보낸다. 외운 default 를 강제로 채워 넣으면 schema 진화에 뒤처지고 dry-run warnings 만 늘어난다.
 14. **외부 fixture 값은 만들지 않는다** — `transferCall` 은 실제 전화번호/SIP target 이 있을 때만 쓰고, `transferAgent` 는 실제 대상 agent UUID 가 있을 때만 쓴다. `tool` 은 `list_tools` 결과의 실제 id 를 사용한다. `sendSms` 의 발신번호/첨부 파일 key 처럼 운영 리소스가 필요한 값은 시나리오나 API가 제공하지 않으면 비워 두거나 해당 노드를 쓰지 않는다. placeholder 번호, 임의 UUID, 가짜 sender 를 넣지 않는다.
@@ -148,7 +188,9 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 - `update_agent` — 에이전트 설정 수정
 - `get_agent` — 기존 에이전트 설정 확인 (flow_data 포함)
 - `list_agents` — 에이전트 목록
-- `get_schema(namespace='flow-schema', schema_type='flow-data')` — flow_data JSON Schema (node·edge·condition `$defs` 포함). `create_agent` / `update_agent` 의 `flow_data` 구성 전에 호출.
+- `get_schema(namespace='flow-schema', schema_type='flow-data', detail='minimal')` — **default 호출.** envelope + 모든 node type 의 `data` shape 가 한 응답에 들어온다. `flow_data` 구성 전 1회 호출.
+- `list_schemas(namespace='flow-schema', category='flow-node')` — narrow case 보조. 사용 가능한 node type 카탈로그 (`node-conversation`, `node-api`, ...). schema body 는 빠진 metadata only.
+- `get_schema(namespace='flow-schema', schema_type='node-{type}')` — narrow case 보조. 특정 node 의 `data` shape 만. 일반적으로는 위 `flow-data` 한 번으로 충분하므로 호출하지 않는다.
 - `validate_flow_data(flow_data=...)` — flow_data dry-run. 응답: `{valid, fixed_flow_data, warnings, errors}`. `create_agent` / `update_agent` 직전에 호출해 차단 오류를 사전 차단하고 자동 보정 결과를 사용자에게 전달한다.
 
 ### Docs (vox.ai docs / vox-docs)

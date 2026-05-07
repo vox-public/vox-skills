@@ -4,20 +4,46 @@
 
 ## Authoritative schema
 
-MCP 로 flow JSON 을 만들거나 수정하기 전에 항상 호출한다.
+MCP 로 flow JSON 을 만들거나 수정하기 전에 항상 호출한다. **default 는 `flow-data` 한 번이다** — 이 한 응답에 envelope 과 모든 node type 의 `data` shape 가 함께 포함된다.
+
+### Default (1회)
 
 ```text
-get_schema(namespace="flow-schema", schema_type="flow-data")
+get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")
 ```
 
-agent `data` 도 같이 작성해야 하면 별도로 호출한다.
+응답에 들어오는 것:
+
+- envelope: `nodes[]`, `edges[]`, `viewport`, `FlowEdge`, transition row shape, edge handle 규칙
+- 모든 node `$defs`: `BeginData`, `ConversationData`, `ApiData`, `ConditionData`, `ExtractionData`, `SendSmsData`, `ToolData`, `TransferCallData`, `TransferAgentData`, `EndCallData`, `NoteData`, `FunctionData` (deprecated)
+
+`detail="minimal"` 은 description / title / examples 를 재귀적으로 제거해 응답을 약 41% 줄인다 (≈ 12,660 → 7,460 tokens). 권장 default.
+
+agent `data` 도 같이 보낼 때:
 
 ```text
-get_schema(namespace="agent-schema", schema_type="agent-data-create")
-get_schema(namespace="agent-schema", schema_type="agent-data-update")
+get_schema(namespace="agent-schema", schema_type="agent-data-create", detail="minimal")
+get_schema(namespace="agent-schema", schema_type="agent-data-update", detail="minimal")
 ```
 
 schema 결과를 받은 뒤에만 `create_agent(type="flow", data=..., flow_data=...)` 또는 `update_agent(flow_data=...)` 를 호출한다. 전송 후 `get_agent` 로 다시 읽어, 보낸 field 가 silently drop 되지 않았는지 확인한다.
+
+### Per-node fallback (narrow case 만)
+
+`flow-data` 가 이미 모든 node $defs 를 포함하므로 일반 케이스에서는 per-node 호출이 필요 없다. 다음 좁은 경우에만 보조로 사용한다.
+
+- flow 가 매우 큼 (15+ 노드, 다양한 type) + LLM context 가 빡빡해 minimal envelope 도 부담스러울 때
+- 같은 flow 를 반복 patch 하면서 envelope 은 캐시하고 한 노드 type 의 detail 만 standard 로 다시 보고 싶을 때
+
+```text
+list_schemas(namespace="flow-schema", category="flow-node")          # 카탈로그 metadata only (schema body 없음)
+get_schema(namespace="flow-schema", schema_type="node-{type}")       # 그 type 의 data shape만
+```
+
+### 절대 하지 말 것
+
+- `get_schema(flow-data)` + `get_schema(node-{type})` 동시 호출 — flow-data 가 이미 그 node 의 $def 를 포함하므로 토큰 중복.
+- `detail="standard"` 를 default 로 사용 — 항상 minimal 로 시작.
 
 ## Dry-run before create / update
 
@@ -76,7 +102,7 @@ schema 결과를 받은 뒤에만 `create_agent(type="flow", data=..., flow_data
 
 ## Review checklist
 
-1. `get_schema(namespace="flow-schema", schema_type="flow-data")` 를 호출했는가?
+1. `get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")` 를 호출했는가? (per-node 호출은 narrow case 가 아니면 생략)
 2. schema 결과에 없는 field 를 과거 문서나 UI 기억만으로 넣지 않았는가?
 3. fallback, failure, else path 를 필요한 `edges` 로 명시했는가?
 4. dry-run 절차 (`validate_flow_data` → `errors === []` 확인 → `warnings` 사용자 전달, create / update 후에는 `result.message` 도 전달) 를 거쳤는가? 자세한 응답 처리 룰은 SKILL.md [Response Handling](../SKILL.md#response-handling).
