@@ -64,11 +64,14 @@ schema 결과를 받은 뒤에만 `create_agent(type="flow", data=..., flow_data
 아래 node 는 과거 데이터 형태와 현재 v3 surface 가 자주 섞인다. 작성 전 schema endpoint 결과를 반드시 대조한다.
 
 - `transferAgent`: 과거 flat `agentId` 표현을 그대로 쓰지 않는다. 현재 schema 결과의 nested `agent.{agent_id, agent_version}` shape 를 따른다. **`agent.agent_id` 누락 시 dry-run 차단**.
+- `transferCall`: 실제 전화번호/SIP target 이 없으면 쓰지 않는다. placeholder 번호로 통과시키지 말고, fallback 안내나 callback 요청 flow 로 바꾼다.
 - `sendSms`: message object 와 섞지 않는다. SMS node 전용 field shape 를 schema 결과에서 확인한다.
+- `sendSms`: 발신번호/첨부 key 같은 운영 fixture 는 임의로 만들지 않는다. schema default 로 충분한 값은 비워 둔다.
 - `sendSms` 실패: 앞선 업무 API 가 성공했다면 fallback 은 "업무는 완료, 문자만 실패"를 말하는 endCall 로 보낸다. generic failure endCall 로 보내면 성공한 예약/등록/접수를 실패처럼 뒤집는다.
 - `endCall`: 종료 멘트가 필요한 경우 node data 의 종료 응답 필드를 schema 로 확인한다. 최종 one-shot 안내만 남았다면 별도 static conversation 대신 endCall 종료 멘트에 넣는 편이 반복을 줄인다.
 - `api`: 지원 HTTP method, auth, body, response variable shape 를 schema 결과에서 확인한다. 임의로 `PATCH` 등을 추가하지 않는다.
 - `tool`: built-in tool 과 custom tool 을 섞지 않는다. custom tool 실행 node 와 agent `data.builtInTools` 설정은 별도 schema surface 다. **`tool_id` 누락 시 dry-run 차단**.
+- `tool`: `tool_id` 는 `list_tools` 결과에서 확인한 실제 id 만 사용한다. 임의 UUID 를 만들지 않는다.
 - `condition`: deterministic 분기는 `data.logicalTransitions[]`, fallback 은 `data.transitions[]` 에 둔다 (v3 저장 surface 는 `edge.condition` 을 사용하지 않는다).
 
 ## Review checklist
