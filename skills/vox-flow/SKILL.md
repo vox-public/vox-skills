@@ -57,6 +57,8 @@ get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")
 
 이 한 응답에 envelope (`nodes[]`, `edges[]`, `viewport`) 와 모든 node type 의 `data` shape (`BeginData`, `ConversationData`, `ApiData`, `ConditionData`, `ExtractionData`, `SendSmsData`, `ToolData`, `TransferCallData`, `TransferAgentData`, `EndCallData`, `NoteData`, `FunctionData`) 가 `$defs` 로 함께 포함되어 온다. `detail="minimal"` 은 description / title / examples 를 재귀적으로 strip 해 응답을 약 41% (≈ 12,660 → 7,460 tokens) 줄인다.
 
+flow 에 `api` / `transferCall` / `transferAgent` / `sendSms` / `tool` 노드 중 **하나라도** 있으면, 다음 [standard 모드로 보강이 필요한 노드 type](#standard-모드로-보강이-필요한-노드-type) 단계를 추가로 거친다. `begin` / `conversation` / `condition` / `extraction` / `endCall` / `note` 만 사용하는 flow 라면 이 minimal 한 번으로 충분하다.
+
 agent `data` 도 같이 보낼 경우 별도로 한 번 더 호출한다.
 
 ```text
@@ -64,26 +66,42 @@ get_schema(namespace="agent-schema", schema_type="agent-data-create", detail="mi
 get_schema(namespace="agent-schema", schema_type="agent-data-update", detail="minimal")
 ```
 
-### Per-node fallback — narrow case 에만
+### standard 모드로 보강이 필요한 노드 type
 
-`flow-data` 가 이미 모든 node $defs 를 포함하므로 일반적으로 per-node `get_schema(node-{type})` 호출은 필요하지 않다. 다음 좁은 경우에만 보조적으로 사용한다.
-
-- flow 가 매우 큼 (15+ 노드, 다양한 type) + LLM context budget 이 빡빡해서 minimal envelope 도 부담스러울 때
-- 같은 flow 를 반복 patch 하면서 envelope 은 캐시하고 한 노드 type 의 detail 만 다시 standard 모드로 보고 싶을 때
-
-이 경우에만:
+다음 node type 중 **하나라도 flow 에 등장하면** 그 type 에 한해 standard 모드로 한 번 더 fetch 해서 description 을 본다 (minimal 만으로는 의미 단서가 부족함):
 
 ```text
-list_schemas(namespace="flow-schema", category="flow-node")          # 카탈로그 metadata only
-get_schema(namespace="flow-schema", schema_type="node-{type}")       # 그 type 만
+get_schema(namespace="flow-schema", schema_type="node-api", detail="standard")
+get_schema(namespace="flow-schema", schema_type="node-transferCall", detail="standard")
+get_schema(namespace="flow-schema", schema_type="node-transferAgent", detail="standard")
+get_schema(namespace="flow-schema", schema_type="node-sendSms", detail="standard")
+get_schema(namespace="flow-schema", schema_type="node-tool", detail="standard")
 ```
 
-`list_schemas` 응답은 `schema: null` 인 metadata-only 목록 (어떤 node type 이 존재하는지) 이고, 실제 schema body 는 `get_schema` 로 받는다.
+각 node 가 standard 보강을 필요로 하는 이유 (minimal 에서 잃는 정보):
+
+- **`node-api`** — `apiConfiguration.body` 가 JSON 문자열인지 object 인지, `responseVariables.jsonPath` 의 JSONPath 문법 예시, `authType` × `authCredentials` 조합 의미
+- **`node-transferCall`** — `transferConfiguration.transferTo` 가 phone number vs SIP URI 어느 쪽인지, `transferType` (cold/warm) 의 동작 차이, `sipHeaders` 사용법, `displayedCallerId` (agent/user) 의미
+- **`node-transferAgent`** — `agent.agent_id` 가 같은 조직 agent UUID 라는 운영 제약, `preserveChatContext` 의 의미
+- **`node-sendSms`** — `staticImageFileKeys` 가 어떤 S3 key 형식인지, `smsFromNumber` 가 등록된 발신번호여야 한다는 제약
+- **`node-tool`** — `toolId` (custom tool UUID) 와 `agentToolId` (built-in tool 인덱스) 의 차이
+
+위 type 이 flow 에 없다면 (`begin` / `conversation` / `condition` / `extraction` / `endCall` / `note` 만 사용), minimal flow-data 한 번이면 충분하다.
+
+### 그 외 narrow case fallback
+
+다음 좁은 경우에도 per-node 호출이 도움이 된다.
+
+- flow 가 매우 큼 (15+ 노드, 다양한 type) + LLM context budget 이 빡빡해서 minimal envelope 도 부담스러울 때 → 사용한 type 별 minimal per-node 호출로 분할
+- 같은 flow 를 반복 patch 하면서 envelope 은 캐시하고 한 노드 type 의 detail 만 다시 standard 모드로 보고 싶을 때
+- `validate_flow_data` 가 같은 node type 에서 같은 룰로 반복 실패할 때 → 그 type 만 standard 모드로 받아 description 으로 디버깅
+
+이 경우에만 `list_schemas(namespace="flow-schema", category="flow-node")` 로 카탈로그를 받아 어떤 node type 이 있는지 metadata only 로 확인할 수 있다 (응답은 `schema: null`).
 
 ### 절대 하지 말 것
 
-- `get_schema(flow-data)` + `get_schema(node-{type})` 동시 호출 — flow-data 가 이미 그 node 의 $def 를 포함하므로 토큰만 중복.
-- `detail="standard"` 를 default 로 사용 — minimal 로 시작하고, description 이 정말 필요할 때만 standard 로 다시 호출.
+- 위 보강 대상 외 type 에 standard 모드 사용 — minimal 로 시작.
+- `get_schema(flow-data)` 와 `get_schema(node-{type})` 를 같은 type 으로 둘 다 minimal 호출 — flow-data 가 이미 그 $def 를 포함하므로 토큰 중복. (위 standard 보강은 detail 이 다르므로 중복 아님.)
 
 ## Node Type 요약
 
