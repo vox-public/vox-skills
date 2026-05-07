@@ -30,7 +30,7 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 - **voice-ai-playbook.md** — 음성 UX 핵심 규칙. **새 flow 설계 시 가장 먼저 읽기.**
 - **default-agent-data.json** + **agent-data-reference.md** — agent.data 기본값 + MCP 동작 규칙. **MCP로 에이전트를 생성할 때 읽기.**
 - **ivr-navigation-best-practice.md** — IVR/DTMF 패턴. **ARS/IVR 통과 시나리오에서 읽기.**
-- **voice-ai-prompt-template.md** — 프롬프트 템플릿. **conversation 노드 프롬프트 작성 시 참고.**
+- **voice-ai-prompt-template.md** — 프롬프트 템플릿. **generated conversation 노드의 `data.prompt` 를 채울 때 checklist 로 참고하되, 전체 prompt 를 복사하지 않는다.**
 - **voice-ai-prompt-diagnosis.md** — 실패 사례 진단. **flow 에이전트가 이상하게 동작할 때 읽기.**
 - **voice-ai-prompt-revision.md** — 진단 기반 리팩터링. **diagnosis 후 노드 프롬프트를 수정할 때 읽기.**
 
@@ -63,7 +63,7 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 | `endCall` | 통화 종료 |
 | `note` | 메모 (실행 없음) |
 
-각 노드의 의미/사용 판단 → `node-types.md` 참조. Deprecated: `function` (→ `tool`), `knowledge` (→ conversation node-level). 정확한 schema 는 항상 MCP schema endpoint 결과를 따른다.
+각 노드의 의미/사용 판단 → `node-types.md` 참조. Deprecated: `function` (→ `tool`). Unsupported: `knowledge` node (→ conversation node-level knowledge configuration). 정확한 schema 는 항상 MCP schema endpoint 결과를 따른다.
 
 ## 설계 패턴
 
@@ -79,14 +79,18 @@ Flow는 prompt agent의 확장이므로, **공통 음성 UX 규칙은 `vox-agent
 
 1. **공통 규칙 먼저** — flow에서도 실패 원인의 대부분은 음성 UX 위반(장문 발화, 부정확한 사실)이므로, `vox-agents`의 voice-ai-playbook 규칙(사실성 우선, 트레이드오프, 런타임 vs 개발 산출물 구분)이 flow에도 동일하게 적용된다.
 2. node type, field, enum, required 여부를 추측하지 않는다 — `flow_data` 작성 직전에 `get_schema(namespace='flow-schema', schema_type='flow-data')` 를 호출하고 그 결과를 기준으로 JSON 을 만든다.
-3. deprecated node(`function`, `knowledge`)는 신규 flow에 사용하지 않는다 — 대시보드에서 더 이상 추가할 수 없고, 향후 런타임 지원이 제거될 수 있다.
+3. deprecated node(`function`)와 unsupported node(`knowledge`)는 신규 flow에 사용하지 않는다 — 지식 기반 응답이 필요하면 `conversation` node의 node-level knowledge 설정을 사용한다.
 4. node 수는 최소화 — 불필요한 분할은 edge 관리를 복잡하게 하고 유지보수 비용이 증가한다.
 5. 변수 이름은 snake_case, 의미가 명확한 이름 사용 — condition node와 변수 렌더러가 snake_case를 전제로 동작하며, 모호한 이름(val1, temp)은 노드 간 전달 시 혼동을 일으킨다.
 6. 전환조건에 "다음 단계 이름"을 쓰지 않는다 — exit 조건만 정의해야 노드 순서가 바뀌어도 LLM이 올바르게 판단한다.
-7. **산출물 경로는 두 가지** — (a) 대시보드 flow editor 에 사람이 직접 입력하는 노드 markdown, (b) v3 REST API (`PATCH /v3/agents/{id}` with `flow_data`) 또는 동등한 vox.ai MCP `create_agent` / `update_agent` 의 `flow_data` 파라미터로 보내는 JSON. JSON surface 는 schema endpoint 가 authoritative 하며, 수정은 항상 **전체 교체** 방식 — 기존 노드 일부만 patch 하지 않고 nodes/edges 전체를 다시 보낸다.
-8. **Schema endpoint 우선** — `references/node-types.md` 는 node 선택과 실수 방지 playbook 이다. 실제 필드 목록을 복사하지 말고, 작업 중 받은 `get_schema` 결과를 기준으로 `flow_data` 를 작성한다. 전송 후 `get_agent` 로 round-trip 확인해 unknown field drop 을 잡는다.
-9. **flow_data 전송 전 dry-run 먼저** — `create_agent` / `update_agent` 의 `flow_data` 를 보내기 전, MCP `validate_flow_data(flow_data=...)` 를 먼저 호출해 dry-run 한다. 응답의 `errors` 가 비었을 때만 진짜 호출하고, `warnings` 는 사용자에게 한두 줄로 요약 전달한다. 이걸 생략하면 (a) 차단 오류가 사용자에게 400/422 로 그대로 노출되고, (b) 자동 보정이 일어났음을 사용자가 알 길이 없다. dry-run 을 건너뛴 경우라도 `create_agent` / `update_agent` 응답 본문의 `result.message` 에 자동 보정 안내 텍스트가 실려오므로, 그 내용을 사용자에게 그대로 전달한다 (차단 오류 사전 차단만 안 될 뿐).
-10. **nested config default 는 백엔드가 채운다** — `api_configuration` 의 인증/헤더/바디 옵션, `extraction_configuration`, `transfer_configuration`, `knowledge`, `message` 같은 nested 객체의 모든 필드를 LLM 이 외워 채울 필요 없다. `url`, `agent_id`, `tool_id` 처럼 누락 시 진짜 차단 오류가 나는 식별자만 명시하고, 나머지는 사용자가 의도적으로 지정한 키만 보낸다. 외운 default 를 강제로 채워 넣으면 schema 진화에 뒤처지고 dry-run warnings 만 늘어난다.
+7. **conversation JSON 은 mode와 exit 조건을 빠뜨리지 않는다** — static 문구는 `promptType:"static"` + `staticSentence`, generated 대화는 `promptType:"dynamic"` + `prompt`/`firstMessage` 로 작성한다. 일반 `transitions[]` row 의 `condition` 은 빈 값/null/"None" 이 아니라 사용자가 그 노드를 벗어나도 되는 의미 있는 한국어 exit 조건이어야 한다. 조건 없는 row 는 자동 진행이 아니라 dead transition 이 된다.
+8. **검증/비교는 정답 데이터 출처가 있어야 한다** — 본인확인, 예약조회, 계약검증처럼 사용자의 답을 기존 데이터와 비교해야 하는 flow 는 먼저 정답값 출처를 정한다. API node 의 responseVariables 또는 통화 시작 전 주입된 preset dynamic variables 가 없으면 "일치 확인"이라고 말하거나 condition 으로 검증하지 않는다. 그런 경우는 정보 수집 flow 로 낮추거나, 조회 API 를 추가한다.
+9. **동일 인물/동일 대상 shortcut 을 명시한다** — "계약자와 학습자가 본인", "예약자와 방문자가 동일"처럼 앞에서 받은 답이 뒤 질문의 답을 결정하면 다시 묻지 않는다. extraction 에서 동일성 변수(`is_same_person` 등)를 만들고 condition 으로 재사용 path 와 추가질문 path 를 나눈다.
+10. **산출물 경로는 두 가지** — (a) 대시보드 flow editor 에 사람이 직접 입력하는 노드 markdown, (b) v3 REST API (`PATCH /v3/agents/{id}` with `flow_data`) 또는 동등한 vox.ai MCP `create_agent` / `update_agent` 의 `flow_data` 파라미터로 보내는 JSON. JSON surface 는 schema endpoint 가 authoritative 하며, 수정은 항상 **전체 교체** 방식 — 기존 노드 일부만 patch 하지 않고 nodes/edges 전체를 다시 보낸다.
+11. **Schema endpoint 우선** — `references/node-types.md` 는 node 선택과 실수 방지 playbook 이다. 실제 필드 목록을 복사하지 말고, 작업 중 받은 `get_schema` 결과를 기준으로 `flow_data` 를 작성한다. 전송 후 `get_agent` 로 round-trip 확인해 unknown field drop 을 잡는다.
+12. **flow_data 전송 전 dry-run 먼저** — `create_agent` / `update_agent` 의 `flow_data` 를 보내기 전, MCP `validate_flow_data(flow_data=...)` 를 먼저 호출해 dry-run 한다. 응답의 `errors` 가 비었을 때만 진짜 호출하고, `warnings` 는 사용자에게 한두 줄로 요약 전달한다. 이걸 생략하면 (a) 차단 오류가 사용자에게 400/422 로 그대로 노출되고, (b) 자동 보정이 일어났음을 사용자가 알 길이 없다. dry-run 을 건너뛴 경우라도 `create_agent` / `update_agent` 응답 본문의 `result.message` 에 자동 보정 안내 텍스트가 실려오므로, 그 내용을 사용자에게 그대로 전달한다 (차단 오류 사전 차단만 안 될 뿐).
+13. **nested config default 는 백엔드가 채운다** — `api_configuration` 의 인증/헤더/바디 옵션, `extraction_configuration`, `transfer_configuration`, `knowledge`, `message` 같은 nested 객체의 모든 필드를 LLM 이 외워 채울 필요 없다. `url`, `agent_id`, `tool_id` 처럼 누락 시 진짜 차단 오류가 나는 식별자만 명시하고, 나머지는 사용자가 의도적으로 지정한 키만 보낸다. 외운 default 를 강제로 채워 넣으면 schema 진화에 뒤처지고 dry-run warnings 만 늘어난다.
+14. **외부 fixture 값은 만들지 않는다** — `transferCall` 은 실제 전화번호/SIP target 이 있을 때만 쓰고, `transferAgent` 는 실제 대상 agent UUID 가 있을 때만 쓴다. `tool` 은 `list_tools` 결과의 실제 id 를 사용한다. `sendSms` 의 발신번호/첨부 파일 key 처럼 운영 리소스가 필요한 값은 시나리오나 API가 제공하지 않으면 비워 두거나 해당 노드를 쓰지 않는다. placeholder 번호, 임의 UUID, 가짜 sender 를 넣지 않는다.
 
 ## Response Handling
 

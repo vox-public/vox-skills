@@ -59,6 +59,8 @@
 - 한 노드 = 한 목적 + 같은 전환조건 구조.
 - 후속 질문의 거절이 exit 가 아니라 노드 내 재질문이면 같은 conversation 노드에 둔다.
 - 후속 질문의 결과가 모두 exit 라면 분리할 수 있다.
+- 사용자 답변을 정답값과 비교해야 하는 단계는 conversation 하나에 넣지 않는다. `conversation(수집) → extraction(사용자 답 추출) → api/condition(검증) → conversation/endCall(결과 안내)` 로 나눈다.
+- 스크립트에 "본인", "동일", "같음" 같은 shortcut 이 있으면 별도 변수와 분기를 만든다. 예: 학습자 관계가 본인이면 계약자 생년월일을 학습자 생년월일로 재사용하고 다시 묻지 않는다.
 - 응답 처리 항목이 7개 이상이면 노드가 너무 크므로 분리 검토한다.
 - 원본 스크립트에 없는 분기를 임의 추가하지 않는다. 필요한 예외만 명확히 표시한다.
 
@@ -68,6 +70,10 @@
 - 전환조건과 1:1 대응하는 응대 멘트는 `content`에 넣지 않는다. 전환 후 발화는 다음 노드에서 처리한다.
 - 전환조건은 `라벨: 조건` 형식으로 쓴다.
 - 전환조건은 고객 발화나 이미 추출된 변수 기준으로 쓴다. "안내 완료", "처리 완료" 같은 에이전트 행동만으로 exit 를 만들지 않는다.
+- 정보 수집/동의 conversation 은 완료 조건이 충족되면 즉시 다음 실행 노드로 handoff 하도록 쓴다. 완료 후 "확인했습니다. 진행하겠습니다" 같은 filler 만 말하고 같은 노드에 남는 설계는 피한다.
+- conversation 노드가 "일치합니다", "조회되었습니다", "검증되었습니다" 라고 확정하려면 그 전에 API 응답 변수 또는 preset dynamic variable 로 정답값이 실제 존재해야 한다. 정답값 출처가 없으면 정보 수집/확인 요청만 하고, 검증 표현은 쓰지 않는다.
+- 최종 one-shot 복구 안내는 가능하면 endCall 종료 멘트에 넣는다. static conversation → endCall 은 반복 위험이 있어, 사용자의 추가 응답을 받아야 하는 단계가 아니라면 만들지 않는다.
+- 업무 API 성공 후 SMS 실패 path 는 업무 결과를 보존하는 별도 종료 멘트로 설계한다. SMS 실패를 전체 예약/등록/접수 실패로 뒤집지 않는다.
 - 예시 멘트는 큰따옴표로 감싼다.
 - TTS가 읽을 수 없는 특수 장식 문자를 멘트 안에 넣지 않는다.
 - `{{...}}` 런타임 변수는 원본 의미를 유지한다.
@@ -80,6 +86,9 @@
 - 각 노드의 목적이 하나인가?
 - conversation 노드에 static/generated 의도가 명시되어 있는가?
 - generated conversation 에 첫 발화와 노드 안 재질문 방식이 명시되어 있는가?
+- JSON/MCP 생성 직전 generated conversation 의 `data.prompt` 에 역할, 목표, 범위, 변수, 금지사항, 전환 판단이 채워져 있고 `[[...]]` 작성용 placeholder 가 남지 않았는가?
+- 검증/비교 노드가 참조하는 정답값이 API responseVariables 또는 preset dynamic variables 로 실제 생성되는가?
+- 동일 인물/동일 대상 답변을 받았을 때 뒤 질문을 생략하거나 값을 재사용하는 분기가 있는가?
 - extraction 노드는 추출 소스, 변수명, 타입, 기대 출력 예시가 있는가?
 - condition 노드는 앞선 extraction/api 에서 만든 변수를 소비하는가?
 - api 노드는 호출 목적, 대기 멘트 여부, 응답 변수 의도가 있는가?
@@ -94,5 +103,7 @@
 2. agent `data` 도 보낼 경우 `get_schema(namespace="agent-schema", schema_type="agent-data-create")` 또는 `agent-data-update` 호출.
 3. `node-creation.md`의 markdown 용어를 JSON field 로 직접 복사하지 않는다.
 4. fallback/실패/else path 는 자동 생성된다고 가정하지 말고 `edges` 로 명시한다.
-5. `validate_flow_data(flow_data=...)` 로 dry-run. `errors === []` 일 때만 다음 단계로 간다. `warnings` 는 사용자에게 한 줄로 전달한다.
-6. `create_agent` / `update_agent` 후 `get_agent` 로 round-trip 확인한다. 응답 본문의 `result.message` 에 자동 보정 안내가 있으면 함께 전달한다.
+5. `isSkipUserResponse:true` 는 extraction skip transition 처럼 사용자 발화를 기다리지 않는 것이 명확한 실행 row 에만 쓴다. static conversation → endCall/next row 와 fallback row 에는 붙이지 않는다.
+6. 업무 성공 뒤 SMS 실패 fallback 이 있으면, fallback target 이 generic failure 가 아니라 "업무는 완료, 문자만 실패" 종료 멘트인지 확인한다.
+7. `validate_flow_data(flow_data=...)` 로 dry-run. `errors === []` 일 때만 다음 단계로 간다. `warnings` 는 사용자에게 한 줄로 전달한다.
+8. `create_agent` / `update_agent` 후 `get_agent` 로 round-trip 확인한다. 응답 본문의 `result.message` 에 자동 보정 안내가 있으면 함께 전달한다.
