@@ -142,7 +142,7 @@ api / function / tool / sendSms 는 `"요청 실패 시"`, transferAgent / trans
 ### Per-edge 패턴 정리
 
 - **begin → first node**: edge `sourceHandle` 은 `begin-source`.
-- **conversation → next**: source node `data.transitions[]` 에 자연어 `condition` row 를 만들고, edge `sourceHandle` 을 그 row id 로 둔다.
+- **conversation → next**: source node `data.transitions[]` 에 자연어 `condition` row 를 만들고, edge `sourceHandle` 을 그 row id 로 둔다. `condition` 을 비워 자동 진행처럼 쓰지 않는다. 빈 값/null/`"None"` 은 런타임에서 선택 가능한 exit 조건이 아니다.
 - **condition → branch**: source node `data.logicalTransitions[]` 에 logic row 를 만들고, fallback 은 `data.transitions[]` 에 `isFallback:true` row 로 둔다.
 - **api / tool → success / failure**: 성공 path 는 success/logical transition row, 실패 path 는 canonical fallback transition row 로 둔다.
 - **static conversation → endCall / next**: 고정 멘트를 말한 뒤 넘어가는 row 도 일반 transition 이다. `isSkipUserResponse:true` 를 붙이면 editor 가 source handle 을 숨겨 edge 가 끊긴 것처럼 보일 수 있다. 다만 최종 안내 후 바로 종료만 남은 one-shot 문구는 static conversation 을 따로 만들지 말고 endCall 의 종료 멘트로 흡수하는 편이 안전하다. static conversation 은 사용자 응답을 기다리며 같은 문구를 반복할 수 있다.
