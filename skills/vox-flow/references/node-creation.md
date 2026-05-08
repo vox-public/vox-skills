@@ -99,8 +99,8 @@
 
 이 markdown 을 MCP/API `flow_data` 로 변환하기 전에는 아래 순서를 따른다.
 
-1. `get_schema(namespace="flow-schema", schema_type="flow-data")` 호출.
-2. agent `data` 도 보낼 경우 `get_schema(namespace="agent-schema", schema_type="agent-data-create")` 또는 `agent-data-update` 호출.
+1. `get_schema(namespace="flow-schema", schema_type="flow-data", detail="minimal")` 호출 — 한 응답에 envelope + 모든 node `data` shape ($defs) 가 함께 들어온다. per-node `get_schema(node-{type})` 는 일반 케이스에선 필요 없다 (narrow case 는 SKILL.md 의 [Schema Fetching](../SKILL.md#schema-fetching) 참조).
+2. agent `data` 도 보낼 경우 `get_schema(namespace="agent-schema", schema_type="agent-data-create", detail="minimal")` 또는 `agent-data-update` 호출.
 3. `node-creation.md`의 markdown 용어를 JSON field 로 직접 복사하지 않는다.
 4. fallback/실패/else path 는 자동 생성된다고 가정하지 말고 `edges` 로 명시한다.
 5. `isSkipUserResponse:true` 는 extraction skip transition 처럼 사용자 발화를 기다리지 않는 것이 명확한 실행 row 에만 쓴다. static conversation → endCall/next row 와 fallback row 에는 붙이지 않는다.
