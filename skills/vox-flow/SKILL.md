@@ -227,6 +227,5 @@ get_schema(namespace="flow-schema", schema_type="node-tool", detail="standard")
 - `docs/build/flow/advanced/global-node` — 글로벌 노드
 
 ### App URLs
-- `https://www.tryvox.co/flow/{flowId}` — 플로우 에디터
-- `https://www.tryvox.co/agent/{agentId}` — 에이전트 상세
+- `https://www.tryvox.co/flow/{agentId}` — 플로우 에이전트 에디터. **agent_id 를 그대로 쓴다 — 별도 flow_id 가 아니다.**
 - `https://www.tryvox.co/dashboard/{organizationId}/agents` — 에이전트 목록
