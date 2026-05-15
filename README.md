@@ -9,7 +9,7 @@ vox.ai 개발자를 위한 Codex/Claude plugin + Agent Skills 레포입니다.
 터미널에서 한 줄로 vox.ai 마켓플레이스를 등록합니다 (2026-04+ Codex).
 
 ```bash
-codex marketplace add vox-public/vox-skills
+codex plugin marketplace add vox-public/vox-skills
 ```
 
 그 뒤 plugin 목록에서 `vox-ai`를 설치합니다.
