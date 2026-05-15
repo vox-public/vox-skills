@@ -1,6 +1,6 @@
 {
   "name": "vox-ai",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "vox.ai voice agent development plugin with bundled MCP tools and best-practice skills.",
   "author": {
     "name": "vox.ai",
