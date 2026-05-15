@@ -8,7 +8,7 @@
       "name": "vox-ai",
       "source": {
         "source": "local",
-        "path": "./"
+        "path": "./plugins/vox-ai"
       },
       "policy": {
         "installation": "AVAILABLE",
