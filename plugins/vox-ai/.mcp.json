@@ -1,12 +1,1 @@
-{
-  "mcpServers": {
-    "vox": {
-      "type": "http",
-      "url": "https://mcp.tryvox.co/mcp"
-    },
-    "vox-docs": {
-      "type": "http",
-      "url": "https://docs.tryvox.co/mcp"
-    }
-  }
-}
+../../.mcp.json

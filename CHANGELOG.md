@@ -51,7 +51,7 @@
 ## Unreleased
 
 ### Changed
-- Codex marketplace id를 Claude marketplace와 동일한 `vox-ai`로 맞췄다. 기존 `local-vox-ai` 이름은 로컬 개발용처럼 보이고 설치 후 plugin key가 `vox-ai@local-vox-ai`로 표시되어 혼란을 만들었으므로, 설치 후 `vox-ai@vox-ai`로 표시되도록 `.agents/plugins/marketplace.json`의 `name`을 정리했다.
+- Codex marketplace id를 Claude marketplace와 동일한 `vox-ai`로 맞췄다. 기존 `local-vox-ai` 이름은 로컬 개발용처럼 보이고 설치 후 plugin key가 `vox-ai@local-vox-ai`로 표시되어 혼란을 만들었으므로, 설치 후 `vox-ai@vox-ai`로 표시되도록 `.agents/plugins/marketplace.json`의 `name`을 정리했다. 같은 변경에서 Codex plugin source를 repo root(`./`)로 옮겨 top-level `.mcp.json`과 `skills/`를 직접 사용하게 했다.
 - `vox-flow` 에 `validate_flow_data` dry-run 워크플로우를 통합했다. SKILL.md Workflow 를 4단계로 확장(4단계: dry-run 검증)하고 Core Operating Rules #9(전송 전 dry-run)·#10(nested config default 는 백엔드가 채움)을 추가했으며, Response Handling 섹션을 신설해 응답별 처리 룰과 룰 ID 빠른 참조를 정리했다. references 도 정합화 — `flow-review.md` 섹션 F(dry-run + 식별자 필수), `execution-node-markdown.md` / `node-types.md` / `node-creation.md` 의 dry-run 단계 통합. 사용자 입장에서 (1) 차단 오류가 400/422 로 노출되는 일을 줄이고, (2) 자동 보정 사실이 빠짐없이 전달되도록 한다.
 - `vox-flow` references에 api 노드 실패 분기 설계 규칙을 추가했다. api 호출 실패 fallback edge가 곧바로 endCall로 흘러가면 사용자가 통화가 갑자기 끊긴 인상을 받기 때문에, 짧은 양해 안내 conversation 노드로 흡수한 뒤 마무리하도록 가이드한다. `execution-node-markdown.md`에 anti-pattern / 권장 JSON 예시를 두고, `node-examples.md`에 짝꿍 노드(API 실패 안내 conversation) 예시를 추가했으며, `flow-review.md`에는 통화 흐름 안전성 섹션 E를 신설해 E1 CRITICAL(api 실패 분기 + 안내 노드 흡수)와 E2 WARN(tool/sendSms 실패 흡수)을 두었다.
 - `vox-flow`를 schema endpoint 우선 운영 방식으로 정리했다. 노드별 JSON field 목록을 로컬 reference에 고정하지 않고, `get_schema(namespace="flow-schema", schema_type="flow-data")`와 agent data schema를 호출한 뒤 `create_agent(type="flow", data=..., flow_data=...)` / `update_agent(flow_data=...)`를 수행하도록 안내한다.
@@ -62,7 +62,7 @@
 - vox MCP의 **OAuth-only** contract를 온보딩 문서에도 반영했다. `SKILL.md` Step 1, `quickstart-ko.md`, `references/mcp-vox-integration.md`에서 `Authorization: Bearer ${VOX_API_KEY}` / `bearer_token_env_var` 등 **제거된 API token 방식** 안내를 모두 걷어내고 클라이언트별 OAuth 경로만 남겼다. 서버가 받지 않는 방식을 가이드해 유저를 막다른 길로 보내는 문제를 제거한다.
 
 ### Fixed
-- Codex plugin package가 설치 cache 안에서 self-contained 하도록 고쳤다. `plugins/vox-ai/.mcp.json`과 `plugins/vox-ai/skills/`를 symlink 대신 실제 파일/디렉터리로 포함하고, `.codex-plugin/plugin.json`의 `mcpServers`를 `./.mcp.json`으로 되돌렸다. Codex는 marketplace checkout의 parent 파일을 plugin cache로 함께 복사하지 않기 때문에 `../.mcp.json` 또는 symlink 기반 구조에서는 `vox` / `vox-docs` MCP 서버가 로드되지 않는다.
+- Codex plugin package가 설치 cache 안에서 self-contained 하도록 고쳤다. repo root에 `.codex-plugin/plugin.json`을 추가하고 Codex marketplace source path를 `./`로 지정해, top-level `.mcp.json`과 `skills/`가 plugin root 안에 존재하도록 했다. Codex는 marketplace checkout의 parent 파일을 plugin cache로 함께 복사하지 않기 때문에 `plugins/vox-ai`를 source로 쓰면서 `../.mcp.json` 같은 parent path에 의존하면 `vox` / `vox-docs` MCP 서버가 로드되지 않는다.
 - `vox-agents`의 agent data / variable reference를 현재 MCP surface와 맞췄다. top-level `prompt`나 `agent_type` shortcut을 가정하지 않고, agent `data` schema와 flow 변수 전달 규칙을 기준으로 설명한다.
 - `vox-agents` references의 변수 미주입 동작 기술을 실제 정책과 정합화했다. `voice-ai-playbook.md`(워크플로우/Variables 샘플/fallback 규칙), `voice-ai-prompt-template.md`(메타 가이드 + 템플릿 본문), `voice-ai-prompt-revision.md`(Pattern D), `voice-ai-prompt-diagnosis.md`(증상 6)에서 "비어있을 수 있음" 같은 표현을 "주입되지 않으면 `{{...}}`가 그대로 전달됨"으로 바꿨다. 이 문구들이 생성된 system prompt에 그대로 복사되어 런타임 LLM이 미주입 방어 로직을 엉뚱한 케이스(빈 값)에만 적용하던 문제를 제거한다. Mission 1 dry run 준비 중 사용자 제보로 발견.
 
