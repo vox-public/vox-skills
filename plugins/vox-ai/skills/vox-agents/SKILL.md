@@ -1,0 +1,105 @@
+---
+name: vox-agents
+description: "Use whenever the user is building a vox.ai voice agent — writing or revising a system prompt, diagnosing agent behavior, or working with agent.data schema via MCP (create_agent / update_agent). This is the default agent skill for prompt-based agents. For flow agent design (multi-node), use vox-flow instead. Trigger on '프롬프트 작성해줘', '프롬프트 고쳐줘', '에이전트가 이상하게 답해', '음성 에이전트', or any vox prompt agent authoring question."
+---
+
+# vox-agents
+
+vox.ai 프롬프트 에이전트(single prompt)를 설계하는 domain skill. 공통 음성 UX 규칙과 에이전트 생성/수정/진단/리팩터링을 담당한다.
+
+Flow 에이전트(multi-node)가 필요한 경우 → `vox-flow` 스킬로 handoff.
+
+## Agent Type 판단 기준
+
+| 기준 | Single Prompt | Flow |
+|------|---------------|------|
+| 대화 복잡도 | 단순 Q&A, 1~2 분기 | 3개 이상 분기, 복잡한 시나리오 |
+| 결정적 흐름 제어 | prompt에 의존 | node 단위로 보장 |
+| 조건부 분기 | 어려움 | condition node로 정확히 제어 |
+| 외부 API 연동 | tool로 가능 | api node로 응답 변수 추출까지 |
+| 변수 추적 | 어려움 | extraction → condition 체인 |
+| 유지보수 | prompt 하나 수정 | node 단위 독립 수정 |
+
+사용자가 유형을 명시하지 않으면 위 기준으로 판단하여 제안한다. Flow가 적합하면 `vox-flow`로 handoff.
+
+## References
+
+- **voice-ai-playbook.md** — 음성 UX 핵심 규칙, 트레이드오프 우선순위. **새 에이전트 설계 시 가장 먼저 읽기.** See [references/voice-ai-playbook.md](references/voice-ai-playbook.md)
+- **default-agent-data.json** + **agent-data-reference.md** — agent.data 기본값(JSON) + MCP 동작 규칙(md). **MCP로 에이전트를 생성·수정할 때 둘 다 읽기.** See [references/default-agent-data.json](references/default-agent-data.json), [references/agent-data-reference.md](references/agent-data-reference.md)
+- **ivr-navigation-best-practice.md** — IVR 메뉴 탐색, DTMF 전략, send_dtmf 프롬프팅. **에이전트가 ARS/IVR을 통과해야 하는 시나리오에서 읽기.** See [references/ivr-navigation-best-practice.md](references/ivr-navigation-best-practice.md)
+- **voice-ai-prompt-template.md** — 한국어 프롬프트 템플릿. **신규 프롬프트 작성 시 복사해 사용.** See [references/voice-ai-prompt-template.md](references/voice-ai-prompt-template.md)
+- **voice-ai-prompt-diagnosis.md** — 실패 사례 원인 진단. **에이전트가 이상하게 동작할 때 읽기.** See [references/voice-ai-prompt-diagnosis.md](references/voice-ai-prompt-diagnosis.md)
+- **voice-ai-prompt-revision.md** — 진단 기반 리팩터링. **diagnosis 산출물의 change_requests를 반영할 때 읽기.** See [references/voice-ai-prompt-revision.md](references/voice-ai-prompt-revision.md)
+- **variable-system.md** — 변수 카테고리(system/dynamic/extraction), naming, 렌더링 위치. **변수 설계 시 읽기.** See [references/variable-system.md](references/variable-system.md)
+- **voice-emotive-speech.md** — Cartesia Sonic-3 기반 감정/속도/웃음 표현력 prompting 가이드 (SSML `<emotion>`, `<speed>`, `[laughter]`). **유저가 "자연스럽게", "웃게", "속도 조절", "감정 표현"을 요청할 때 읽기.** See [references/voice-emotive-speech.md](references/voice-emotive-speech.md)
+
+## Core Operating Rules
+
+1. **작업 유형에 맞는 reference를 먼저 열고** 그 규칙을 적용한다.
+2. **사실성 우선** — vox 플랫폼/도구/모델 관련 사실은 확인된 목록이 없으면 만들어내지 않는다. 잘못된 사실은 고객 신뢰를 손상시키고 실제 장애로 이어진다.
+   - 목록이 없으면: (1) 확인 질문 1개, 또는 (2) `[[...]]` placeholder로 남긴다.
+3. **트레이드오프 우선순위**: 사실성/정확성 > 음성 UX > 친절함/설명량
+4. **런타임 발화 vs 개발 산출물 구분** — "기본 1–2문장" 같은 장문 방지 규칙은 에이전트의 **런타임 발화**에만 적용된다. 개발 산출물(시스템 프롬프트, 진단 YAML, 패치 노트)은 필요한 만큼 길어도 된다. 이 구분이 없으면 LLM이 voice UX 규칙을 개발 output에까지 적용해서, 프롬프트의 가드레일/도구 섹션을 지나치게 축약하는 실패가 발생한다.
+5. **최소 변경 리팩터링** — 기존 프롬프트의 필수 섹션/도구 계약/변수/에러처리를 삭제하면 런타임 장애가 발생한다.
+6. **진단 → 리팩터링 핸드오프**: diagnosis에 `failure_modes`와 `change_requests`가 반드시 포함, revision은 `change_requests`를 근거로만 변경한다 — 근거 없는 재설계는 기존 동작을 깨뜨린다.
+7. **MCP 실행 주의** — 유저가 "적용/업데이트"를 명시했을 때만 실행. builtInTools/toolIds가 전체 교체 방식이라 실수로 실행하면 기존 설정이 날아간다. `agent-data-reference.md` 참조.
+
+## Workflow
+
+신규 작성:
+1. `voice-ai-playbook.md` 읽기 → 규칙 숙지
+2. `voice-ai-prompt-template.md` 복사 → 요구사항 반영
+3. agent.data 스키마 참조하여 MCP로 생성
+
+디버깅/개선:
+1. `voice-ai-prompt-diagnosis.md` 읽기 → 실패 원인 진단
+2. `voice-ai-prompt-revision.md` 읽기 → change_requests 기반 리팩터링
+
+## Prompt Composition (Default + Opt-in 모듈)
+
+템플릿(`voice-ai-prompt-template.md`)은 공통 뼈대 + 조건부 모듈로 구성한다.
+
+| 모듈 | 상태 | 주입 위치 | 소스 |
+|------|------|----------|------|
+| 턴테이킹 (인터럽션 복구 포함) | **Default** — 항상 포함 | `# 턴테이킹` 섹션의 `[[turn_taking_rules]]` | `voice-ai-playbook.md` § 턴테이킹 전체 |
+| 표현력 (감정/속도/웃음) | **Opt-in** — 요청 시만 | 새 `# 표현력` 섹션의 `[[expressivity_rules]]` (템플릿에 주석 처리된 상태로 존재) | `voice-emotive-speech.md` |
+
+**Opt-in 트리거 (표현력)** — 유저가 "자연스럽게", "감정 발화", "웃게", "톤", "속도 조절", "감정 enabled" 같은 표현을 쓰면 해당 모듈을 포함한다. 미언급 시 템플릿의 `# 표현력` 주석 블록을 **그대로 삭제**한다.
+
+**Opt-in 전제 조건** — 표현력 모듈은 voice가 **Cartesia** 제공자일 때만 의미가 있다. 다른 제공자(ElevenLabs 등)면 포함하지 말고 사용자에게 voice 변경을 제안(`vox-web-app` 가이드)한 뒤 결정.
+
+**기존 프롬프트 수정** — 이미 배포된 프롬프트에 opt-in 모듈을 **추가/제거**하라는 요청은 `voice-ai-prompt-revision.md`의 change_requests 흐름으로 처리한다.
+
+## Ownership Boundary
+
+| Owns | Does Not Own |
+|------|--------------|
+| prompt authoring / diagnosis / revision | flow design (→ vox-flow) |
+| agent.data schema | tool management (→ vox-tools) |
+| voice AI playbook rules (공통) | pricing / billing |
+| IVR/DTMF best practice (공통) | phone number management |
+| agent type 판단 + flow handoff | web app UI guide (→ vox-web-app) |
+
+## Related Resources
+
+### MCP Tools (vox)
+- `create_agent` — 에이전트 생성 (prompt + agent.data)
+- `update_agent` — 에이전트 수정 (prompt/llm/stt/voice/postCall/tools 등 개별 필드)
+- `get_agent` — 에이전트 상세 조회 (현재 prompt, 설정 확인)
+- `list_agents` — 에이전트 목록
+- `get_call` — 통화 로그 조회 (진단 시 transcript 확인)
+- `get_schema(namespace='agent-schema', schema_type='agent-data-create')` — `create_agent.data` shape 확인
+- `get_schema(namespace='agent-schema', schema_type='agent-data-update')` — `update_agent.data` shape 확인
+- `get_schema(namespace='flow-schema', schema_type='flow-data')` — flow agent graph shape 확인 (필요 시 `vox-flow`로 handoff)
+
+### Docs (vox-docs search)
+- `docs/build/overview` — 에이전트 빌드 개요
+- `docs/build/single-prompt/prompt-writing` — 프롬프트 작성 가이드
+- `docs/build/voice/voice-select` — 음성/LLM 선택
+- `docs/build/knowledge/overview` — 지식 베이스
+- `docs/build/variables/system-variables` — 시스템 변수
+- `docs/build/variables/dynamic-variables` — 동적 변수
+
+### App URLs
+- `https://www.tryvox.co/dashboard/{organizationId}/agents` — 에이전트 목록
+- `https://www.tryvox.co/agent/{agentId}` — 에이전트 상세/프롬프트 편집

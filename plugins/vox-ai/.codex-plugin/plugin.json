@@ -16,7 +16,7 @@
     "skills"
   ],
   "skills": "./skills/",
-  "mcpServers": "../.mcp.json",
+  "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "vox.ai",
     "shortDescription": "Build and operate vox.ai voice agents in Codex.",
