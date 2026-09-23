@@ -46,7 +46,32 @@ vox.ai MCP 도구를 사용해 음성 AI 에이전트를 만들고 실제 전화
    - name: 이름
    - type: "single_prompt" (기본값 — 생략 가능)
    - data: { prompt: { prompt: "<생성된 프롬프트>" } } — `prompt`는 문자열이 아니라 객체다. `firstLine`/`firstLineType`은 생략하면 서버 기본값이 적용된다. 프롬프트/설정은 top-level이 아니라 `data` 안에 넣는다(camelCase). 정확한 형태는 `get_schema(namespace="agent-schema", schema_type="agent-data-create", detail="minimal")`로 확인
-   - llm/voice는 넣지 않는다 — `data.llm`/`data.voice`를 생략하면 서버가 기본값을 채운다. 사용자가 특정 음성·언어를 명시할 때만, 허용값을 `list_voice_models(language="ko-KR")`·`list_llm_models`로 조회해 지정한다.
+   - llm/voice는 넣지 않는다 — pipeline 기본값은 `data.llm`/`data.voice`를 생략해 사용한다. pipeline에서 특정 음성을 요청하면 `list_voice_models(language="ko-KR")`·`list_llm_models`로 값을 확인한다. Native live 선택은 아래 `vox-agents` 경로를 따른다.
+
+If the user explicitly asks for GPT-Live, Grok Voice, or Gemini Live during
+onboarding, do not use the pipeline-only default above. Create only a
+`type: "single_prompt"` agent; native live runtimes are rejected on Flow
+agents. Do not implicitly convert or migrate a Flow; existing Flow agents
+remain on `pipeline`. Hand the payload design to `vox-agents` and require
+`data.llm.model` plus an explicit `data.runtime` object. Put the selected
+provider's builtin voice under `data.runtime.voice` and read its exact model
+and voice values from the agent schema. Pin Grok Voice to
+`grok-voice-think-fast-2.0` and Gemini Live to
+`gemini-2.5-flash-native-audio-preview-12-2025`; use only the provider-specific
+builtin voice IDs and casing in the current schema. Gemini 3.1 and 3.8 are not
+supported by this contract. Grok Voice and Gemini Live reject
+custom voices; the GPT-Live custom reference is not a way to create a voice
+or grant provider authorization. Existing pipeline voice settings remain
+unchanged and are not migrated. Omit legacy pipeline `stt`, `voice`,
+`parallelSTT`, and schema-marked incompatible speech preferences. Do not infer
+a native live runtime from a missing field or silently map `data.llm` to
+another model.
+
+For Grok Voice and Gemini Live, the effective
+`data.speech.isAllowInterruption` value must be `true`. Create omission uses the
+default `true`; PATCH omission preserves the existing value, so explicitly set
+`true` when switching from a stored `false`. The API rejects `false` and does
+not silently force it to `true`.
 
 생성 성공 시에만 다음 단계로 진행.
 실패 시: 에러 내용을 보여주고 수정 후 재시도.
