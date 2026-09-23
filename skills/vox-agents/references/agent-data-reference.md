@@ -125,12 +125,12 @@ get_schema(namespace="tool-schema", schema_type="<built-in-tool-schema>")
 
 동작:
 1. 기존 `agent.data`를 읽음
-2. 변경할 sub-schema 의 현재 값을 보존해야 하면 전체 subtree 를 다시 구성
+2. 바꿀 key 만 담는다. 통째로 교체되는 `builtInTools`·`toolIds`·`presetDynamicVariables`·`manuals` 는 현재 값을 읽어 보존할 항목까지 함께 담는다
 3. `get_schema(namespace="agent-schema", schema_type="agent-data-update")` 로 update shape 확인
 4. `update_agent(agent_id=..., data=...)` 호출
 5. `get_agent()`로 round-trip 확인
 
-**sub-schema replacement semantics가 핵심이다** — `builtInTools`에 `end_call` 하나만 넣으면 기존 도구가 전부 사라질 수 있다. 기존 도구 객체를 schema 기본값으로 다시 만들면 전환 대상, SMS 발신/본문 설정, DTMF interrupt, 종료 도구 실행 중 발화 같은 tool-level 설정도 사라진다. 반드시 `get_agent()`로 현재 값을 읽고, 수정 후 보존할 sibling 값을 함께 다시 보내라.
+**교체 단위를 구분하는 것이 핵심이다** — object sub-schema(`prompt`, `llm`, `voice` 등)는 한 단계 병합된다. 보낸 key 만 바뀌고 생략한 key 는 유지되며, 그 안의 nested object 는 통째로 바뀐다. 단 `llm` 은 `model`, `voice` 는 `id`·`provider` 를 함께 보내야 한다. 반면 `builtInTools`·`toolIds`·`presetDynamicVariables`·`manuals` 는 통째로 교체된다. `builtInTools`에 `end_call` 하나만 넣으면 기존 도구가 전부 사라질 수 있다. 기존 도구 객체를 schema 기본값으로 다시 만들면 전환 대상, SMS 발신/본문 설정, DTMF interrupt, 종료 도구 실행 중 발화 같은 tool-level 설정도 사라진다. 반드시 `get_agent()`로 현재 값을 읽고, 수정 후 보존할 항목을 함께 다시 보내라.
 
 ## 실전 예시
 

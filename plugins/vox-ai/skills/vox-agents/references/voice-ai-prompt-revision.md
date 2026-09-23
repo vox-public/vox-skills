@@ -31,7 +31,7 @@ get_agent(agent_id = call.agent_id)
 ```
 
 - vox 플랫폼이 실제로 읽는 system prompt는 보통 `agent.data.prompt.prompt`에 있다.
-- `firstLine`/`firstLineType` 등 `agent.data.prompt`의 다른 필드는 업데이트 시 소실되기 쉬우니, **prompt 객체 전체를 보존**할 수 있게 먼저 읽어둔다.
+- `firstLine`/`firstLineType` 등 `agent.data.prompt`의 다른 필드는 업데이트 때 보내지 않으면 그대로 유지된다. 변경 전후를 비교할 수 있게 현재 값은 먼저 읽어둔다.
 - 필요하면 `get_call` transcript 근거로 `voice-ai-prompt-diagnosis.md` 방식으로 원인을 다시 정리하고(특히 tool 호출/실패 처리/turn-taking), 그 결과를 이번 리팩터링 입력으로 사용한다.
 
 3) 개선된 system prompt 생성
@@ -41,16 +41,15 @@ get_agent(agent_id = call.agent_id)
 4) 유저 확인 후 실제 반영(업데이트)
 
 ```text
-current_prompt = agent.data.prompt
 update_agent(
   agent_id = call.agent_id,
-  data = {"prompt": {**current_prompt, "prompt": revised_system_prompt}}
+  data = {"prompt": {"prompt": revised_system_prompt}}
 )
 ```
 
 권장:
 - 업데이트는 **유저가 “적용해줘/업데이트해줘”라고 명시했을 때만** 실행한다.
-- `update_agent`의 프롬프트 변경은 top-level `prompt` 인자가 아니라 `data.prompt` 객체로 보낸다. `data.prompt`는 sub-schema 전체 교체(replace)이므로 `firstLine`/`firstLineType` 등 필요한 필드를 포함한 최종 객체를 전달한다.
+- `update_agent`의 프롬프트 변경은 top-level `prompt` 인자가 아니라 `data.prompt` 객체로 보낸다. `data.prompt`는 보낸 key 만 바뀌고 `firstLine`/`firstLineType` 등 보내지 않은 필드는 유지되므로, 바꿀 `prompt`만 전달한다.
 - LLM/STT/postCall 같은 설정 변경은 `agent-data-reference.md`를 따른다.
 - 적용 후 `get_agent`로 다시 읽어서 프롬프트가 바뀌었는지 확인한다.
 
