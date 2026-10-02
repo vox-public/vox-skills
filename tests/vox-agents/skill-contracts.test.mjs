@@ -54,11 +54,13 @@ test("Manual data reference stays authoring-facing", () => {
   const bundled = read("plugins/vox-ai/skills/vox-agents/references/manual-data-reference.md");
 
   assert.equal(bundled, source, "manual-data-reference.md must match the plugin bundle");
-  assert.match(source, /@tool:<빌트인 name>/);
-  assert.match(source, /@tool:<커스텀 도구 UUID>/);
+  assert.match(source, /content에서 `@tool:<빌트인 name>`으로 참조한다/);
+  assert.match(source, /CLI custom Tool references use the same Agent's Tool bindings\/local names/);
   assert.match(source, /@manual:<UUID>/);
-  assert.match(source, /특정 Manual 이후에만 사용하는 후속 Manual은 `trigger`를 비우고 부모 content에서 `@manual:<UUID>`로 참조/);
-  assert.doesNotMatch(source, /linked_manual_ids/);
+  assert.match(source, /후속 Manual은 `trigger`를 비우고 부모 content에서 `@manual:<local-name>`\(CLI\) 또는 `@manual:<UUID>`\(API\)로 참조/);
+  assert.match(source, /`agents\/<agent>\/manuals\/<local-name>\/manual\.json`/);
+  assert.match(source, /`bindings\[<agent>\]\.manuals\[<local-name>\]`/);
+  assert.doesNotMatch(source, /^\s*`?(?:linked_manual_ids|tool_ids)`?\s*:/m);
   assert.match(source, /M1.*M2.*임시 식별자는 직접 작성하지 않는다/);
   assert.deepEqual(
     [...source.matchAll(/^## (\d+\..+)$/gm)].map((match) => match[1]),
@@ -73,8 +75,9 @@ test("Manual authoring guide avoids internal and unrelated implementation detail
   assert.equal(bundled, source, "manual-authoring.md must match the plugin bundle");
   assert.match(source, /trigger는 Manual을 언제 시작할지 판단하는 기준 문장/);
   assert.match(source, /절차 전용 도구.*해당 매뉴얼에 연결/);
-  assert.match(source, /후속 Manual을 같은 Agent의 `manuals` 맵에 두고 `trigger`를 비운 뒤/);
-  assert.doesNotMatch(source, /linked_manual_ids/);
+  assert.match(source, /같은 Agent가 소유한 Manual 사이에서 content의 `@manual:` 참조/);
+  assert.match(source, /`@manual:<local-name>`\(CLI\) 또는 `@manual:<UUID>`\(API\)/);
+  assert.doesNotMatch(source, /^\s*`?linked_manual_ids`?\s*:/m);
   assert.match(source, /Manual은 필요한 업무 상황에서만 시작하는 독립 절차/);
   assert.match(source, /M1 같은 임시 식별자는 본문·content에 하드코딩하지 않는다/);
 });
@@ -125,5 +128,74 @@ test("agent data teaches the agent-owned manuals map, not retired manualIds", ()
   assert.match(dataReference, /^### manuals$/m);
   assert.match(dataReference, /manualIds is retired/);
   assert.match(dataReference, /맵 전체가 교체된다/);
-  assert.doesNotMatch(read("skills/vox-agents/SKILL.md"), /vox agent attach manual/);
+  assert.match(read("skills/vox-agents/SKILL.md"), /Do not use .*vox agent attach manual/);
+});
+
+test("native live reference separates schema, warm whisper preflight, and deployment evidence", () => {
+  const sourcePath = "skills/vox-agents/references/gpt-live-agent-data.json";
+  const sourceText = read(sourcePath);
+  const source = JSON.parse(sourceText);
+  const bundled = read(`plugins/vox-ai/${sourcePath}`);
+  const preflight = source.voice_call_preflight;
+
+  assert.equal(bundled, sourceText, "native live reference must match the plugin bundle");
+  assert.equal(
+    preflight.scope,
+    "current agent-server entrypoint integration checks for single_prompt inbound and outbound voice calls; not chat sessions",
+  );
+  assert.equal(
+    preflight.contract_boundary.agent_schema.authority,
+    "authoritative for API request fields and accepted values",
+  );
+  assert.equal(preflight.contract_boundary.deployed_behavior, "not_verified");
+  assert.equal(
+    preflight.contract_boundary.runtime_preflight,
+    "current agent-server entrypoint integration checks; not an inherent provider limitation",
+  );
+  assert.equal(preflight.contract_boundary.provider_capability, "not_assessed");
+  assert.equal(preflight.shared.agent_type, "single_prompt");
+  assert.deepEqual(preflight.shared.runtime_types, ["gpt_live", "grok_voice", "gemini_live"]);
+  assert.deepEqual(preflight.shared.interruption, {
+    field: "data.speech.isAllowInterruption",
+    required_effective_value: true,
+  });
+  assert.deepEqual(
+    preflight.rejected_for_gpt_live_and_gemini_live.map(({ setting }) => setting),
+    [
+      "effective callSettings.callScreening",
+      "any transfer_call operator destination",
+      "speakDuringExecution.messages",
+    ],
+  );
+  assert.match(preflight.rejected_for_gpt_live_and_gemini_live[1].when, /mixed phone\/SIP\/operator/);
+  assert.equal(preflight.warm_transfer_whisper.setting, "data.voice");
+  assert.equal(preflight.warm_transfer_whisper.schema, "existing AgentVoice");
+  assert.match(preflight.warm_transfer_whisper.scope, /warm phone\/SIP transfer briefings only/);
+  assert.match(preflight.warm_transfer_whisper.scope, /data\.runtime\.voice/);
+  assert.deepEqual(preflight.warm_transfer_whisper.eligibility.destination_transports, ["phone", "sip"]);
+  assert.match(preflight.warm_transfer_whisper.eligibility.static_mode, /non-blank/);
+  assert.match(preflight.warm_transfer_whisper.eligibility.dynamic_mode, /empty or omitted/);
+  assert.deepEqual(preflight.warm_transfer_whisper.default_voice_when_omitted, {
+    provider: "openai",
+    model: "tts-1",
+    id: "onyx",
+    lifetime: "transient; not stored in agent data",
+    uses_data_voice: false,
+    uses_runtime_voice: false,
+  });
+  assert.deepEqual(preflight.warm_transfer_whisper.write_semantics, {
+    create: "Omit data.voice to use the transient default, or provide an AgentVoice object; null is not valid on create.",
+    patch: "Omission preserves the current optional data.voice; null clears it.",
+  });
+  assert.match(preflight.warm_transfer_whisper.boundary, /only for whisper TTS/);
+  assert.match(preflight.warm_transfer_whisper.boundary, /does not persist data.voice/);
+  assert.match(preflight.grok_voice.these_gpt_gemini_preflight_checks, /not_applied/);
+  assert.match(preflight.authoring_action, /Do not silently remove or rewrite/);
+  assert.match(read("skills/vox-agents/SKILL.md"), /not evidence of deployed runtime or provider quality/);
+  assert.match(read("skills/vox-agents/SKILL.md"), /optional top-level `data\.voice`/);
+  assert.doesNotMatch(sourceText, /transfer_call\.whisperVoice|WhisperVoiceConfig/);
+  const dataReference = read("skills/vox-agents/references/agent-data-reference.md");
+  assert.match(dataReference, /optional top-level `data\.voice`/);
+  assert.match(dataReference, /`data\.voice: null` clears/);
+  assert.match(dataReference, /data\.runtime\.voice/);
 });

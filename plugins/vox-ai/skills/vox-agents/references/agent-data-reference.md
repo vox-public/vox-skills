@@ -9,11 +9,11 @@ get_schema(namespace="agent-schema", schema_type="agent-data-create")
 get_schema(namespace="agent-schema", schema_type="agent-data-update")
 ```
 
-[default-agent-data.json](default-agent-data.json)은 `agent.data` root 구조 예시(illustrative shape)일 뿐이다. 복사해서 보낼 "기본값"도 schema source 도 아니다. 기본값의 SSOT 는 api-server 이고, 생략한 sub-schema 는 서버가 기본값으로 채운다.
+[default-agent-data.json](default-agent-data.json)은 `agent.data` root 구조 예시(illustrative shape)일 뿐이다. 복사해서 보낼 "기본값"도 schema source 도 아니다. [gpt-live-agent-data.json](gpt-live-agent-data.json)은 native live create/update shape와 전환 예시다. 기본값의 SSOT 는 api-server 이고, 생략한 sub-schema 는 서버가 기본값으로 채운다.
 
 ## Root 필수 필드
 
-schema endpoint 결과를 따른다. 현재 기본 payload 에서는 `prompt`, `stt`, `llm`, `voice`, `postCall`, `toolIds`를 핵심 root 로 다룬다.
+schema endpoint 결과를 따른다. 기존 pipeline payload 에서는 `prompt`, `stt`, `llm`, `voice`, `postCall`, `toolIds`를 핵심 root 로 다룬다. `runtime`을 사용하는 최신 계약은 현재 schema endpoint 결과를 기준으로 확인한다.
 나머지(`builtInTools`, `manuals`, `speech`, `callSettings`, `security`, `knowledge`, `webhookSettings`, `presetDynamicVariables`)는 schema 결과에 맞춰 선택적으로 보낸다.
 
 ## 필드별 핵심 규칙
@@ -43,6 +43,34 @@ schema endpoint 결과를 따른다. 현재 기본 payload 에서는 `prompt`, `
 - `speed`: 발화 속도. 허용 범위는 voice마다 다르다 — `list_voice_models` 결과의 `capabilities.speed`를 따른다.
 - `temperature`: 음성 변이.
 
+### runtime (native live)
+
+Native live runtime values belong in `data.runtime`; pipeline STT/TTS settings do not
+configure their speech session. For provider IDs, create/update transitions, readback
+behavior, and voice-call preflight limits, use
+[gpt-live-agent-data.json](gpt-live-agent-data.json). That reference is authoring guidance,
+not the API schema: `get_schema(namespace="agent-schema", ...)` remains authoritative
+for request shape and current accepted values.
+
+All three runtimes are `single_prompt`-only and require effective
+`data.speech.isAllowInterruption: true`. Keep `data.llm` as the separate text/business
+LLM; never substitute the native `runtime.model` or invent an automatic chat fallback.
+Do not copy pipeline `stt` or `parallelSTT` settings into a native runtime. Keep the
+native conversation voice under `data.runtime.voice`; optional top-level `data.voice`
+uses the existing `AgentVoice` schema for warm-transfer whisper TTS only. Do not infer a
+pipeline voice from `runtime.voice` when switching back. Native reads may omit legacy
+`stt` or optional `data.voice` fields or return them as `null`; `data.voice: null` clears
+the optional whisper configuration on PATCH, while omission on PATCH preserves the
+current value. On create, omit `data.voice` for the transient default or provide an
+`AgentVoice` object; do not send `null`.
+
+An eligible warm phone/SIP `transfer_call` briefing may use top-level `data.voice` for
+whisper TTS. Dynamic mode uses the server default summary prompt when
+`warmTransferPrompt` is empty or omitted; static mode skips the whisper when text is
+blank. If `data.voice` is omitted, the eligible briefing uses a transient OpenAI
+`tts-1`/`onyx` default without storing a default voice. This does not change the native
+conversation voice under `data.runtime.voice`.
+
 ### postCall
 
 - `actions[]` 각 항목에 `type`, `name` 필수.
@@ -55,7 +83,10 @@ schema endpoint 결과를 따른다. 현재 기본 payload 에서는 `prompt`, `
 - single-prompt Agent가 소유한 Manual 맵이다. 키는 Manual UUID이고, 값은 `name`·`trigger`·`content`·`built_in_tools`·`config`다. 맵 값 안의 필드는 snake_case다.
 - `manualIds`·`manual_ids`는 폐기됐다. create/update에 보내면 `manualIds is retired`로 거절된다. Manual을 따로 만들어 Agent에 붙이는 방식은 없고, Manual은 Agent 맵 안에만 있다.
 - update에서 `manuals`를 보내면 맵 전체가 교체된다. 생략하면 기존 맵이 유지된다. Manual 하나만 고칠 때도 `get_agent`로 현재 맵을 읽고 나머지 Manual을 그대로 포함한 전체 맵을 보낸다. 빈 `{}`를 보내면 모든 Manual이 삭제된다.
-- `trigger`가 채워진 Manual은 Agent가 직접 시작할 수 있는 진입 Manual이다. `trigger`가 빈 Manual은 다른 Manual content의 `@manual:<UUID>`로만 도달하는 후속 Manual이다.
+- API `data.manuals` values use snake_case. Keep this full-map write contract separate from CLI local files and scoped `/agents/{agent_id}/manuals` CRUD; the public MCP surface has no standalone Manual CRUD tools or global `/manuals` route.
+- `trigger`가 채워진 Manual은 Agent가 직접 시작할 수 있는 진입 Manual이다. `trigger`가 빈 Manual은 다른 Manual content의 `@manual:<UUID>`로만 도달하는 후속 Manual이다. API content uses canonical UUID references; CLI files use same-agent local names that the CLI resolves through `.vox/project.json` bindings.
+- CLI Manual files live at `agents/<agent>/manuals/<local-name>/manual.json`; IDs are stored in `bindings[<agent>].manuals[<local-name>]`. CLI `agent.json` does not include `data.manuals`, `manualIds`, or `manualRefs`.
+- Manual maps are frozen into Agent versions. A write to the current draft does not change production calls; saving a version and promoting it are separate approved steps.
 - flow Agent에는 Manual을 두지 않는다. 비어 있지 않은 맵은 배포 시 `MANUALS_UNSUPPORTED_AGENT_TYPE`으로 거절된다.
 - Manual이 있는 Agent는 `manual-review.md` 기준으로 진입·linked Manual과 Manual 소유 Tool을 재귀 검토한다.
 - Manual content·Trigger·`StartManual` 라우팅은 `manual-authoring.md`, 필드와 연결·참조 규칙은 `manual-data-reference.md`를 따른다.
@@ -72,6 +103,7 @@ schema endpoint 결과를 따른다. 현재 기본 payload 에서는 `prompt`, `
 ### speech
 
 - `isAllowInterruption`: 사용자가 에이전트 발화 중 끊을 수 있는지. 기본 `true`.
+- GPT-Live, Grok Voice, Gemini Live는 모두 유효한 값이 `true`여야 한다. 생성에서 생략하면 기본 `true`; PATCH에서 생략하면 현재 값을 유지한다. 기존 `false`에서 native runtime으로 전환할 때는 `true`를 명시한다. Agent-server는 `false`를 거부하며 자동으로 바꾸지 않는다.
 - `isAllowTurnDetection`: 턴 감지 활성화. 기본 `true`.
 - `responsiveness`: 0.0~1.0. 높을수록 빠르게 응답 시작. 기본 1.0 (최댓값).
 - `responsiveness` 는 latency 에 직접 영향을 주는 production default 다. 사용자 요구나 기존 agent 설정이 없으면 `1.0` 을 유지하고, 자연스러움/안정성 개선을 추측해 `0.8` / `0.9` 로 낮추지 않는다.
@@ -118,19 +150,36 @@ get_schema(namespace="tool-schema", schema_type="<built-in-tool-schema>")
 - `flow` agent 를 실사용 가능한 상태로 만들 때는 public `flow` 를 함께 보낸다. `flow_data` 는 legacy graph 이므로 새 작성에는 쓰지 않는다. 단순 shell agent 생성 여부는 API/MCP contract 를 확인한다.
 - flow graph 만 만들거나 검증하는 작업이면 `data` 를 생략한다. schema 에 보이는 기본값을 복사하려고 `stt.speed`, `llm`, `voice`, `speech` 를 채우지 않는다.
 - `data` 를 작성하기 전에 `get_schema(namespace="agent-schema", schema_type="agent-data-create")` 를 호출한다.
+- Native live를 만들거나 전환할 때는 `type: "single_prompt"`과 `data.runtime`을 사용하고, 현재 schema/catalog에 맞는 별도 text `data.llm`을 유지한다. Provider voice 값, create/update 전환 동작, GPT/Gemini voice-call preflight 제약은 `gpt-live-agent-data.json`을 따른다. Flow는 `pipeline`을 유지한다. For native input, omit pipeline `stt`/`parallelSTT` and incompatible legacy speech preferences; optional top-level `data.voice` is only for warm-transfer whisper TTS, while native conversation voice stays at `data.runtime.voice`.
 
 ### update_agent
 
-현재 MCP 입력은 `agent_id`, `name`, `data`, `flow`, `flow_data` 기준이다. agent 설정 변경은 top-level shortcut 이 아니라 `data` 안의 sub-schema 로 보낸다. flow graph 수정은 새 작성 경로에서는 `flow` 를 사용하고, `flow_data` 는 legacy graph 유지보수 때만 쓴다.
+현재 MCP `update_agent` 입력은 `agent_id`, `name`, `data`, `flow`, `flow_data`, 필수 `expected_head_revision`, 선택적 `expected_flow_revision` 기준이다. agent 설정 변경은 top-level shortcut 이 아니라 `data` 안의 sub-schema 로 보낸다. flow graph 수정은 새 작성 경로에서는 `flow` 를 사용하고, `flow_data` 는 legacy graph 전체 교체 때만 쓴다.
 
 동작:
-1. 기존 `agent.data`를 읽음
-2. 바꿀 key 만 담는다. 통째로 교체되는 `builtInTools`·`toolIds`·`presetDynamicVariables`·`manuals` 는 현재 값을 읽어 보존할 항목까지 함께 담는다
+1. `get_agent`로 현재 편집본의 `agent.data`, `head_revision`, `flow_revision`을 읽음
+2. 변경할 sub-schema만 구성하고, `builtInTools`·`toolIds`·`presetDynamicVariables`·`manuals`처럼 전체 교체되는 항목은 보존할 현재 값을 함께 구성
 3. `get_schema(namespace="agent-schema", schema_type="agent-data-update")` 로 update shape 확인
-4. `update_agent(agent_id=..., data=...)` 호출
-5. `get_agent()`로 round-trip 확인
+4. `expected_head_revision`에 앞서 읽은 값을 지정. Flow 그래프 전체를 바꾸면 같은 조회의 `flow_revision`을 `expected_flow_revision`으로 지정
+5. `update_agent(agent_id=..., expected_head_revision=..., data=...)` 호출
+6. `get_agent`로 round-trip 확인
 
-**교체 단위를 구분하는 것이 핵심이다** — object sub-schema(`prompt`, `llm`, `voice` 등)는 한 단계 병합된다. 보낸 key 만 바뀌고 생략한 key 는 유지되며, 그 안의 nested object 는 통째로 바뀐다. 단 `llm` 은 `model`, `voice` 는 `id`·`provider` 를 함께 보내야 한다. 반면 `builtInTools`·`toolIds`·`presetDynamicVariables`·`manuals` 는 통째로 교체된다. `builtInTools`에 `end_call` 하나만 넣으면 기존 도구가 전부 사라질 수 있다. 기존 도구 객체를 schema 기본값으로 다시 만들면 전환 대상, SMS 발신/본문 설정, DTMF interrupt, 종료 도구 실행 중 발화 같은 tool-level 설정도 사라진다. 반드시 `get_agent()`로 현재 값을 읽고, 수정 후 보존할 항목을 함께 다시 보내라.
+`REVISION_CONFLICT`를 받으면 자동으로 다시 읽고 blind retry하지 않는다. 변경된 설정을
+사용자에게 알리고, 사용자가 최신 상태와 요청 변경을 확인해 병합한 뒤 새 revision으로
+재요청한다.
+
+CLI `agent version save`는 현재 `head_revision`과 Flow이면 `flow_revision`을 사용해
+스냅샷을 만들고 `promote: false`를 지정한다. CLI `agent promote`에는 현재 production
+version 또는 `null`을 `expected_production_version`으로 전달한다. public MCP에는
+버전 create/publish/restore 도구가 없고 CLI에는 version restore/duplicate 명령이 없다.
+
+single_prompt native live 전환:
+
+- pipeline → native live: provider `runtime`을 명시하고 기존 `data.llm`을 유지한다. `runtime`을 생략한 PATCH는 전환이 아니다.
+- native live → pipeline: `runtime: {"type": "pipeline"}`과 pipeline용 `stt`, `voice`를 명시한다. `runtime.voice`에서 pipeline 음성을 추측하지 않는다.
+- native live 수정: `runtime`과 `runtime.voice`를 기준으로 round-trip을 확인한다. Native PATCH에서 `data.voice: null`은 optional whisper TTS 설정을 지우고, omission은 현재 값을 유지한다. On create, omit `data.voice` or provide an `AgentVoice` object; do not send null.
+
+**병합 규칙을 구분한다.** `data`에서 생략한 top-level 설정은 기존 값을 유지한다. 일반 객체(`prompt`, `llm`, `voice` 등)는 한 단계 병합되어 보낸 key만 바뀌고 생략한 sibling은 유지되지만, 그 안의 nested object는 통째로 교체된다. `llm`은 `model`, `voice`는 `id`와 `provider`를 함께 보낸다. 배열은 전체 교체되고 `runtime`, `manuals`, `presetDynamicVariables`도 원자적으로 전체 교체된다. `builtInTools`나 `toolIds`를 보낼 때는 배열 전체를 보존해야 하며, `builtInTools`에 `end_call` 하나만 보내면 기존 도구가 전부 사라질 수 있다. 현재 도구 객체를 schema 기본값으로 다시 만들면 transfer 목적지, SMS 발신/본문 설정, DTMF interrupt, tool 실행 중 발화 같은 설정도 사라질 수 있다. 전체 교체되는 값을 보존해야 하면 `get_agent`로 현재 값을 읽어 의도한 subtree 전체를 다시 보낸다.
 
 ## 실전 예시
 
@@ -158,6 +207,7 @@ list_llm_models()
 
 update_agent(
   agent_id="agent-uuid",
+  expected_head_revision=17,  # 예시 값: 직전 get_agent 응답에서 관찰한 값
   data={
     "prompt": {"prompt": "수정된 프롬프트..."},
     "llm": {"model": "<list_llm_models 결과에서 선택>", "temperature": 0.2}
@@ -179,6 +229,7 @@ get_agent(agent_id="agent-uuid")
 # 3. 기존 + 신규를 합쳐서 전체를 보냄
 update_agent(
   agent_id="agent-uuid",
+  expected_head_revision=17,  # 예시 값: 직전 get_agent 응답에서 관찰한 값
   data={
     "builtInTools": [
       {"toolType": "end_call", "name": "end_call"},

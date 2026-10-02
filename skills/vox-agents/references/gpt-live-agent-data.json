@@ -1,0 +1,170 @@
+{
+  "_note": "Illustrative native live shapes. Read the current agent schema and text LLM catalog before sending a request. Provider model IDs and builtin voice IDs below reflect the current source contract; examples are not implicit defaults or deployment evidence.",
+  "create_single_prompt": {
+    "name": "업무 상담 에이전트",
+    "type": "single_prompt",
+    "data": {
+      "prompt": {
+        "prompt": "고객의 업무 문의를 짧고 정확하게 안내하세요."
+      },
+      "llm": {
+        "model": "<list_llm_models에서 선택한 text LLM>"
+      },
+      "runtime": {
+        "type": "gpt_live",
+        "model": "gpt-live-1",
+        "voice": {
+          "type": "builtin",
+          "name": "marin"
+        }
+      }
+    }
+  },
+  "grok_voice_runtime": {
+    "type": "grok_voice",
+    "model": "grok-voice-think-fast-2.0",
+    "voice": {
+      "type": "builtin",
+      "name": "eve"
+    }
+  },
+  "gemini_live_runtime": {
+    "type": "gemini_live",
+    "model": "gemini-2.5-flash-native-audio-preview-12-2025",
+    "voice": {
+      "type": "builtin",
+      "name": "Puck"
+    }
+  },
+  "builtin_voice_catalogs": {
+    "grok_voice": {
+      "model": "grok-voice-think-fast-2.0",
+      "name_case": "lowercase",
+      "names": [
+        "carina", "zagan", "helix", "orion", "luna", "iris", "altair", "zenith",
+        "perseus", "helios", "lux", "kepler", "rigel", "cosmo", "celeste", "ursa",
+        "sirius", "lumen", "castor", "naksh", "atlas", "ara", "eve", "leo", "rex", "sal"
+      ]
+    },
+    "gemini_live": {
+      "model": "gemini-2.5-flash-native-audio-preview-12-2025",
+      "name_case": "case-sensitive",
+      "names": [
+        "Achernar", "Achird", "Algenib", "Algieba", "Alnilam", "Aoede", "Autonoe", "Callirrhoe",
+        "Charon", "Despina", "Enceladus", "Erinome", "Fenrir", "Gacrux", "Iapetus", "Kore",
+        "Laomedeia", "Leda", "Orus", "Pulcherrima", "Puck", "Rasalgethi", "Sadachbia",
+        "Sadaltager", "Schedar", "Sulafat", "Umbriel", "Vindemiatrix", "Zephyr", "Zubenelgenubi"
+      ]
+    }
+  },
+  "custom_voice_runtime_reference": {
+    "type": "gpt_live",
+    "model": "gpt-live-1",
+    "voice": {
+      "type": "custom",
+      "id": "voice_..."
+    }
+  },
+  "pipeline_update": {
+    "data": {
+      "llm": {
+        "model": "<existing-or-catalogued-text-llm>"
+      },
+      "runtime": {
+        "type": "pipeline"
+      },
+      "stt": {
+        "languages": ["ko"],
+        "speed": "high"
+      },
+      "voice": {
+        "id": "<list_voice_models에서 선택한 voice id>",
+        "provider": "<voice catalog provider>"
+      }
+    }
+  },
+  "voice_call_preflight": {
+    "scope": "current agent-server entrypoint integration checks for single_prompt inbound and outbound voice calls; not chat sessions",
+    "contract_boundary": {
+      "agent_schema": {
+        "authority": "authoritative for API request fields and accepted values",
+        "lookup": "get_schema(namespace=agent-schema, schema_type=agent-data-create|agent-data-update)"
+      },
+      "runtime_preflight": "current agent-server entrypoint integration checks; not an inherent provider limitation",
+      "deployed_behavior": "not_verified",
+      "provider_capability": "not_assessed",
+      "provider_quality": "not_verified"
+    },
+    "shared": {
+      "agent_type": "single_prompt",
+      "runtime_types": ["gpt_live", "grok_voice", "gemini_live"],
+      "interruption": {
+        "field": "data.speech.isAllowInterruption",
+        "required_effective_value": true
+      },
+      "data.llm": "Keep the configured text/business LLM separate from runtime.model; do not invent chatLlm or an automatic chat fallback."
+    },
+    "rejected_for_gpt_live_and_gemini_live": [
+      {
+        "setting": "effective callSettings.callScreening",
+        "when": "non-null",
+        "reason": "The current agent-server integration has no TTS path for the configured screening response."
+      },
+      {
+        "setting": "any transfer_call operator destination",
+        "when": "an operator target appears anywhere in a direct or Manual-owned transfer_call config, including mixed phone/SIP/operator destinations, regardless of the selected destination or transfer mode",
+        "reason": "The current text-only native say path has no TTS output for the required operator-transfer announcement."
+      },
+      {
+        "setting": "speakDuringExecution.messages",
+        "when": "enabled is true and messages contains at least one non-empty item",
+        "reason": "The current agent-server tool-speech path requires TTS, which this native integration does not provide."
+      }
+    ],
+    "warm_transfer_whisper": {
+      "setting": "data.voice",
+      "schema": "existing AgentVoice",
+      "scope": "optional TTS voice for native warm phone/SIP transfer briefings only; native conversation audio remains under data.runtime.voice",
+      "eligibility": {
+        "transfer_type": "warm",
+        "destination_transports": ["phone", "sip"],
+        "static_mode": "A non-blank warmTransferStaticSentence is read; blank or missing text skips the static whisper.",
+        "dynamic_mode": "A briefing is generated even when warmTransferPrompt is empty or omitted; the server uses its default summary prompt."
+      },
+      "default_voice_when_omitted": {
+        "provider": "openai",
+        "model": "tts-1",
+        "id": "onyx",
+        "lifetime": "transient; not stored in agent data",
+        "uses_data_voice": false,
+        "uses_runtime_voice": false
+      },
+      "write_semantics": {
+        "create": "Omit data.voice to use the transient default, or provide an AgentVoice object; null is not valid on create.",
+        "patch": "Omission preserves the current optional data.voice; null clears it."
+      },
+      "boundary": "When provided, top-level data.voice is used only for whisper TTS and never as native conversation voice. When omitted, the default does not persist data.voice."
+    },
+    "grok_voice": {
+      "these_gpt_gemini_preflight_checks": "not_applied; retains the current call path",
+      "boundary": "This does not guarantee every TTS-dependent feature, call outcome, or voice quality."
+    },
+    "authoring_action": "Do not silently remove or rewrite a requested setting to pass these checks. Surface the conflict and ask which setting or runtime the user wants to change."
+  },
+  "contract_notes": [
+    "GPT-Live, Grok Voice, and Gemini Live are supported only for type=single_prompt; Flow agents remain on pipeline without implicit conversion or migration.",
+    "On create, a missing runtime and runtime.type=pipeline preserve existing pipeline behavior; on update, an omitted runtime preserves the current mode.",
+    "Grok Voice requires grok-voice-think-fast-2.0 and Gemini Live requires gemini-2.5-flash-native-audio-preview-12-2025. Gemini 3.1 and 3.8 are outside this contract.",
+    "Every native runtime requires an explicit provider model and voice reference; GPT-Live uses model gpt-live-1 and accepts builtin or organization-authorized custom references, while Grok Voice and Gemini Live require builtin voices.",
+    "Use only the exact IDs in builtin_voice_catalogs. Grok IDs are lowercase; Gemini IDs are case-sensitive. Grok and Gemini reject custom voice objects.",
+    "A GPT-Live custom reference does not provision a voice or grant authorization; verify that the organization has approved and mapped the referenced voice. Existing pipeline voice settings are not migrated.",
+    "Native live input omits legacy stt, parallelSTT, and speech preferences marked incompatible by the current schema; optional top-level data.voice is reserved for warm-transfer whisper TTS and native conversation voice remains under data.runtime.voice. Do not remove data.speech wholesale.",
+    "Keep data.llm as the selected text/business LLM, independent of runtime.model; do not infer or invent a chat fallback.",
+    "The pipeline-to-live update keeps existing data.llm unless explicitly changed. The live-to-pipeline update explicitly supplies stt and voice; it does not infer them from runtime.voice.",
+    "Native live reads may omit stt/optional data.voice or return them as null; runtime.voice is the native conversation voice.",
+    "For all three native runtimes, effective data.speech.isAllowInterruption must be true. Create omission uses the true default; PATCH omission preserves the current value, so explicitly send true when switching from a stored false value. Agent-server rejects false and does not force it to true.",
+    "Do not migrate pipeline data.voice into data.runtime.voice; on a native runtime, top-level data.voice is only an optional warm-transfer whisper TTS configuration.",
+    "Existing Flow node LLM overrides remain under flow.nodes[].data.llm as legacy Flow settings; they are not a native live feature and must not be rewritten to a native live model.",
+    "Voice-call preflight checks are current agent-server integration constraints, not API-schema validation, inherent provider limitations, or deployment evidence; do not silently drop unsupported fields."
+  ]
+}
