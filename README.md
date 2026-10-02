@@ -1,62 +1,61 @@
-# vox.ai Skills
+> **Deprecated: 이 저장소는 더 이상 관리하지 않는다.**
+> vox.ai plugin([vox-public/plugin](https://github.com/vox-public/plugin))으로 옮겼다. 새 설치와 업데이트는 모두 plugin 저장소를 쓴다. 아래 skill 내용은 이전 설치 호환을 위해 남겨 둔 것이며 갱신되지 않는다.
 
-vox.ai 개발자를 위한 Codex/Claude plugin + Agent Skills 레포입니다.
+# vox.ai Skills (deprecated)
 
-## 설치
+## 새 plugin 설치
 
-### OpenAI Codex Plugin (권장)
+하나의 GitHub 저장소(`https://github.com/vox-public/plugin.git`)로 세 호스트에 모두 설치한다.
 
-터미널에서 한 줄로 vox.ai 마켓플레이스를 등록합니다 (2026-04+ Codex).
+Claude Code:
 
-```bash
-codex plugin marketplace add vox-public/vox-skills
-```
-
-그 뒤 plugin 목록에서 `vox-ai`를 설치합니다.
-
-- **Codex App**: **Plugins** 화면에서 `vox-ai` → **Add to Codex**
-- **Codex CLI**: `codex` 실행 후 `/plugins` → `vox-ai` → **Install plugin**
-
-설치 중 브라우저에서 vox.ai OAuth 로그인 창이 열립니다. 설치 후에는 Codex를 재시작해야 skill과 MCP 서버가 현재 세션에 로드됩니다.
-
-### Claude Code Plugin
-
-Claude Code 세션 안에서 slash command로 진행합니다.
-
-```
-# 1. marketplace 등록
-/plugin marketplace add vox-public/vox-skills
-
-# 2. plugin 설치
+```text
+/plugin marketplace add https://github.com/vox-public/plugin.git
 /plugin install vox-ai@vox-ai
-
-# 3. 현재 세션에 로드
 /reload-plugins
 ```
 
-한 번의 설치로 MCP 서버 + Skills가 모두 제공됩니다. 처음 vox MCP 도구를 호출할 때 브라우저에서 vox.ai OAuth 로그인 창이 열립니다.
+Codex CLI:
 
-### MCP 직접 등록 (대안)
-
-```bash
-# Codex MCP
-codex mcp add vox --url https://mcp.tryvox.co/mcp
-codex mcp login vox
-
-# Claude Code MCP
-claude mcp add --transport http vox https://mcp.tryvox.co/mcp
-
-# Skills
-npx skills add https://github.com/vox-public/vox-skills --skill using-vox-skills
+```sh
+codex plugin marketplace add https://github.com/vox-public/plugin.git
+codex plugin add vox-ai@vox-ai
+codex mcp login vox-ai
 ```
 
-레포에서 에이전트를 코드처럼 관리하는 코딩 에이전트 작업은 [vox CLI](https://docs.tryvox.co/docs/ai/cli)가 담당합니다. CLI에는 이 레포의 스킬이 offline pack으로 함께 들어 있어 `vox skills show <skill> --brief --json`으로 같은 내용을 조회할 수 있습니다.
+Grok Build:
 
-설치 전에 레포에 포함된 스킬 목록을 확인하려면:
-
-```bash
-npx skills add https://github.com/vox-public/vox-skills --list
+```sh
+grok plugin install https://github.com/vox-public/plugin.git
 ```
+
+## 이전 `vox-skills` 설치에서 옮기기
+
+이 저장소의 marketplace와 plugin 이름도 `vox-ai`라서 새 plugin과 충돌한다. 옛 것을 uninstall, marketplace remove 한 뒤 새 marketplace를 add 하고 install 한다. 이름이 같아 버전이 1.0.1에서 0.2.x로 낮아져도 정상이다.
+
+```text
+# Claude Code
+/plugin uninstall vox-ai@vox-ai
+/plugin marketplace remove vox-ai
+/plugin marketplace add https://github.com/vox-public/plugin.git
+/plugin install vox-ai@vox-ai
+/reload-plugins
+```
+
+```sh
+# Codex CLI
+codex plugin marketplace remove vox-ai
+codex plugin marketplace add https://github.com/vox-public/plugin.git
+codex plugin add vox-ai@vox-ai
+codex mcp login vox-ai
+
+# Grok Build
+grok plugin uninstall vox-ai
+grok plugin marketplace remove vox-ai
+grok plugin install https://github.com/vox-public/plugin.git
+```
+
+MCP 직접 등록과 CLI 안내는 [docs.tryvox.co/docs/ai/overview](https://docs.tryvox.co/docs/ai/overview)를 따른다.
 
 ## Available Skills
 

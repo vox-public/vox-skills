@@ -1,89 +1,32 @@
 #!/usr/bin/env bash
-# vox.ai install script for Claude Code (CLI / IDE) and Codex CLI.
-#
-# One-line usage:
-#   curl -fsSL https://raw.githubusercontent.com/vox-public/vox-skills/main/install.sh | bash
-#
-# Specify target explicitly:
-#   curl -fsSL https://raw.githubusercontent.com/vox-public/vox-skills/main/install.sh | bash -s -- claude
-#   curl -fsSL https://raw.githubusercontent.com/vox-public/vox-skills/main/install.sh | bash -s -- codex
-#   curl -fsSL https://raw.githubusercontent.com/vox-public/vox-skills/main/install.sh | bash -s -- both
-#
-# Target defaults to "auto": installs for every supported CLI it finds in PATH.
+# DEPRECATED: vox-public/vox-skills 는 더 이상 관리하지 않는다.
+# vox.ai plugin(https://github.com/vox-public/plugin)으로 옮겼다.
+# 이 스크립트는 아무것도 설치하지 않고 안내만 출력한 뒤 종료 코드 1로 끝난다.
 
-set -euo pipefail
+cat >&2 <<'MSG'
+[deprecated] vox-public/vox-skills 는 더 이상 관리하지 않습니다.
+vox.ai plugin(https://github.com/vox-public/plugin)으로 옮겼습니다. 이 스크립트는 아무것도 설치하지 않습니다.
 
-TARGET="${1:-auto}"
+새로 설치하기
+  Claude Code:
+    /plugin marketplace add https://github.com/vox-public/plugin.git
+    /plugin install vox-ai@vox-ai
+    /reload-plugins
+  Codex CLI:
+    codex plugin marketplace add https://github.com/vox-public/plugin.git
+    codex plugin add vox-ai@vox-ai
+    codex mcp login vox-ai
+  Grok Build:
+    grok plugin install https://github.com/vox-public/plugin.git
 
-c_red=$'\033[31m'; c_green=$'\033[32m'; c_cyan=$'\033[36m'; c_dim=$'\033[2m'; c_reset=$'\033[0m'
-err()  { printf '%serror:%s %s\n' "$c_red" "$c_reset" "$*" >&2; }
-log()  { printf '%s✓%s %s\n' "$c_green" "$c_reset" "$*"; }
-info() { printf '%s→%s %s\n' "$c_cyan" "$c_reset" "$*"; }
-dim()  { printf '%s%s%s\n' "$c_dim" "$*" "$c_reset"; }
+이전 vox-skills 설치가 있다면 (marketplace 이름이 같아 먼저 제거해야 합니다)
+  1. 옛 plugin uninstall      2. 옛 marketplace remove
+  3. 새 marketplace add       4. 새 plugin install
+  Claude Code: /plugin uninstall vox-ai@vox-ai  ->  /plugin marketplace remove vox-ai  ->  위 명령
+  Codex CLI:   codex plugin marketplace remove vox-ai  ->  위 명령
+  Grok Build:  grok plugin uninstall vox-ai && grok plugin marketplace remove vox-ai  ->  위 명령
+  버전이 1.0.1에서 0.2.x 로 낮아져도 정상입니다.
 
-install_claude() {
-  if ! command -v claude >/dev/null 2>&1; then
-    err "claude CLI not found in PATH. Install Claude Code first: https://claude.com/code"
-    return 1
-  fi
-  info "Installing vox.ai for Claude Code…"
-  claude plugin marketplace add vox-public/vox-skills
-  claude plugin install vox-ai@vox-ai
-  log "vox.ai plugin installed for Claude Code."
-  echo
-  info "Next steps in your Claude Code chat:"
-  dim "    /reload-plugins              # load plugin into the current session"
-  dim "    /vox-ai:vox-onboarding       # start the first voice agent"
-}
-
-install_codex() {
-  if ! command -v codex >/dev/null 2>&1; then
-    err "codex CLI not found in PATH. Install OpenAI Codex CLI first."
-    return 1
-  fi
-  info "Registering vox.ai marketplace for Codex CLI…"
-  codex plugin marketplace add vox-public/vox-skills
-  log "vox.ai marketplace registered for Codex."
-  echo
-  info "Next steps in Codex CLI:"
-  dim "    /plugin                      # install vox-ai from the list"
-  dim "    restart codex-cli"
-  dim "    /vox-ai:vox-onboarding       # start the first voice agent"
-}
-
-case "$TARGET" in
-  claude|claude-code)
-    install_claude
-    ;;
-  codex|codex-cli)
-    install_codex
-    ;;
-  both|all)
-    install_claude || true
-    echo
-    install_codex || true
-    ;;
-  auto)
-    found=0
-    if command -v claude >/dev/null 2>&1; then
-      install_claude && found=1 || true
-    fi
-    if command -v codex >/dev/null 2>&1; then
-      echo
-      install_codex && found=1 || true
-    fi
-    if [ "$found" = "0" ]; then
-      err "Neither claude nor codex CLI found. Install one of them first."
-      exit 1
-    fi
-    ;;
-  *)
-    err "Unknown target: $TARGET"
-    echo "Usage: install.sh [claude|codex|both|auto]"
-    exit 1
-    ;;
-esac
-
-echo
-log "Done. Authenticate via OAuth on first vox MCP tool call."
-dim "  Docs: https://docs.tryvox.co/docs/ai/overview"
+문서: https://docs.tryvox.co/docs/ai/overview
+MSG
+exit 1
