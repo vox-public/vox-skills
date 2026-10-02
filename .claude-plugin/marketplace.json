@@ -4,13 +4,13 @@
     "name": "vox.ai"
   },
   "metadata": {
-    "description": "vox.ai voice agent development plugin — MCP tools + best practice skills",
+    "description": "[DEPRECATED] 더 이상 관리하지 않는다. https://github.com/vox-public/plugin 으로 옮겼다. vox.ai voice agent development plugin — MCP tools + best practice skills",
     "version": "1.0.1"
   },
   "plugins": [
     {
       "name": "vox-ai",
-      "description": "vox.ai voice agent development plugin — MCP tools + best practice skills",
+      "description": "[DEPRECATED] 더 이상 관리하지 않는다. https://github.com/vox-public/plugin 으로 옮겼다. vox.ai voice agent development plugin — MCP tools + best practice skills",
       "source": "./",
       "strict": false,
       "skills": [
